@@ -1,0 +1,2791 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CV. Alfaris Enam Delapan - Sistem Manajemen Distribusi Roti</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff8ed',
+              100: '#feedd2',
+              200: '#fdd8a5',
+              300: '#fbbd6f',
+              400: '#f89835',
+              500: '#f57a0b', // warm bakery amber
+              600: '#d95d06',
+              700: '#b44208',
+              800: '#90340e',
+              900: '#752c0f',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Segoe UI', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Supabase JS Client CDN (Siap Diaktifkan) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal Backdrop Animation */
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-area-po, #print-area-po * {
+        visibility: visible;
+      }
+      #print-area-po {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-20 md:pb-0">
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20 gap-2">
+        
+        <!-- Identitas Perusahaan -->
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-brand-500 to-amber-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20 flex-shrink-0">
+            <i data-lucide="croissant" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <h1 class="text-sm sm:text-lg font-bold text-slate-900 truncate tracking-tight">
+                CV. Alfaris Enam Delapan
+              </h1>
+              <span id="role-badge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                Mode Owner
+              </span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-slate-500 truncate hidden xs:block">
+              Sistem Manajemen Distribusi Roti
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Side: Mode Switcher & Cloud Indicator -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+          
+          <!-- Cloud / Supabase Status Pill (Klik untuk Pengaturan) -->
+          <button 
+            id="supabase-status-pill" 
+            onclick="openSupabaseConfigModal()" 
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[11px] text-slate-700 border border-slate-200 transition cursor-pointer" 
+            title="Klik untuk Pengaturan Koneksi Database Supabase Cloud">
+            <span id="supabase-indicator-dot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span id="supabase-indicator-text" class="font-medium hidden sm:inline">Mode Lokal</span>
+            <span class="sm:hidden font-medium">Lokal</span>
+            <i data-lucide="database" class="w-3 h-3 text-slate-400"></i>
+          </button>
+
+          <!-- Mode Switcher -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button 
+              id="btn-mode-kasir"
+              onclick="setMode('kasir')" 
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all duration-150">
+              <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Mode</span> Kasir
+            </button>
+            
+            <button 
+              id="btn-mode-owner"
+              onclick="setMode('owner')" 
+              class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-brand-600 shadow-sm border border-slate-200 transition-all duration-150">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-500"></i>
+              <span class="hidden sm:inline">Mode</span> Owner <span class="hidden md:inline text-[10px] text-slate-400 font-normal">(Admin)</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Banner Info Mode -->
+    <div id="mode-notice-banner" class="bg-amber-50 border-t border-amber-100 px-4 py-1.5 text-xs text-amber-800 flex items-center justify-between">
+      <div class="max-w-7xl mx-auto w-full flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 truncate">
+          <i id="mode-notice-icon" data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+          <span id="mode-notice-text">
+            <strong>Mode Owner Aktif:</strong> Akses penuh terbuka (Panel laba rugi, HPP kulakan, alokasi tabungan & biaya operasional ditampilkan).
+          </span>
+        </div>
+        <button onclick="document.getElementById('mode-notice-banner').classList.add('hidden')" class="text-amber-600 hover:text-amber-800">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- BODY WRAPPER (SIDEBAR + MAIN CONTENT) -->
+  <div class="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 flex gap-6">
+
+    <!-- DESKTOP SIDEBAR NAVIGATION -->
+    <aside class="hidden md:flex flex-col w-64 flex-shrink-0">
+      <div class="sticky top-28 bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-1">
+        <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          Menu Navigasi
+        </div>
+        
+        <!-- Tab 1: Dashboard -->
+        <button onclick="switchTab('dashboard')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="dashboard">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Dashboard</span>
+        </button>
+        
+        <!-- Tab 2: Transaksi Sales -->
+        <button onclick="switchTab('transaksi')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="transaksi">
+          <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+          <span>Transaksi Sales</span>
+          <span id="sidebar-trx-count" class="ml-auto text-[10px] bg-brand-100 text-brand-700 font-semibold px-2 py-0.5 rounded-full">0</span>
+        </button>
+        
+        <!-- Tab 3: REKAP PO SALES (BARU!) -->
+        <button onclick="switchTab('po')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="po">
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-brand-500"></i>
+          <span>Rekap PO Sales</span>
+          <span id="sidebar-po-badge" class="ml-auto text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded">PO Pabrik</span>
+        </button>
+
+        <!-- Tab 4: Produk & Harga -->
+        <button onclick="switchTab('produk')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="produk">
+          <i data-lucide="package" class="w-4 h-4"></i>
+          <span>Produk & Harga</span>
+          <span class="ml-auto text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded">6 Level</span>
+        </button>
+        
+        <!-- Tab 5: Operasional & P&L -->
+        <button onclick="switchTab('operasional')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="operasional">
+          <i data-lucide="truck" class="w-4 h-4"></i>
+          <span>Operasional & P&L</span>
+          <span class="ml-auto text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Keuangan</span>
+        </button>
+        
+        <!-- Tab 6: Data Sales -->
+        <button onclick="switchTab('sales')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="sales">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span>Data Sales</span>
+          <span id="sidebar-sales-count" class="ml-auto text-[10px] bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-full">0</span>
+        </button>
+
+        <!-- Cloud Database & Backup Section -->
+        <div class="pt-4 mt-4 border-t border-slate-100 px-3 space-y-2">
+          <button 
+            onclick="openSupabaseConfigModal()" 
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition"
+            title="Pengaturan Database Cloud Supabase">
+            <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>Database Cloud Supabase</span>
+          </button>
+
+          <button 
+            onclick="downloadMonthlyBackup()" 
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+            title="Download seluruh data dalam format JSON">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-brand-600"></i>
+            <span>Backup Bulanan (JSON)</span>
+          </button>
+
+          <div id="sidebar-cloud-sync-card" class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 leading-relaxed">
+            <span class="font-bold text-slate-700 block mb-0.5">Database Status:</span>
+            <span id="sidebar-cloud-sync-status">Mode Penyimpanan Lokal (LocalStorage). Klik tombol di atas untuk sambungkan ke Cloud.</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 min-w-0">
+
+      <!-- ============================================== -->
+      <!-- TAB 1: DASHBOARD -->
+      <!-- ============================================== -->
+      <section id="tab-dashboard" class="tab-content active space-y-5">
+        
+        <!-- Welcome banner -->
+        <div class="bg-gradient-to-r from-brand-500 via-amber-500 to-orange-500 rounded-2xl p-4 sm:p-6 text-white shadow-md shadow-brand-500/15 relative overflow-hidden">
+          <div class="relative z-10">
+            <div class="text-xs sm:text-sm font-medium text-amber-100 mb-1">Distribusi & Logistik Roti</div>
+            <h2 class="text-xl sm:text-2xl font-bold">Ringkasan Operasional Hari Ini</h2>
+            <p class="text-xs sm:text-sm text-white/90 mt-1 max-w-xl">
+              Pantau pergerakan stok roti, setoran kasir sales keliling, tagihan kasbon, retur toko, dan cek rute kosong secara real-time.
+            </p>
+          </div>
+          <div class="absolute -right-6 -bottom-8 opacity-15 pointer-events-none">
+            <i data-lucide="croissant" class="w-44 h-44 text-white"></i>
+          </div>
+        </div>
+
+        <!-- STATS KPI GRID -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500">Total Omset Penjualan</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div id="kpi-omset" class="text-lg sm:text-2xl font-bold text-slate-900">Rp 0</div>
+            <div id="kpi-omset-sub" class="text-[11px] text-slate-400 mt-1">Dari 0 Transaksi</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border-2 border-rose-200 shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-rose-800">Total Kasbon Belum Lunas</span>
+              <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <i data-lucide="alert-circle" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div id="kpi-kasbon" class="text-lg sm:text-2xl font-extrabold text-rose-700">Rp 0</div>
+            <div id="kpi-kasbon-sub" class="text-[11px] text-rose-600 font-medium mt-1">0 Nota tempo berjalan</div>
+          </div>
+
+          <div class="owner-only bg-white p-4 rounded-2xl border-2 border-emerald-300 shadow-sm relative overflow-hidden">
+            <div class="absolute top-2 right-2">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
+                <i data-lucide="lock" class="w-2.5 h-2.5"></i> OWNER ONLY
+              </span>
+            </div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-emerald-900">Laba Bersih Riil Masuk CV</span>
+            </div>
+            <div id="kpi-profit" class="text-lg sm:text-2xl font-extrabold text-emerald-800">Rp 0</div>
+            <div id="kpi-profit-sub" class="text-[11px] text-emerald-700 font-medium mt-1">Setelah operasional & nabung</div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-500">Rute Kosong / Toko Idle</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i data-lucide="map-pin-off" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div id="kpi-idle-toko" class="text-lg sm:text-2xl font-bold text-amber-600">0 Toko</div>
+            <div id="kpi-idle-sub" class="text-[11px] text-slate-500 mt-1">Belum dikunjungi > 3 hari</div>
+          </div>
+        </div>
+
+        <!-- DAFTAR SALES KASBON & JATUH TEMPO -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gradient-to-r from-rose-50/70 to-amber-50/50">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base">
+                  Monitoring Kasbon Sales (Tempo 3 Hari)
+                </h3>
+                <span id="badge-kasbon-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                  0 Tagihan
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Sales yang mengambil roti kasbon dengan indikator jatuh tempo otomatis, pelunasan cepat, dan pengiriman nota WA.
+              </p>
+            </div>
+            
+            <button 
+              onclick="openTransactionModal()" 
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm self-start sm:self-auto transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Input Drop Roti Baru
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[700px]">
+              <thead class="bg-slate-50/80 text-slate-700 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3.5">Nota & Tanggal Ambil</th>
+                  <th class="py-3 px-3.5">Sales / Kurir</th>
+                  <th class="py-3 px-3.5">Total Roti & Tagihan</th>
+                  <th class="py-3 px-3.5">Jatuh Tempo</th>
+                  <th class="py-3 px-3.5 text-center">Status Tempo</th>
+                  <th class="py-3 px-3.5 text-center">Aksi Pelunasan & WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-kasbon-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+
+          <div id="dashboard-kasbon-empty" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="badge-check" class="w-10 h-10 mx-auto mb-2 text-emerald-400"></i>
+            <p class="text-xs font-semibold text-slate-700">Luar biasa! Tidak ada tagihan kasbon yang tertunggak saat ini.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: TRANSAKSI SALES -->
+      <!-- ============================================== -->
+      <section id="tab-transaksi" class="tab-content space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-slate-900">Transaksi Drop Roti & Setoran Sales</h2>
+              <span id="trx-total-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800 border border-brand-200">
+                0 Nota
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">
+              Pencatatan pengambilan roti harian per level harga mitra, pembayaran tunai/transfer, dan kasbon tempo 3 hari.
+            </p>
+          </div>
+          
+          <button 
+            onclick="openTransactionModal()" 
+            class="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm transition self-start sm:self-auto">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Input Transaksi Baru</span>
+          </button>
+        </div>
+
+        <!-- Filter & Search Bar Transaksi -->
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+            <button onclick="setTrxFilter('all')" id="filter-trx-all" class="px-3 py-1 rounded-lg font-semibold bg-white text-slate-800 shadow-xs transition">
+              Semua (<span id="count-all-trx">0</span>)
+            </button>
+            <button onclick="setTrxFilter('kasbon')" id="filter-trx-kasbon" class="px-3 py-1 rounded-lg font-medium text-slate-500 hover:text-slate-800 transition">
+              Kasbon (<span id="count-kasbon-trx">0</span>)
+            </button>
+            <button onclick="setTrxFilter('lunas')" id="filter-trx-lunas" class="px-3 py-1 rounded-lg font-medium text-slate-500 hover:text-slate-800 transition">
+              Lunas (<span id="count-lunas-trx">0</span>)
+            </button>
+          </div>
+
+          <div class="relative flex-1 min-w-[200px]">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input 
+              id="search-trx" 
+              type="text" 
+              oninput="renderTransactionList()" 
+              placeholder="Cari nota TRX, nama sales, atau rute..." 
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:bg-white"
+            >
+          </div>
+        </div>
+
+        <!-- List Transaksi Container -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          <div id="trx-container" class="divide-y divide-slate-100"></div>
+          <div id="trx-empty" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+            <p class="text-xs font-medium">Belum ada data transaksi yang sesuai filter.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: REKAP PO SALES (PRE-ORDER AMBIL PABRIK) -->
+      <!-- ============================================== -->
+      <section id="tab-po" class="tab-content space-y-4">
+        
+        <!-- Header & Action Buttons -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-slate-900">Rekapitulasi Pre-Order (PO) Sales</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800 border border-brand-200">
+                Ambil Pabrik Roti
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">
+              Akumulasi pesanan varian roti per sales dan rekap total produksi roti yang harus diambil dari pabrik.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button 
+              onclick="openPOInputModal()" 
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Input PO Sales</span>
+            </button>
+
+            <button 
+              onclick="sendPOWhatsAppToFactory()" 
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+              <span>Kirim PO ke Pabrik (WA)</span>
+            </button>
+
+            <button 
+              onclick="printPORecap()" 
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-white hover:bg-slate-700 shadow-sm transition">
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span>Cetak Rekap</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Tanggal & Quick Pills -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-4 h-4 text-brand-500"></i>
+              <span>Tanggal Ambil Pabrik:</span>
+            </span>
+            <input 
+              type="date" 
+              id="po-date-filter" 
+              onchange="renderPOSalesMatrix()" 
+              class="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 focus:outline-none focus:border-brand-500"
+            >
+          </div>
+
+          <!-- Quick Date Pills -->
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
+            <button onclick="setPODateQuick(0)" id="po-btn-today" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900">
+              Hari Ini
+            </button>
+            <button onclick="setPODateQuick(1)" id="po-btn-tomorrow" class="px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition">
+              Besok (PO Pabrik)
+            </button>
+            <button onclick="setPODateQuick(2)" id="po-btn-lusa" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900">
+              Lusa
+            </button>
+          </div>
+        </div>
+
+        <!-- Top Summary Cards untuk PO Tanggal Terpilih -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Total Roti Ambil Pabrik -->
+          <div class="bg-gradient-to-br from-brand-500 to-amber-600 p-3.5 rounded-2xl text-white shadow-sm">
+            <div class="flex items-center justify-between mb-1 opacity-90 text-[11px] font-semibold">
+              <span>Total Roti Ambil Pabrik</span>
+              <i data-lucide="factory" class="w-4 h-4"></i>
+            </div>
+            <div id="po-kpi-total-pcs" class="text-xl sm:text-2xl font-black">0 Pcs</div>
+            <div id="po-kpi-date-label" class="text-[10px] text-amber-100 mt-0.5">Untuk tanggal terpilih</div>
+          </div>
+
+          <!-- Total Armada Sales PO -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between mb-1 text-[11px] font-medium text-slate-500">
+              <span>Sales Menyetor PO</span>
+              <i data-lucide="users" class="w-4 h-4 text-purple-600"></i>
+            </div>
+            <div id="po-kpi-sales-count" class="text-lg sm:text-xl font-bold text-slate-900">0 Tim</div>
+            <div class="text-[10px] text-emerald-600 mt-0.5 font-semibold">Armada terdata</div>
+          </div>
+
+          <!-- Varian Terbanyak -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between mb-1 text-[11px] font-medium text-slate-500">
+              <span>Varian Paling Banyak</span>
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+            </div>
+            <div id="po-kpi-top-variant" class="text-sm sm:text-base font-bold text-slate-800 truncate">-</div>
+            <div id="po-kpi-top-variant-qty" class="text-[10px] text-slate-400 mt-0.5">0 pcs dipesan</div>
+          </div>
+
+          <!-- Estimasi Modal Kulakan Pabrik (Owner Only) -->
+          <div class="owner-only bg-amber-50/80 p-3.5 rounded-2xl border border-amber-300 shadow-xs">
+            <div class="flex items-center justify-between mb-1 text-[11px] font-bold text-amber-900">
+              <span>Tagihan Modal Pabrik</span>
+              <span class="text-[9px] bg-amber-200 text-amber-950 font-bold px-1.5 py-0.5 rounded">Owner Only</span>
+            </div>
+            <div id="po-kpi-factory-cost" class="text-lg sm:text-xl font-extrabold text-amber-950">Rp 0</div>
+            <div class="text-[10px] text-amber-700 mt-0.5">Estimasi bayar ke pabrik</div>
+          </div>
+        </div>
+
+        <!-- PRINTABLE CONTAINER: MATRIX TABLE REKAP PO SALES -->
+        <div id="print-area-po" class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          
+          <div class="p-3.5 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2 bg-slate-50/80">
+            <div>
+              <h3 class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="table" class="w-4 h-4 text-brand-600"></i>
+                <span>Matriks Akumulasi Pesanan Roti per Sales</span>
+              </h3>
+              <p class="text-[11px] text-slate-500">Baris = Nama Sales, Kolom = Varian Roti, Baris Bawah = Total Pabrik.</p>
+            </div>
+            <span id="po-active-date-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+              Tanggal: -
+            </span>
+          </div>
+
+          <!-- Matrix Table with Horizontal Scrolling -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700 min-w-[750px] border-collapse">
+              <thead class="bg-slate-100/90 text-slate-800 font-bold border-b border-slate-300">
+                <tr id="po-matrix-thead-row">
+                  <!-- Header kolom dinamis dari JS (Sales, Roti A, Roti B..., Total Sales, Aksi) -->
+                </tr>
+              </thead>
+              <tbody id="po-matrix-tbody" class="divide-y divide-slate-100">
+                <!-- Baris per sales dinamis dari JS -->
+              </tbody>
+              <tfoot id="po-matrix-tfoot" class="bg-amber-100/80 font-black border-t-2 border-brand-500 text-slate-900">
+                <!-- Footer Baris TOTAL HARUS DIAMBIL DARI PABRIK -->
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Empty State PO -->
+          <div id="po-matrix-empty" class="hidden p-8 text-center text-slate-400">
+            <i data-lucide="clipboard-x" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+            <p class="text-xs font-semibold text-slate-700">Belum ada data Pre-Order (PO) sales untuk tanggal ini.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Klik tombol "+ Input PO Sales" di atas untuk memasukkan pesanan rute.</p>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: PRODUK & 6 LEVEL HARGA -->
+      <!-- ============================================== -->
+      <section id="tab-produk" class="tab-content space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-slate-900">Produk Roti & 6 Level Harga Jual</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800 border border-brand-200">
+                Multi-Tier Pricing
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">
+              Pengaturan harga kulakan pabrik dan 6 tingkatan harga jual otomatis untuk distributor.
+            </p>
+          </div>
+          
+          <div class="flex items-center gap-2 flex-wrap">
+            <button 
+              onclick="openProductModal()" 
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm transition">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Tambah Produk Baru</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 LEVEL PRICING SELECTOR -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+              <i data-lucide="layers" class="w-4 h-4 text-brand-500"></i>
+              <span>Daftar 6 Tingkat Harga (Tiering Mitra CV. Alfaris):</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[11px] text-slate-500 font-medium">Sorot Kolom:</label>
+              <select id="select-active-tier" onchange="renderProductsTable()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-semibold text-slate-700 focus:outline-none">
+                <option value="all">Tampilkan Semua 6 Level</option>
+                <option value="level1">1. Sales Besar</option>
+                <option value="level2">2. Sales Sedang</option>
+                <option value="level3">3. Sales Kecil</option>
+                <option value="level4">4. Toko Kirim Langsung</option>
+                <option value="level5">5. Agen Khusus</option>
+                <option value="level6">6. Grosir Partai</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 text-[11px]">
+            <div class="p-1.5 rounded-lg bg-blue-50/70 border border-blue-100 flex items-center justify-between">
+              <span class="font-semibold text-blue-900 truncate">1. Sales Besar</span>
+              <span class="text-[10px] text-blue-600 font-mono">+25%</span>
+            </div>
+            <div class="p-1.5 rounded-lg bg-indigo-50/70 border border-indigo-100 flex items-center justify-between">
+              <span class="font-semibold text-indigo-900 truncate">2. Sales Sedang</span>
+              <span class="text-[10px] text-indigo-600 font-mono">+30%</span>
+            </div>
+            <div class="p-1.5 rounded-lg bg-amber-50/70 border border-amber-100 flex items-center justify-between">
+              <span class="font-semibold text-amber-900 truncate">3. Sales Kecil</span>
+              <span class="text-[10px] text-amber-600 font-mono">+35%</span>
+            </div>
+            <div class="p-1.5 rounded-lg bg-emerald-50/70 border border-emerald-100 flex items-center justify-between">
+              <span class="font-semibold text-emerald-900 truncate">4. Toko Langsung</span>
+              <span class="text-[10px] text-emerald-600 font-mono">+45%</span>
+            </div>
+            <div class="p-1.5 rounded-lg bg-purple-50/70 border border-purple-100 flex items-center justify-between">
+              <span class="font-semibold text-purple-900 truncate">5. Agen Khusus</span>
+              <span class="text-[10px] text-purple-600 font-mono">+28%</span>
+            </div>
+            <div class="p-1.5 rounded-lg bg-rose-50/70 border border-rose-100 flex items-center justify-between">
+              <span class="font-semibold text-rose-900 truncate">6. Grosir Partai</span>
+              <span class="text-[10px] text-rose-600 font-mono">+20%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabel Produk & 6 Level Harga -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          <div class="p-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Daftar Produk Roti</span>
+              <span id="product-total-badge" class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">0 Produk</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="owner-only text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded font-semibold flex items-center gap-1">
+                <i data-lucide="eye" class="w-3 h-3 text-amber-600"></i> Kulakan Pabrik Terbuka
+              </span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[750px]">
+              <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                <tr id="product-table-head"></tr>
+              </thead>
+              <tbody id="product-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: OPERASIONAL, KEUANGAN & LABA RUGI (P&L) -->
+      <!-- ============================================== -->
+      <section id="tab-operasional" class="tab-content space-y-5">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-slate-900">Operasional, Keuangan & Laba Rugi</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">P&L Statement</span>
+            </div>
+            <p class="text-xs text-slate-500">Pencatatan biaya sewa armada, solar, gaji kru, pajak, alokasi tabungan, retur toko & deteksi rute kosong.</p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="openExpenseModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition">
+              <i data-lucide="plus" class="w-4 h-4"></i> Catat Pengeluaran
+            </button>
+            <button onclick="openReturModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-sm transition">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Catat Retur Toko
+            </button>
+          </div>
+        </div>
+
+        <!-- EXECUTIVE PANEL LABA RUGI OWNER (HANYA OWNER) -->
+        <div class="owner-only bg-gradient-to-br from-amber-500/10 via-white to-amber-50 border-2 border-amber-300 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/80 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="p-1 rounded bg-amber-500 text-white font-bold text-[10px]">P&L STATEMENT</span>
+                <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Laporan Laba Rugi Komprehensif CV. Alfaris Enam Delapan</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Rumus: (Total Omset &minus; Modal Kulakan) &minus; Total Beban Operasional &minus; Alokasi Tabungan.</p>
+            </div>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <div class="p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between">
+              <div><span class="font-bold text-slate-900 block text-xs sm:text-sm">1. Total Penjualan Sales (Omset Kotor)</span><span class="text-[11px] text-slate-400">Total akumulasi nota drop roti</span></div>
+              <span id="pl-total-omset" class="text-sm sm:text-base font-extrabold text-slate-900">Rp 0</span>
+            </div>
+
+            <div class="p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between">
+              <div><span class="font-bold text-slate-900 block text-xs sm:text-sm">2. Beban Pokok Penjualan (HPP Modal Kulakan Pabrik)</span><span class="text-[11px] text-slate-400">Modal dasar beli roti ke pabrik produsen</span></div>
+              <span id="pl-total-kulakan" class="text-sm sm:text-base font-bold text-rose-600">-Rp 0</span>
+            </div>
+
+            <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 flex items-center justify-between font-bold">
+              <div><span class="text-amber-950 block text-xs sm:text-sm">= LABA KOTOR DISTRIBUTOR (GROSS PROFIT)</span><span class="text-[11px] text-amber-700 font-normal">Selisih omset dikurangi modal kulakan</span></div>
+              <span id="pl-laba-kotor" class="text-sm sm:text-base font-extrabold text-amber-900">Rp 0</span>
+            </div>
+
+            <div class="p-3 bg-white rounded-2xl border border-slate-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <div><span class="font-bold text-slate-900 block text-xs sm:text-sm">3. Total Beban Operasional Lapangan</span><span class="text-[11px] text-slate-400">Sewa mobil, solar, gaji 4 kru, pajak, waste retur</span></div>
+                <span id="pl-total-operasional" class="text-sm sm:text-base font-bold text-rose-600">-Rp 0</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block text-[10px]">Sewa Mobil:</span><span id="sub-sewa-mobil" class="font-bold text-slate-800">Rp 0</span></div>
+                <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block text-[10px]">Solar BBM:</span><span id="sub-solar" class="font-bold text-slate-800">Rp 0</span></div>
+                <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block text-[10px]">Gaji 4 Kru:</span><span id="sub-gaji" class="font-bold text-slate-800">Rp 0</span></div>
+                <div class="p-2 rounded-xl bg-slate-50"><span class="text-slate-400 block text-[10px]">Pajak:</span><span id="sub-pajak" class="font-bold text-slate-800">Rp 0</span></div>
+                <div class="p-2 rounded-xl bg-rose-50 text-rose-800"><span class="text-rose-600 block text-[10px] font-semibold">Waste Retur:</span><span id="sub-waste-retur" class="font-bold">Rp 0</span></div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between">
+              <div><span class="font-bold text-slate-900 block text-xs sm:text-sm">4. Alokasi Nabung Mingguan (Cadangan CV)</span><span class="text-[11px] text-slate-400">Disisihkan untuk tabungan ekspansi & modal darurat</span></div>
+              <span id="pl-total-tabungan" class="text-sm sm:text-base font-bold text-blue-600">-Rp 0</span>
+            </div>
+
+            <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl text-white shadow-md flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2"><span class="text-xs font-bold uppercase tracking-wider text-emerald-100">HASIL AKHIR BERSIH</span><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/20">Net Profit</span></div>
+                <h4 class="text-base sm:text-xl font-extrabold mt-1">Laba Bersih CV. Alfaris Enam Delapan</h4>
+              </div>
+              <div class="text-right">
+                <div id="pl-laba-bersih-akhir" class="text-xl sm:text-3xl font-black">Rp 0</div>
+                <span id="pl-profit-margin-badge" class="inline-block mt-1 text-[11px] bg-white/20 px-2 py-0.5 rounded font-mono font-semibold">Margin: 0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUKU KAS PENGELUARAN OPERASIONAL & TABUNGAN -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm space-y-3 p-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center"><i data-lucide="receipt" class="w-4 h-4"></i></div>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base">Buku Catatan Pengeluaran Operasional & Alokasi Tabungan</h3>
+              </div>
+            </div>
+            <select id="filter-expense-cat" onchange="renderExpenseTable()" class="text-xs bg-slate-50 border rounded-xl px-2.5 py-1.5 font-semibold">
+              <option value="all">Semua Kategori</option>
+              <option value="sewa_mobil">Sewa Mobil</option>
+              <option value="solar">Solar / BBM</option>
+              <option value="gaji">Gaji 4 Karyawan</option>
+              <option value="pajak">Pajak</option>
+              <option value="nabung">Alokasi Nabung</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[700px]">
+              <thead class="bg-slate-50 text-slate-700 font-semibold border-b">
+                <tr><th class="py-3 px-3.5">Tanggal</th><th class="py-3 px-3.5">Kategori</th><th class="py-3 px-3.5">Keterangan</th><th class="py-3 px-3.5 text-right">Nominal</th><th class="py-3 px-3.5 text-center">Aksi</th></tr>
+              </thead>
+              <tbody id="expense-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MODUL RETUR ROTI TOKO LANGSUNG -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base">Daftar Retur Roti Khusus Pelanggan Toko Kirim Langsung</h3>
+            </div>
+            <button onclick="openReturModal()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 text-white"><i data-lucide="plus" class="w-3.5 h-3.5 inline"></i> Catat Retur</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600 min-w-[700px]">
+              <thead class="bg-slate-50 border-b">
+                <tr><th class="py-3 px-3.5">No Retur</th><th class="py-3 px-3.5">Toko</th><th class="py-3 px-3.5">Produk & Qty</th><th class="py-3 px-3.5">Kondisi</th><th class="py-3 px-3.5 text-center">Perlakuan</th><th class="py-3 px-3.5 text-right">Beban Waste</th><th class="py-3 px-3.5 text-center">Aksi</th></tr>
+              </thead>
+              <tbody id="retur-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PANEL CEK RUTE KOSONG -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-4 space-y-3">
+          <div class="flex justify-between items-center border-b pb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center"><i data-lucide="map-pin" class="w-4 h-4"></i></div>
+              <h3 class="font-bold text-slate-900 text-sm sm:text-base">Radar Monitoring Kunjungan & Deteksi Rute Kosong</h3>
+            </div>
+            <select id="filter-rute-days" onchange="renderRuteKosongPanel()" class="text-xs bg-slate-50 border rounded-xl px-2.5 py-1.5 font-semibold">
+              <option value="all">Semua Toko</option>
+              <option value="idle3" selected>Belum Dikunjungi > 3 Hari</option>
+              <option value="idle7">Kritis > 7 Hari</option>
+            </select>
+          </div>
+          <div id="rute-kosong-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1"></div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 6: DATA SALES -->
+      <!-- ============================================== -->
+      <section id="tab-sales" class="tab-content space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-slate-900">Manajemen Data Sales & Kurir</h2>
+              <span id="sales-badge-count" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">0 Orang</span>
+            </div>
+            <p class="text-xs text-slate-500">Daftar sales roti keliling. Sales keluar-masuk dapat dinonaktifkan tanpa menghapus rekam jejak histori.</p>
+          </div>
+          <button onclick="openSalesModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm transition">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Tambah Sales Baru
+          </button>
+        </div>
+
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+            <button onclick="setSalesFilter('all')" id="filter-sales-all" class="px-3 py-1 rounded-lg font-semibold bg-white text-slate-800 shadow-xs">Semua (<span id="count-all-sales">0</span>)</button>
+            <button onclick="setSalesFilter('aktif')" id="filter-sales-aktif" class="px-3 py-1 rounded-lg font-medium text-slate-500">Aktif (<span id="count-aktif-sales">0</span>)</button>
+            <button onclick="setSalesFilter('nonaktif')" id="filter-sales-nonaktif" class="px-3 py-1 rounded-lg font-medium text-slate-500">Nonaktif (<span id="count-nonaktif-sales">0</span>)</button>
+          </div>
+          <input id="search-sales" type="text" oninput="renderSalesList()" placeholder="Cari sales..." class="px-3 py-1.5 text-xs bg-slate-50 border rounded-xl flex-1 max-w-xs">
+        </div>
+
+        <div id="sales-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"></div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL: INPUT PRE-ORDER (PO) SALES -->
+  <!-- ============================================== -->
+  <div id="modal-po-input" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-brand-500 to-amber-600 text-white">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold">Input Pre-Order (PO) Sales</h3>
+            <p class="text-[11px] text-amber-100">Pesanan roti untuk pengambilan pabrik besok</p>
+          </div>
+        </div>
+        <button onclick="closePOInputModal()" class="text-white/80 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="form-po-input" onsubmit="savePOSales(event)" class="p-4 space-y-3.5 text-xs overflow-y-auto flex-1">
+        <input type="hidden" id="po-form-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Target Tanggal Ambil Pabrik *</label>
+            <input type="date" id="po-form-date" required class="w-full px-3 py-2 border rounded-xl bg-slate-50 font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nama Sales (Aktif) *</label>
+            <select id="po-form-sales" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800"></select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+            <i data-lucide="package" class="w-3.5 h-3.5 text-brand-500"></i>
+            <span>Jumlah Pesanan per Varian Roti (Pcs):</span>
+          </label>
+          <div id="po-form-products-inputs" class="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+            <!-- Diisi dinamis per produk oleh JS -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Catatan Khusus Sales</label>
+          <input type="text" id="po-form-notes" placeholder="Contoh: Titipan rute Dinoyo minta lebih awal" class="w-full px-3 py-2 border rounded-xl">
+        </div>
+
+        <div class="pt-3 border-t flex justify-end gap-2">
+          <button type="button" onclick="closePOInputModal()" class="px-3.5 py-2 rounded-xl text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-sm">Simpan PO Sales</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: FORM CATAT PENGELUARAN OPERASIONAL & TABUNGAN -->
+  <div id="modal-expense" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center">
+        <h3 class="text-sm font-bold">Catat Pengeluaran Operasional</h3>
+        <button onclick="closeExpenseModal()" class="text-slate-400 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form id="form-expense" onsubmit="saveExpense(event)" class="p-4 space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Kategori Pengeluaran *</label>
+          <select id="expense-form-category" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold">
+            <option value="sewa_mobil">Sewa Mobil Armada</option>
+            <option value="solar">Solar / BBM Armada Harian</option>
+            <option value="gaji">Gaji 4 Karyawan (Bongkar Muat & Kasir)</option>
+            <option value="pajak">Pembayaran Pajak & Retribusi</option>
+            <option value="nabung">Alokasi Nabung Mingguan (Cadangan CV)</option>
+            <option value="lainnya">Operasional Lainnya</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nominal Biaya (Rp) *</label>
+          <input type="number" id="expense-form-amount" required min="1000" step="1000" placeholder="150000" class="w-full px-3 py-2 border rounded-xl font-bold">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Keterangan / Rincian *</label>
+          <input type="text" id="expense-form-desc" required placeholder="Solar mobil grand max rute Blimbing" class="w-full px-3 py-2 border rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Tanggal</label>
+          <input type="date" id="expense-form-date" required class="w-full px-3 py-2 border rounded-xl">
+        </div>
+        <div class="pt-3 border-t flex justify-end gap-2">
+          <button type="button" onclick="closeExpenseModal()" class="px-3.5 py-2 rounded-xl text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold">Simpan Pengeluaran</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL RETUR ROTI -->
+  <div id="modal-retur" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-4 border-b bg-rose-50/70 flex justify-between items-center">
+        <h3 class="text-sm font-bold text-slate-900">Catat Retur Roti Toko Langsung</h3>
+        <button onclick="closeReturModal()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form id="form-retur" onsubmit="saveRetur(event)" class="p-4 space-y-3 text-xs overflow-y-auto flex-1">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pilih Toko Langsung *</label>
+          <select id="retur-form-toko" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold mb-1">Varian Roti *</label>
+            <select id="retur-form-product" required onchange="calculateReturFinancialImpact()" class="w-full px-2 py-1.5 border rounded-lg"></select>
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Jumlah (Pcs) *</label>
+            <input type="number" id="retur-form-qty" required min="1" value="10" oninput="calculateReturFinancialImpact()" class="w-full px-2 py-1.5 border rounded-lg font-bold">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Alasan</label>
+          <select id="retur-form-reason" class="w-full px-2 py-1.5 border rounded-lg bg-white">
+            <option value="Kadaluwarsa / Expired">Kadaluwarsa / Expired</option>
+            <option value="Kempes / Rusak Kemasan">Kempes / Rusak Kemasan</option>
+            <option value="Tidak Laku / Overstock">Tidak Laku / Overstock</option>
+            <option value="Berjamur / Kualitas Cacat">Kualitas Roti Cacat / Berjamur</option>
+          </select>
+        </div>
+        <div class="p-3 bg-slate-50 border rounded-xl space-y-2">
+          <label class="block font-bold text-slate-800">Pilihan Perlakuan Retur:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="retur-action-card flex items-start gap-2 p-2.5 rounded-lg border-2 border-blue-500 bg-blue-50 cursor-pointer">
+              <input type="radio" name="retur_action_type" value="pabrik" checked onchange="calculateReturFinancialImpact()" class="mt-0.5">
+              <div><strong class="text-blue-900 block text-[11px]">(a) Tukar Pabrik</strong><span class="text-[10px] text-blue-700">100% ganti baru (Beban: Rp 0)</span></div>
+            </label>
+            <label class="retur-action-card flex items-start gap-2 p-2.5 rounded-lg border-2 border-slate-200 bg-white cursor-pointer">
+              <input type="radio" name="retur_action_type" value="waste" onchange="calculateReturFinancialImpact()" class="mt-0.5">
+              <div><strong class="text-rose-900 block text-[11px]">(b) Ditanggung Sendiri</strong><span class="text-[10px] text-rose-700">Waste rugi HPP potong laba</span></div>
+            </label>
+          </div>
+          <div id="retur-calc-box" class="p-2 rounded-lg bg-blue-50 text-xs flex justify-between font-bold text-blue-800">
+            <span>Beban Kas CV:</span><span id="retur-calc-display">Rp 0 (Klaim Pabrik)</span>
+          </div>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeReturModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-rose-600 text-white font-semibold">Simpan Retur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TRANSAKSI, SALES, PRODUK -->
+  <div id="modal-transaction" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-4 border-b flex justify-between items-center bg-slate-50">
+        <h3 class="text-sm font-bold text-slate-900">Input Transaksi Drop Roti Sales</h3>
+        <button onclick="closeTransactionModal()" class="text-slate-400 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form id="form-transaction" onsubmit="saveTransaction(event)" class="p-4 space-y-4 text-xs overflow-y-auto flex-1">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block font-bold mb-1">Sales (Aktif) *</label><select id="trx-form-sales" required class="w-full px-2.5 py-1.5 border rounded-lg bg-white"></select></div>
+          <div><label class="block font-bold mb-1">Level Harga *</label>
+            <select id="trx-form-tier" onchange="handleTierChangeInForm()" class="w-full px-2.5 py-1.5 border rounded-lg bg-white font-bold text-brand-700">
+              <option value="level1">1. Sales Besar (+25%)</option>
+              <option value="level2">2. Sales Sedang (+30%)</option>
+              <option value="level3">3. Sales Kecil (+35%)</option>
+              <option value="level4">4. Toko Langsung (+45%)</option>
+              <option value="level5">5. Agen Khusus (+28%)</option>
+              <option value="level6">6. Grosir Partai (+20%)</option>
+            </select>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center font-bold"><span>Roti yang Dibawa:</span><button type="button" onclick="addTrxProductRow()" class="text-brand-600 font-semibold">+ Tambah Baris</button></div>
+          <div id="trx-product-rows-container" class="space-y-2"></div>
+        </div>
+        <div class="p-3 bg-slate-50 border rounded-xl space-y-2">
+          <label class="font-bold">Pembayaran:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="p-2 border rounded-lg bg-white flex flex-col items-center cursor-pointer font-bold"><input type="radio" name="trx_payment_method" value="tunai" checked onchange="handlePaymentMethodChange()" class="hidden"><span>Tunai</span></label>
+            <label class="p-2 border rounded-lg bg-white flex flex-col items-center cursor-pointer font-bold"><input type="radio" name="trx_payment_method" value="transfer" onchange="handlePaymentMethodChange()" class="hidden"><span>Transfer</span></label>
+            <label class="p-2 border rounded-lg bg-white flex flex-col items-center cursor-pointer font-bold"><input type="radio" name="trx_payment_method" value="kasbon" onchange="handlePaymentMethodChange()" class="hidden"><span>Kasbon (3 Hari)</span></label>
+          </div>
+          <div id="trx-kasbon-info-box" class="hidden text-amber-800 text-[11px] p-2 bg-amber-50 rounded-lg">Jatuh tempo: <strong id="trx-calculated-due-date" class="text-rose-700">-</strong></div>
+        </div>
+        <div class="p-3 bg-brand-50 border rounded-xl flex justify-between items-center">
+          <div><span class="text-brand-800">Total Roti:</span> <span id="trx-form-total-qty" class="font-bold">0 Pcs</span></div>
+          <div class="text-right"><span class="text-brand-800">Grand Total:</span> <span id="trx-form-grand-total" class="font-extrabold text-base text-brand-700">Rp 0</span></div>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeTransactionModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold">Simpan Transaksi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-sales" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 space-y-3">
+      <h3 class="text-sm font-bold">Tambah / Edit Sales</h3>
+      <form id="form-sales" onsubmit="saveSales(event)" class="space-y-3 text-xs">
+        <div><label class="block font-semibold mb-1">Nama Sales</label><input type="text" id="sales-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
+        <div><label class="block font-semibold mb-1">No WA</label><input type="tel" id="sales-form-phone" required class="w-full px-3 py-2 border rounded-xl"></div>
+        <div><label class="block font-semibold mb-1">Rute</label><input type="text" id="sales-form-route" class="w-full px-3 py-2 border rounded-xl"></div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeSalesModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="modal-product" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-4 space-y-3">
+      <h3 class="text-sm font-bold">Produk & 6 Level Harga</h3>
+      <form id="form-product" onsubmit="saveProduct(event)" class="space-y-3 text-xs max-h-[80vh] overflow-y-auto">
+        <div><label class="block font-semibold mb-1">Nama Roti</label><input type="text" id="product-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
+        <div class="p-2.5 bg-amber-50 rounded-xl border flex gap-2 items-center">
+          <input type="number" id="product-form-factory-price" placeholder="HPP Kulakan" required class="flex-1 px-3 py-1.5 border rounded-xl font-bold">
+          <button type="button" onclick="autoCalculatePriceLevels()" class="px-3 py-1.5 bg-amber-600 text-white rounded-xl font-semibold">Hitung 6 Level</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block font-bold">(1) Sales Bsr</label><input type="number" id="price-level1" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold">(2) Sales Sdg</label><input type="number" id="price-level2" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold">(3) Sales Kcl</label><input type="number" id="price-level3" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold">(4) Toko Langsung</label><input type="number" id="price-level4" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold">(5) Agen</label><input type="number" id="price-level5" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold">(6) Grosir</label><input type="number" id="price-level6" class="w-full px-2 py-1 border rounded-lg"></div>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeProductModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PENGATURAN KONEKSI DATABASE CLOUD SUPABASE -->
+  <div id="modal-supabase-config" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 overflow-y-auto max-h-[92vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <i data-lucide="database" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">Database Cloud Supabase</h3>
+            <p class="text-xs text-slate-500">Sinkronisasi data real-time Kasir, Sales & Owner</p>
+          </div>
+        </div>
+        <button onclick="closeSupabaseConfigModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Live Status Banner -->
+      <div id="supabase-modal-status-box" class="mt-4 p-3.5 rounded-xl border flex items-center gap-3">
+        <!-- Rendered via JavaScript updateSupabaseUIStatus() -->
+      </div>
+
+      <!-- Input Form -->
+      <form onsubmit="handleSupabaseConfigSubmit(event)" class="mt-4 space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Project URL Supabase</label>
+          <input 
+            type="text" 
+            id="supabase-url-input" 
+            placeholder="https://your-project-id.supabase.co" 
+            class="w-full px-3 py-2 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" 
+            required />
+          <p class="text-[11px] text-slate-400 mt-1">
+            Ambil di dashboard Supabase: <span class="font-medium text-slate-600">Project Settings &gt; API &gt; Project URL</span>
+          </p>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">API Key (anon / public)</label>
+          <input 
+            type="password" 
+            id="supabase-key-input" 
+            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+            class="w-full px-3 py-2 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" 
+            required />
+          <p class="text-[11px] text-slate-400 mt-1">
+            Ambil di dashboard Supabase: <span class="font-medium text-slate-600">Project Settings &gt; API &gt; Project API keys (anon public)</span>
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-2 space-y-2">
+          <button 
+            type="submit" 
+            id="btn-save-supabase"
+            class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs text-xs flex items-center justify-center gap-2 transition cursor-pointer">
+            <i data-lucide="plug-zap" class="w-4 h-4"></i>
+            <span>Simpan & Sambungkan ke Cloud</span>
+          </button>
+
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+            <button 
+              type="button" 
+              onclick="migrateLocalToSupabase()" 
+              id="btn-migrate-supabase" 
+              class="py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold rounded-xl text-[11px] flex items-center justify-center gap-1.5 border border-amber-200 transition cursor-pointer" 
+              title="Unggah (push) seluruh data lokal saat ini ke cloud Supabase">
+              <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
+              <span>Upload Data Lokal</span>
+            </button>
+            
+            <button 
+              type="button" 
+              onclick="pullDataFromSupabase(true)" 
+              id="btn-pull-supabase" 
+              class="py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold rounded-xl text-[11px] flex items-center justify-center gap-1.5 border border-blue-200 transition cursor-pointer" 
+              title="Tarik data terbaru dari cloud Supabase">
+              <i data-lucide="cloud-download" class="w-3.5 h-3.5"></i>
+              <span>Tarik Data Cloud</span>
+            </button>
+          </div>
+
+          <button 
+            type="button" 
+            onclick="disconnectSupabase()" 
+            class="w-full py-2 px-3 text-slate-500 hover:text-rose-600 font-semibold rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer">
+            <i data-lucide="power-off" class="w-3.5 h-3.5"></i>
+            <span>Putuskan Sambungan Cloud (Gunakan LocalStorage)</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- SQL Instruction Box -->
+      <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 leading-relaxed">
+        <span class="font-bold text-slate-800 block mb-0.5 flex items-center gap-1">
+          <i data-lucide="file-code" class="w-3.5 h-3.5 text-emerald-600"></i>
+          Struktur Tabel Supabase:
+        </span>
+        File SQL skema dan tabel sudah dibuat di <code class="font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded">supabase_schema.sql</code>. Buka file tersebut, salin ke menu <b>SQL Editor</b> di Supabase, dan klik <b>Run</b>.
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM TAB NAVIGATION (MOBILE DENGAN 6 TABS) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-slate-200 px-1 py-1 shadow-lg">
+    <div class="grid grid-cols-6 gap-0.5">
+      <button onclick="switchTab('dashboard')" class="nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-brand-600" data-tab="dashboard">
+        <i data-lucide="layout-dashboard" class="w-4 h-4 mb-0.5"></i><span class="truncate">Dash</span>
+      </button>
+      <button onclick="switchTab('transaksi')" class="nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="transaksi">
+        <i data-lucide="arrow-left-right" class="w-4 h-4 mb-0.5"></i><span class="truncate">Trx</span>
+      </button>
+      <button onclick="switchTab('po')" class="nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="po">
+        <i data-lucide="clipboard-list" class="w-4 h-4 mb-0.5"></i><span class="truncate">PO</span>
+      </button>
+      <button onclick="switchTab('produk')" class="nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="produk">
+        <i data-lucide="package" class="w-4 h-4 mb-0.5"></i><span class="truncate">Produk</span>
+      </button>
+      <button onclick="switchTab('operasional')" class="nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="operasional">
+        <i data-lucide="truck" class="w-4 h-4 mb-0.5"></i><span class="truncate">Ops</span>
+      </button>
+      <button onclick="switchTab('sales')" class="nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="sales">
+        <i data-lucide="users" class="w-4 h-4 mb-0.5"></i><span class="truncate">Sales</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================== -->
+  <!-- JAVASCRIPT MASTER STORE, PO SALES & P&L -->
+  <!-- ============================================== -->
+  <script>
+    // --- 1. SUPABASE DATABASE CLIENT & STATE SYNC ---
+    // Konfigurasi bawaan (bisa diisi di sini atau lewat UI Modal):
+    const DEFAULT_SUPABASE_CONFIG = {
+      url: '',      // Contoh: 'https://xyzabcdefg.supabase.co'
+      anonKey: ''   // Contoh: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    };
+
+    const STORAGE_KEY_SUPABASE_URL = 'alfaris_supabase_url';
+    const STORAGE_KEY_SUPABASE_KEY = 'alfaris_supabase_key';
+
+    let supabaseClient = null;
+    let isSupabaseConnected = false;
+    let supabaseRealtimeChannel = null;
+
+    // Helper Case Converters (snake_case <-> camelCase)
+    function toSnakeCase(str) {
+      return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    }
+
+    function toCamelCase(str) {
+      return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    }
+
+    function objectToSnake(obj) {
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+      const res = {};
+      for (const key of Object.keys(obj)) {
+        if (key === 'prices' || key === 'items') {
+          res[key] = obj[key];
+        } else {
+          res[toSnakeCase(key)] = obj[key];
+        }
+      }
+      return res;
+    }
+
+    function objectToCamel(obj) {
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+      const res = {};
+      for (const key of Object.keys(obj)) {
+        if (key === 'created_at') continue;
+        if (key === 'prices' || key === 'items') {
+          res[key] = obj[key];
+        } else {
+          res[toCamelCase(key)] = obj[key];
+        }
+      }
+      return res;
+    }
+
+    function getActiveSupabaseCredentials() {
+      const storedUrl = localStorage.getItem(STORAGE_KEY_SUPABASE_URL);
+      const storedKey = localStorage.getItem(STORAGE_KEY_SUPABASE_KEY);
+      const url = (storedUrl && storedUrl.trim()) || DEFAULT_SUPABASE_CONFIG.url || '';
+      const anonKey = (storedKey && storedKey.trim()) || DEFAULT_SUPABASE_CONFIG.anonKey || '';
+      return { url: url.trim(), anonKey: anonKey.trim() };
+    }
+
+    async function initSupabase(isManualTest = false) {
+      const { url, anonKey } = getActiveSupabaseCredentials();
+
+      if (!url || !anonKey || typeof supabase === 'undefined') {
+        supabaseClient = null;
+        isSupabaseConnected = false;
+        updateSupabaseUIStatus();
+        if (isManualTest) showToast('URL dan Anon Key Supabase harus diisi.', 'error');
+        return false;
+      }
+
+      try {
+        supabaseClient = supabase.createClient(url, anonKey);
+        
+        // Ping test: fetch single sales row
+        const { data, error } = await supabaseClient.from('sales').select('id').limit(1);
+        if (error) {
+          throw error;
+        }
+
+        isSupabaseConnected = true;
+        updateSupabaseUIStatus();
+        console.log('[Supabase Cloud] Berhasil terhubung ke:', url);
+        
+        // Tarik data terbaru dari Cloud secara otomatis
+        await pullDataFromSupabase(false);
+
+        // Pasang listener realtime
+        setupSupabaseRealtime();
+
+        if (isManualTest) {
+          showToast('Koneksi Supabase berhasil diverifikasi & terhubung!', 'success');
+        }
+        return true;
+      } catch (err) {
+        console.warn('[Supabase Cloud] Gagal terhubung:', err);
+        supabaseClient = null;
+        isSupabaseConnected = false;
+        updateSupabaseUIStatus(err.message || 'Gagal terhubung');
+        if (isManualTest) {
+          showToast('Gagal terhubung ke Supabase: ' + (err.message || 'Cek URL / Key / SQL'), 'error');
+        }
+        return false;
+      }
+    }
+
+    function updateSupabaseUIStatus(errMsg = null) {
+      const dot = document.getElementById('supabase-indicator-dot');
+      const text = document.getElementById('supabase-indicator-text');
+      const sideText = document.getElementById('sidebar-cloud-sync-status');
+      const modalBox = document.getElementById('supabase-modal-status-box');
+
+      if (isSupabaseConnected) {
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        if (text) text.innerHTML = '<span class="text-emerald-700 font-semibold">Cloud Aktif</span>';
+        if (sideText) sideText.innerHTML = '<span class="text-emerald-600 font-semibold">🟢 Terhubung ke Cloud Supabase</span> (Sinkron Otomatis Realtime)';
+        if (modalBox) {
+          modalBox.className = 'mt-4 p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/80 flex items-center gap-3 text-emerald-900';
+          modalBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
+              <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </div>
+            <div class="text-xs">
+              <p class="font-bold">Database Cloud Supabase Terhubung</p>
+              <p class="text-[11px] text-emerald-700">Setiap perubahan transaksi, PO, dan pengeluaran otomatis tersimpan ke cloud secara realtime.</p>
+            </div>
+          `;
+        }
+      } else if (errMsg) {
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+        if (text) text.innerHTML = '<span class="text-rose-600 font-semibold">Error Cloud</span>';
+        if (sideText) sideText.innerHTML = '<span class="text-rose-600 font-semibold">🔴 Koneksi Cloud Gagal</span>. Data tetap aman di penyimpanan lokal.';
+        if (modalBox) {
+          modalBox.className = 'mt-4 p-3.5 rounded-xl border border-rose-200 bg-rose-50 flex items-center gap-3 text-rose-900';
+          modalBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center flex-shrink-0">
+              <i data-lucide="alert-circle" class="w-5 h-5"></i>
+            </div>
+            <div class="text-xs">
+              <p class="font-bold">Gagal Terhubung ke Supabase</p>
+              <p class="text-[11px] text-rose-700">${escapeHtml(errMsg)}. Pastikan tabel sudah dibuat via SQL Editor.</p>
+            </div>
+          `;
+        }
+      } else {
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        if (text) text.innerHTML = '<span class="text-slate-600 font-medium hidden sm:inline">Mode Lokal</span><span class="sm:hidden">Lokal</span>';
+        if (sideText) sideText.innerHTML = 'Mode Penyimpanan Lokal (LocalStorage). Klik tombol di atas untuk sambungkan ke Cloud.';
+        if (modalBox) {
+          modalBox.className = 'mt-4 p-3.5 rounded-xl border border-amber-200 bg-amber-50/80 flex items-center gap-3 text-amber-900';
+          modalBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center flex-shrink-0">
+              <i data-lucide="hard-drive" class="w-5 h-5"></i>
+            </div>
+            <div class="text-xs">
+              <p class="font-bold">Mode Penyimpanan Lokal (LocalStorage)</p>
+              <p class="text-[11px] text-amber-700">Aplikasi bekerja offline. Masukkan URL dan Key Supabase untuk mengaktifkan cloud database.</p>
+            </div>
+          `;
+        }
+      }
+      lucide.createIcons();
+    }
+
+    function openSupabaseConfigModal() {
+      const { url, anonKey } = getActiveSupabaseCredentials();
+      document.getElementById('supabase-url-input').value = url;
+      document.getElementById('supabase-key-input').value = anonKey;
+      updateSupabaseUIStatus();
+      document.getElementById('modal-supabase-config').classList.remove('hidden');
+    }
+
+    function closeSupabaseConfigModal() {
+      document.getElementById('modal-supabase-config').classList.add('hidden');
+    }
+
+    async function handleSupabaseConfigSubmit(e) {
+      e.preventDefault();
+      const url = document.getElementById('supabase-url-input').value.trim();
+      const key = document.getElementById('supabase-key-input').value.trim();
+
+      if (!url || !key) {
+        showToast('Project URL dan API Key harus diisi!', 'error');
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEY_SUPABASE_URL, url);
+      localStorage.setItem(STORAGE_KEY_SUPABASE_KEY, key);
+      
+      showToast('Memeriksa koneksi ke Supabase...', 'info');
+      const ok = await initSupabase(true);
+      if (ok) {
+        closeSupabaseConfigModal();
+      }
+    }
+
+    function disconnectSupabase() {
+      if (!confirm('Putuskan koneksi ke Supabase? Aplikasi akan beralih ke mode penyimpanan lokal (LocalStorage).')) return;
+      localStorage.removeItem(STORAGE_KEY_SUPABASE_URL);
+      localStorage.removeItem(STORAGE_KEY_SUPABASE_KEY);
+      if (supabaseRealtimeChannel && supabaseClient) {
+        supabaseClient.removeChannel(supabaseRealtimeChannel);
+      }
+      supabaseClient = null;
+      isSupabaseConnected = false;
+      updateSupabaseUIStatus();
+      closeSupabaseConfigModal();
+      showToast('Koneksi Cloud diputus. Beralih ke LocalStorage.');
+    }
+
+    // --- CLOUD SYNC HELPERS (BACKGROUND NON-BLOCKING) ---
+    async function syncTableToSupabase(tableName, list) {
+      if (!supabaseClient || !isSupabaseConnected || !Array.isArray(list)) return;
+      try {
+        const rows = list.map(item => objectToSnake(item));
+        const { error } = await supabaseClient.from(tableName).upsert(rows, { onConflict: 'id' });
+        if (error) {
+          console.warn(`[Supabase Sync] Gagal sync tabel ${tableName}:`, error.message);
+        } else {
+          console.log(`[Supabase Sync] Sukses sync ${tableName} (${rows.length} rows)`);
+        }
+      } catch (err) {
+        console.error(`[Supabase Sync] Exception ${tableName}:`, err);
+      }
+    }
+
+    async function deleteItemFromSupabase(tableName, id) {
+      if (!supabaseClient || !isSupabaseConnected) return;
+      try {
+        const { error } = await supabaseClient.from(tableName).delete().eq('id', id);
+        if (error) {
+          console.warn(`[Supabase Delete] Gagal hapus item ${id} dari ${tableName}:`, error.message);
+        } else {
+          console.log(`[Supabase Delete] Sukses hapus item ${id} dari ${tableName}`);
+        }
+      } catch (err) {
+        console.error(`[Supabase Delete] Exception ${tableName}:`, err);
+      }
+    }
+
+    async function pullDataFromSupabase(isManual = false) {
+      if (!supabaseClient || !isSupabaseConnected) {
+        if (isManual) showToast('Supabase belum terhubung. Silakan simpan kredensial terlebih dahulu.', 'error');
+        return;
+      }
+
+      if (isManual) showToast('Menarik data terbaru dari Supabase...', 'info');
+
+      try {
+        const [sRes, pRes, tRes, eRes, rRes, tkRes, poRes] = await Promise.all([
+          supabaseClient.from('sales').select('*').order('id', { ascending: true }),
+          supabaseClient.from('products').select('*').order('id', { ascending: true }),
+          supabaseClient.from('transactions').select('*').order('date', { ascending: false }),
+          supabaseClient.from('expenses').select('*').order('date', { ascending: false }),
+          supabaseClient.from('retur').select('*').order('date', { ascending: false }),
+          supabaseClient.from('toko_langsung').select('*').order('id', { ascending: true }),
+          supabaseClient.from('po_sales').select('*').order('date', { ascending: false })
+        ]);
+
+        let tablesUpdated = 0;
+        if (sRes.data && sRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(sRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+        if (pRes.data && pRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(pRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+        if (tRes.data && tRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(tRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+        if (eRes.data && eRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(eRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+        if (rRes.data && rRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(rRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+        if (tkRes.data && tkRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(tkRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+        if (poRes.data && poRes.data.length > 0) {
+          localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(poRes.data.map(objectToCamel)));
+          tablesUpdated++;
+        }
+
+        renderAllViews();
+        updateSupabaseUIStatus();
+
+        if (isManual) {
+          if (tablesUpdated > 0) {
+            showToast(`Data Cloud berhasil disinkronkan (${tablesUpdated} tabel diperbarui)!`, 'success');
+          } else {
+            showToast('Koneksi berhasil, namun database Supabase masih kosong. Silakan gunakan tombol "Upload Data Lokal".', 'info');
+          }
+        }
+      } catch (err) {
+        console.error('[Supabase Pull Error]:', err);
+        if (isManual) showToast('Gagal memuat data dari Supabase: ' + err.message, 'error');
+      }
+    }
+
+    async function migrateLocalToSupabase() {
+      if (!supabaseClient || !isSupabaseConnected) {
+        showToast('Sambungkan ke Supabase terlebih dahulu!', 'error');
+        return;
+      }
+
+      if (!confirm('Unggah (Push) seluruh data lokal (Sales, Produk, Transaksi, Operasional, Retur, Toko, PO) ke Cloud Supabase? Data di tabel akan disinkronkan.')) {
+        return;
+      }
+
+      showToast('Mengunggah seluruh data lokal ke database Supabase...', 'info');
+
+      try {
+        await Promise.all([
+          syncTableToSupabase('sales', getSalesData()),
+          syncTableToSupabase('products', getProductsData()),
+          syncTableToSupabase('transactions', getTransactionsData()),
+          syncTableToSupabase('expenses', getExpensesData()),
+          syncTableToSupabase('retur', getReturData()),
+          syncTableToSupabase('toko_langsung', getTokoData()),
+          syncTableToSupabase('po_sales', getPOSalesData())
+        ]);
+
+        showToast('Sukses! Seluruh data lokal kini telah tersimpan di Cloud Supabase!', 'success');
+        closeSupabaseConfigModal();
+      } catch (err) {
+        console.error('[Supabase Migrate Error]:', err);
+        showToast('Gagal migrasi data ke Supabase: ' + err.message, 'error');
+      }
+    }
+
+    function setupSupabaseRealtime() {
+      if (!supabaseClient) return;
+      try {
+        if (supabaseRealtimeChannel) {
+          supabaseClient.removeChannel(supabaseRealtimeChannel);
+        }
+        supabaseRealtimeChannel = supabaseClient.channel('alfaris-db-changes')
+          .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+            console.log('[Supabase Realtime] Perubahan data terdeteksi:', payload.table, payload.eventType);
+            pullDataFromSupabase(false);
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn('[Supabase Realtime] Listener error:', e);
+      }
+    }
+
+    function renderAllViews() {
+      renderSalesList();
+      renderProductsTable();
+      renderDashboardKasbon();
+      renderTransactionList();
+      renderReturTable();
+      renderRuteKosongPanel();
+      renderExpenseTable();
+      renderPOSalesMatrix();
+      populateSalesDropdown();
+      updateDashboardAndPL();
+      applyRoleVisibility();
+      lucide.createIcons();
+    }
+
+    // --- 2. LOCAL STORAGE KEYS & APPLICATION STATE ---
+    const STORAGE_KEY_SALES = 'alfaris_sales_master_v2';
+    const STORAGE_KEY_PRODUCTS = 'alfaris_products_master_v2';
+    const STORAGE_KEY_TRX = 'alfaris_transactions_master_v2';
+    const STORAGE_KEY_RETUR = 'alfaris_retur_master_v2';
+    const STORAGE_KEY_TOKO = 'alfaris_toko_langsung_master_v2';
+    const STORAGE_KEY_EXPENSES = 'alfaris_expenses_master_v2';
+    const STORAGE_KEY_PO = 'alfaris_po_sales_master_v2';
+
+    let currentRole = 'owner';
+    let currentTab = 'dashboard';
+    let currentSalesFilter = 'all';
+    let currentTrxFilter = 'all';
+    let currentPODate = '';
+
+    const PRICE_TIERS = [
+      { id: 'level1', name: 'Sales Besar', marginPct: 25, color: 'blue' },
+      { id: 'level2', name: 'Sales Sedang', marginPct: 30, color: 'indigo' },
+      { id: 'level3', name: 'Sales Kecil', marginPct: 35, color: 'amber' },
+      { id: 'level4', name: 'Toko Kirim Langsung', marginPct: 45, color: 'emerald' },
+      { id: 'level5', name: 'Agen Khusus', marginPct: 28, color: 'purple' },
+      { id: 'level6', name: 'Grosir Partai', marginPct: 20, color: 'rose' }
+    ];
+
+    function getTodayYMD() { return new Date().toISOString().split('T')[0]; }
+    function addDaysYMD(baseStr, days) {
+      const d = new Date(baseStr);
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split('T')[0];
+    }
+    function formatIndoDate(ymdStr) {
+      if (!ymdStr) return '-';
+      const p = ymdStr.split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ymdStr;
+    }
+
+    const todayStr = getTodayYMD();
+    const tomorrowStr = addDaysYMD(todayStr, 1);
+    currentPODate = tomorrowStr; // Default PO focus ke besok (pengambilan pabrik)
+
+    // Seed Data Pre-Order (PO) Sales
+    const DEFAULT_PO_SALES = [
+      {
+        id: 'PO-001',
+        date: tomorrowStr,
+        salesId: 'SLS-001',
+        salesName: 'Budi Santoso',
+        salesRoute: 'Pasar Besar - Dinoyo',
+        items: { 'PRD-001': 200, 'PRD-002': 100, 'PRD-003': 50, 'PRD-004': 60, 'PRD-005': 30 },
+        notes: 'Pagi jam 06:00 sudah siap jalan'
+      },
+      {
+        id: 'PO-002',
+        date: tomorrowStr,
+        salesId: 'SLS-002',
+        salesName: 'Agus Wahyudi',
+        salesRoute: 'Sukun - Kepanjen',
+        items: { 'PRD-001': 150, 'PRD-002': 120, 'PRD-003': 80, 'PRD-004': 40, 'PRD-005': 50 },
+        notes: 'Tambahan roti tawar untuk toko langganan'
+      },
+      {
+        id: 'PO-003',
+        date: tomorrowStr,
+        salesId: 'SLS-003',
+        salesName: 'Rian Dani',
+        salesRoute: 'Singosari - Lawang',
+        items: { 'PRD-001': 180, 'PRD-002': 80, 'PRD-003': 40, 'PRD-004': 70, 'PRD-005': 20 },
+        notes: 'Rute Singosari'
+      },
+      {
+        id: 'PO-004',
+        date: tomorrowStr,
+        salesId: 'SLS-004',
+        salesName: 'Hendra Saputra',
+        salesRoute: 'Blimbing - Sawojajar',
+        items: { 'PRD-001': 300, 'PRD-002': 200, 'PRD-003': 100, 'PRD-004': 120, 'PRD-005': 80 },
+        notes: 'Mobil Grand Max Box'
+      },
+      {
+        id: 'PO-005',
+        date: todayStr,
+        salesId: 'SLS-001',
+        salesName: 'Budi Santoso',
+        salesRoute: 'Pasar Besar - Dinoyo',
+        items: { 'PRD-001': 150, 'PRD-002': 80, 'PRD-003': 40, 'PRD-004': 50, 'PRD-005': 20 },
+        notes: 'PO hari ini'
+      }
+    ];
+
+    // Seed Data Pengeluaran
+    const DEFAULT_EXPENSES = [
+      { id: 'EXP-001', date: todayStr, category: 'solar', categoryLabel: 'Solar BBM', amount: 180000, desc: 'Solar armada 4 motor & mobil' },
+      { id: 'EXP-002', date: addDaysYMD(todayStr, -2), category: 'sewa_mobil', categoryLabel: 'Sewa Mobil', amount: 750000, desc: 'Sewa mingguan armada box' },
+      { id: 'EXP-003', date: addDaysYMD(todayStr, -3), category: 'gaji', categoryLabel: 'Gaji 4 Karyawan', amount: 2400000, desc: 'Kasir & 3 Kru bongkar muat' },
+      { id: 'EXP-004', date: addDaysYMD(todayStr, -4), category: 'pajak', categoryLabel: 'Pajak', amount: 250000, desc: 'Setoran PPh Final & retribusi' },
+      { id: 'EXP-005', date: addDaysYMD(todayStr, -1), category: 'nabung', categoryLabel: 'Alokasi Nabung', amount: 1000000, desc: 'Cadangan kas CV Alfaris' }
+    ];
+
+    // Seed Toko, Retur, Sales, Produk, Transaksi
+    const DEFAULT_TOKO = [
+      { id: 'TKO-001', name: 'Toko Berkah Dinoyo', pic: 'Ibu Hj. Aminah', phone: '081233445566', route: 'Pasar Besar - Dinoyo', salesName: 'Budi Santoso', lastVisitDate: addDaysYMD(todayStr, -8) },
+      { id: 'TKO-002', name: 'Minimarket Barokah Kepanjen', pic: 'Pak Gunawan', phone: '085711223344', route: 'Sukun - Kepanjen', salesName: 'Agus Wahyudi', lastVisitDate: addDaysYMD(todayStr, -5) },
+      { id: 'TKO-003', name: 'Toko Rejeki Singosari', pic: 'Pak Bambang', phone: '082199887766', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: addDaysYMD(todayStr, -1) },
+      { id: 'TKO-004', name: 'Toko Sentosa Lawang Indah', pic: 'Ibu Ratna', phone: '081955667788', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: addDaysYMD(todayStr, -10) }
+    ];
+
+    const DEFAULT_RETUR = [
+      { id: 'RTR-001', date: todayStr, tokoName: 'Toko Berkah Dinoyo', productName: 'Roti Manis Coklat Lumer', qty: 20, reason: 'Kadaluwarsa', actionType: 'pabrik', wasteHppAmount: 0 },
+      { id: 'RTR-002', date: addDaysYMD(todayStr, -1), tokoName: 'Toko Sentosa Lawang', productName: 'Roti Tawar Kupas Premium', qty: 15, reason: 'Kempes', actionType: 'waste', wasteHppAmount: 127500 }
+    ];
+
+    const DEFAULT_SALES = [
+      { id: 'SLS-001', name: 'Budi Santoso', phone: '081234567890', route: 'Pasar Besar - Dinoyo', status: 'aktif' },
+      { id: 'SLS-002', name: 'Agus Wahyudi', phone: '085798761234', route: 'Sukun - Kepanjen', status: 'aktif' },
+      { id: 'SLS-003', name: 'Rian Dani', phone: '082144556677', route: 'Singosari - Lawang', status: 'aktif' },
+      { id: 'SLS-004', name: 'Hendra Saputra', phone: '083811223344', route: 'Blimbing - Sawojajar', status: 'aktif' }
+    ];
+
+    const DEFAULT_PRODUCTS = [
+      { id: 'PRD-001', code: 'ROTI-MC-01', name: 'Roti Manis Coklat Lumer', category: 'Roti Manis', stock: 850, factoryPrice: 3500, prices: { level1: 4400, level2: 4600, level3: 4800, level4: 5100, level5: 4500, level6: 4200 } },
+      { id: 'PRD-002', code: 'ROTI-MK-02', name: 'Roti Manis Keju Spesial', category: 'Roti Manis', stock: 620, factoryPrice: 3700, prices: { level1: 4600, level2: 4800, level3: 5000, level4: 5400, level5: 4750, level6: 4450 } },
+      { id: 'PRD-003', code: 'ROTI-TW-03', name: 'Roti Tawar Kupas Premium', category: 'Roti Tawar', stock: 410, factoryPrice: 8500, prices: { level1: 10600, level2: 11000, level3: 11500, level4: 12500, level5: 10900, level6: 10200 } },
+      { id: 'PRD-004', code: 'ROTI-SS-04', name: 'Roti Sisir Mentega Jadul', category: 'Roti Sisir', stock: 300, factoryPrice: 4200, prices: { level1: 5250, level2: 5500, level3: 5700, level4: 6100, level5: 5400, level6: 5050 } },
+      { id: 'PRD-005', code: 'ROTI-SB-05', name: 'Roti Sobek Coklat Keju', category: 'Roti Sobek', stock: 80, factoryPrice: 9000, prices: { level1: 11250, level2: 11700, level3: 12200, level4: 13000, level5: 11500, level6: 10800 } }
+    ];
+
+    const DEFAULT_TRANSACTIONS = [
+      {
+        id: 'TRX-2026-0041',
+        date: todayStr,
+        salesId: 'SLS-001',
+        salesName: 'Budi Santoso',
+        salesPhone: '081234567890',
+        salesRoute: 'Pasar Besar - Dinoyo',
+        tierName: 'Sales Besar',
+        paymentMethod: 'tunai',
+        paymentStatus: 'lunas',
+        totalQty: 250,
+        totalAmount: 1100000,
+        totalFactoryCost: 875000,
+        items: [{ productName: 'Roti Manis Coklat Lumer', qty: 250, unitPrice: 4400, subtotal: 1100000 }]
+      },
+      {
+        id: 'TRX-2026-0038',
+        date: addDaysYMD(todayStr, -4),
+        salesId: 'SLS-002',
+        salesName: 'Agus Wahyudi',
+        salesPhone: '085798761234',
+        salesRoute: 'Sukun - Kepanjen',
+        tierName: 'Sales Sedang',
+        paymentMethod: 'kasbon',
+        paymentStatus: 'belum_lunas',
+        dueDate: addDaysYMD(todayStr, -1),
+        totalQty: 120,
+        totalAmount: 1320000,
+        totalFactoryCost: 1020000,
+        items: [{ productName: 'Roti Tawar Kupas Premium', qty: 120, unitPrice: 11000, subtotal: 1320000 }]
+      }
+    ];
+
+    // --- 3. STORAGE GETTERS & SETTERS (DUAL SYNC: LOCALSTORAGE + SUPABASE) ---
+    function getPOSalesData() {
+      const s = localStorage.getItem(STORAGE_KEY_PO);
+      if (!s) { localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(DEFAULT_PO_SALES)); return DEFAULT_PO_SALES; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_PO_SALES; }
+    }
+    function savePOSalesData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(list));
+      renderPOSalesMatrix();
+      if (!skipCloud) syncTableToSupabase('po_sales', list);
+    }
+
+    function getExpensesData() {
+      const s = localStorage.getItem(STORAGE_KEY_EXPENSES);
+      if (!s) { localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(DEFAULT_EXPENSES)); return DEFAULT_EXPENSES; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_EXPENSES; }
+    }
+    function saveExpensesData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(list));
+      renderExpenseTable();
+      updateDashboardAndPL();
+      if (!skipCloud) syncTableToSupabase('expenses', list);
+    }
+
+    function getTokoData() {
+      const s = localStorage.getItem(STORAGE_KEY_TOKO);
+      if (!s) { localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(DEFAULT_TOKO)); return DEFAULT_TOKO; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_TOKO; }
+    }
+    function saveTokoData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(list));
+      renderRuteKosongPanel();
+      if (!skipCloud) syncTableToSupabase('toko_langsung', list);
+    }
+
+    function getReturData() {
+      const s = localStorage.getItem(STORAGE_KEY_RETUR);
+      if (!s) { localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(DEFAULT_RETUR)); return DEFAULT_RETUR; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_RETUR; }
+    }
+    function saveReturData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(list));
+      renderReturTable();
+      updateDashboardAndPL();
+      if (!skipCloud) syncTableToSupabase('retur', list);
+    }
+
+    function getSalesData() {
+      const s = localStorage.getItem(STORAGE_KEY_SALES);
+      if (!s) { localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(DEFAULT_SALES)); return DEFAULT_SALES; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_SALES; }
+    }
+    function saveSalesData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(list));
+      renderSalesList();
+      populateSalesDropdown();
+      updateDashboardAndPL();
+      if (!skipCloud) syncTableToSupabase('sales', list);
+    }
+
+    function getProductsData() {
+      const s = localStorage.getItem(STORAGE_KEY_PRODUCTS);
+      if (!s) { localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS)); return DEFAULT_PRODUCTS; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_PRODUCTS; }
+    }
+    function saveProductsData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(list));
+      renderProductsTable();
+      renderPOSalesMatrix();
+      updateDashboardAndPL();
+      if (!skipCloud) syncTableToSupabase('products', list);
+    }
+
+    function getTransactionsData() {
+      const s = localStorage.getItem(STORAGE_KEY_TRX);
+      if (!s) { localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(DEFAULT_TRANSACTIONS)); return DEFAULT_TRANSACTIONS; }
+      try { return JSON.parse(s); } catch (e) { return DEFAULT_TRANSACTIONS; }
+    }
+    function saveTransactionsData(list, skipCloud = false) {
+      localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(list));
+      renderDashboardKasbon();
+      renderTransactionList();
+      updateDashboardAndPL();
+      if (!skipCloud) syncTableToSupabase('transactions', list);
+    }
+
+    function formatRupiah(num) { return 'Rp ' + Number(num || 0).toLocaleString('id-ID'); }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const isSuccess = type === 'success';
+      toast.className = `${isSuccess ? 'bg-emerald-600' : 'bg-slate-800'} text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transform transition-all duration-200 pointer-events-auto`;
+      toast.innerHTML = `<i data-lucide="${isSuccess ? 'check-circle-2' : 'info'}" class="w-4 h-4"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => toast.remove(), 250);
+      }, 3000);
+    }
+
+    // --- 4. FITUR REKAP PO SALES (PRE-ORDER PABRIK) ---
+    function setPODateQuick(offset) {
+      currentPODate = addDaysYMD(todayStr, offset);
+      document.getElementById('po-date-filter').value = currentPODate;
+
+      // Update pills highlight
+      const btns = [
+        { id: 'po-btn-today', offset: 0 },
+        { id: 'po-btn-tomorrow', offset: 1 },
+        { id: 'po-btn-lusa', offset: 2 }
+      ];
+      btns.forEach(b => {
+        const el = document.getElementById(b.id);
+        if (b.offset === offset) {
+          el.className = 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition';
+        } else {
+          el.className = 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900';
+        }
+      });
+
+      renderPOSalesMatrix();
+    }
+
+    function renderPOSalesMatrix() {
+      const dateInput = document.getElementById('po-date-filter');
+      if (dateInput && dateInput.value) {
+        currentPODate = dateInput.value;
+      } else if (dateInput) {
+        dateInput.value = currentPODate;
+      }
+
+      document.getElementById('po-active-date-badge').innerText = `Tanggal: ${formatIndoDate(currentPODate)}`;
+      document.getElementById('po-kpi-date-label').innerText = `Per ${formatIndoDate(currentPODate)}`;
+
+      const products = getProductsData();
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+
+      const theadRow = document.getElementById('po-matrix-thead-row');
+      const tbody = document.getElementById('po-matrix-tbody');
+      const tfoot = document.getElementById('po-matrix-tfoot');
+      const emptyState = document.getElementById('po-matrix-empty');
+
+      // 1. Bangun Header Kolom Dinamis
+      let headHtml = `
+        <th class="py-3 px-3.5 bg-slate-200/80 sticky left-0 z-10">Nama Sales / Kurir</th>
+      `;
+      products.forEach(p => {
+        headHtml += `<th class="py-3 px-2.5 text-center text-slate-800 whitespace-nowrap">${escapeHtml(p.name)}</th>`;
+      });
+      headHtml += `
+        <th class="py-3 px-3.5 text-center bg-brand-100 text-brand-900 font-extrabold">Total PO Sales</th>
+        <th class="py-3 px-3.5 text-center">Aksi</th>
+      `;
+      theadRow.innerHTML = headHtml;
+
+      // 2. Cek apakah ada data pada tanggal ini
+      if (posOnDate.length === 0) {
+        tbody.innerHTML = '';
+        tfoot.innerHTML = '';
+        emptyState.classList.remove('hidden');
+
+        document.getElementById('po-kpi-total-pcs').innerText = '0 Pcs';
+        document.getElementById('po-kpi-sales-count').innerText = '0 Tim';
+        document.getElementById('po-kpi-top-variant').innerText = '-';
+        document.getElementById('po-kpi-top-variant-qty').innerText = '0 pcs';
+        document.getElementById('po-kpi-factory-cost').innerText = 'Rp 0';
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      // Array penampung akumulasi vertikal per produk
+      const productTotals = {};
+      products.forEach(p => productTotals[p.id] = 0);
+      let grandTotalPcs = 0;
+      let grandTotalFactoryCost = 0;
+
+      // 3. Bangun Baris per Sales
+      tbody.innerHTML = posOnDate.map(po => {
+        let salesRowSum = 0;
+        let rowColsHtml = '';
+
+        products.forEach(p => {
+          const qty = (po.items && po.items[p.id]) || 0;
+          salesRowSum += qty;
+          productTotals[p.id] += qty;
+          grandTotalPcs += qty;
+          grandTotalFactoryCost += (qty * (p.factoryPrice || 0));
+
+          rowColsHtml += `
+            <td class="py-3 px-2.5 text-center font-semibold ${qty > 0 ? 'text-slate-900 bg-amber-50/20 font-bold' : 'text-slate-300'}">
+              ${qty > 0 ? qty + ' pcs' : '-'}
+            </td>
+          `;
+        });
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3 px-3.5 font-bold text-slate-900 sticky left-0 bg-white shadow-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-brand-100 text-brand-800 font-bold text-[10px] flex items-center justify-center">
+                  ${(po.salesName || 'S').slice(0, 2).toUpperCase()}
+                </span>
+                <div>
+                  <div>${escapeHtml(po.salesName)}</div>
+                  <div class="text-[10px] text-slate-400 font-normal">${escapeHtml(po.salesRoute || '-')}</div>
+                </div>
+              </div>
+            </td>
+            ${rowColsHtml}
+            <td class="py-3 px-3.5 text-center font-extrabold text-brand-700 bg-brand-50/50 text-sm">
+              ${salesRowSum} Pcs
+            </td>
+            <td class="py-3 px-3.5 text-center whitespace-nowrap">
+              <button onclick="editPOSales('${po.id}')" class="p-1 rounded text-slate-500 hover:text-brand-600 transition" title="Edit PO">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5 inline"></i>
+              </button>
+              <button onclick="deletePOSales('${po.id}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition" title="Hapus">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // 4. Bangun Footer: TOTAL KESELURUHAN PER JENIS ROTI UNTUK PABRIK
+      let footColsHtml = '';
+      let topProduct = null;
+      let topQty = -1;
+
+      products.forEach(p => {
+        const totalPcsProd = productTotals[p.id] || 0;
+        if (totalPcsProd > topQty) {
+          topQty = totalPcsProd;
+          topProduct = p;
+        }
+        footColsHtml += `
+          <td class="py-3.5 px-2.5 text-center text-amber-950 font-black text-sm bg-amber-200/70 border-x border-amber-300">
+            ${totalPcsProd} Pcs
+          </td>
+        `;
+      });
+
+      tfoot.innerHTML = `
+        <tr class="border-t-2 border-brand-500">
+          <td class="py-3.5 px-3.5 text-slate-900 font-black uppercase tracking-wider sticky left-0 bg-amber-100 z-10 flex items-center gap-1.5">
+            <i data-lucide="factory" class="w-4 h-4 text-brand-700"></i>
+            <span>TOTAL AMBIL PABRIK</span>
+          </td>
+          ${footColsHtml}
+          <td class="py-3.5 px-3.5 text-center font-black text-base text-brand-900 bg-amber-300/80">
+            ${grandTotalPcs} Pcs
+          </td>
+          <td class="py-3.5 px-3.5 text-center text-[10px] text-slate-500">Rekap Final</td>
+        </tr>
+      `;
+
+      // 5. Update KPI Cards
+      document.getElementById('po-kpi-total-pcs').innerText = `${grandTotalPcs} Pcs`;
+      document.getElementById('po-kpi-sales-count').innerText = `${posOnDate.length} Tim`;
+      document.getElementById('po-kpi-top-variant').innerText = topProduct ? topProduct.name : '-';
+      document.getElementById('po-kpi-top-variant-qty').innerText = topQty > 0 ? `${topQty} pcs dipesan` : '0 pcs';
+      document.getElementById('po-kpi-factory-cost').innerText = formatRupiah(grandTotalFactoryCost);
+
+      applyRoleVisibility();
+      lucide.createIcons();
+    }
+
+    // Modal Input / Edit PO Sales
+    function openPOInputModal(poId = null) {
+      const modal = document.getElementById('modal-po-input');
+      const form = document.getElementById('form-po-input');
+      const salesSelect = document.getElementById('po-form-sales');
+      const productsContainer = document.getElementById('po-form-products-inputs');
+      const activeSales = getSalesData().filter(s => s.status === 'aktif');
+      const products = getProductsData();
+
+      form.reset();
+      document.getElementById('po-form-id').value = '';
+      document.getElementById('po-form-date').value = currentPODate;
+
+      // Populate Sales
+      salesSelect.innerHTML = activeSales.map(s => `
+        <option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.route)}</option>
+      `).join('');
+
+      let existingItems = {};
+      if (poId) {
+        const po = getPOSalesData().find(p => p.id === poId);
+        if (po) {
+          document.getElementById('po-form-id').value = po.id;
+          document.getElementById('po-form-date').value = po.date;
+          salesSelect.value = po.salesId;
+          document.getElementById('po-form-notes').value = po.notes || '';
+          existingItems = po.items || {};
+        }
+      }
+
+      // Generate input field untuk tiap produk
+      productsContainer.innerHTML = products.map(p => {
+        const val = existingItems[p.id] !== undefined ? existingItems[p.id] : 50;
+        return `
+          <div class="flex items-center justify-between gap-3 p-1.5 bg-white rounded-lg border border-slate-200">
+            <span class="font-semibold text-slate-800 text-xs">${escapeHtml(p.name)}</span>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <input 
+                type="number" 
+                min="0" 
+                step="5" 
+                data-prod-id="${p.id}" 
+                value="${val}" 
+                class="po-input-qty w-20 px-2 py-1 text-xs font-bold text-center border border-slate-300 rounded-lg focus:outline-none focus:border-brand-500"
+              >
+              <span class="text-slate-400 text-[10px]">pcs</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closePOInputModal() {
+      document.getElementById('modal-po-input').classList.add('hidden');
+    }
+
+    function editPOSales(poId) {
+      openPOInputModal(poId);
+    }
+
+    function deletePOSales(poId) {
+      if (confirm('Hapus data PO sales ini?')) {
+        let allPO = getPOSalesData().filter(p => p.id !== poId);
+        savePOSalesData(allPO, true);
+        deleteItemFromSupabase('po_sales', poId);
+        showToast('Data PO sales dihapus.');
+      }
+    }
+
+    function savePOSales(e) {
+      e.preventDefault();
+      const poId = document.getElementById('po-form-id').value;
+      const targetDate = document.getElementById('po-form-date').value;
+      const salesId = document.getElementById('po-form-sales').value;
+      const notes = document.getElementById('po-form-notes').value.trim();
+
+      const sales = getSalesData().find(s => s.id === salesId);
+      if (!sales || !targetDate) return;
+
+      const items = {};
+      document.querySelectorAll('.po-input-qty').forEach(input => {
+        const pId = input.getAttribute('data-prod-id');
+        const qty = parseInt(input.value) || 0;
+        items[pId] = qty;
+      });
+
+      let allPO = getPOSalesData();
+
+      if (poId) {
+        allPO = allPO.map(p => {
+          if (p.id === poId) {
+            return { ...p, date: targetDate, salesId: sales.id, salesName: sales.name, salesRoute: sales.route, items, notes };
+          }
+          return p;
+        });
+        showToast(`PO ${sales.name} berhasil diperbarui.`);
+      } else {
+        // Cek jika sales sudah pernah PO pada tanggal yang sama, kita tawarkan update atau gabung
+        const existingIdx = allPO.findIndex(p => p.date === targetDate && p.salesId === sales.id);
+        if (existingIdx >= 0) {
+          allPO[existingIdx].items = items;
+          allPO[existingIdx].notes = notes;
+          showToast(`PO ${sales.name} untuk ${formatIndoDate(targetDate)} diperbarui.`);
+        } else {
+          const newPO = {
+            id: 'PO-' + String(Date.now()).slice(-5),
+            date: targetDate,
+            salesId: sales.id,
+            salesName: sales.name,
+            salesRoute: sales.route || 'Rute Bebas',
+            salesPhone: sales.phone,
+            items,
+            notes: notes || '-'
+          };
+          allPO.unshift(newPO);
+          showToast(`PO ${sales.name} berhasil dicatat.`);
+        }
+      }
+
+      currentPODate = targetDate;
+      document.getElementById('po-date-filter').value = currentPODate;
+      savePOSalesData(allPO);
+      closePOInputModal();
+    }
+
+    // Kirim Rekapitulasi PO ke WhatsApp Pabrik Roti
+    function sendPOWhatsAppToFactory() {
+      const products = getProductsData();
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+
+      if (posOnDate.length === 0) {
+        alert(`Belum ada data PO Sales untuk tanggal ${formatIndoDate(currentPODate)}. Silakan input PO terlebih dahulu.`);
+        return;
+      }
+
+      const productTotals = {};
+      products.forEach(p => productTotals[p.id] = 0);
+      let grandTotalPcs = 0;
+
+      posOnDate.forEach(po => {
+        products.forEach(p => {
+          const qty = (po.items && po.items[p.id]) || 0;
+          productTotals[p.id] += qty;
+          grandTotalPcs += qty;
+        });
+      });
+
+      let itemsText = '';
+      let nomor = 1;
+      products.forEach(p => {
+        const qty = productTotals[p.id] || 0;
+        if (qty > 0) {
+          itemsText += `${nomor}. *${p.name}* : ${qty} pcs\n`;
+          nomor++;
+        }
+      });
+
+      const msg = 
+`*CV. ALFARIS ENAM DELAPAN*
+_Sistem Manajemen Distribusi Roti_
+Jl. Industri Roti No. 68, Malang
+----------------------------------------------
+*REKAP PRE-ORDER (PO) PRODUKSI PABRIK*
+
+Tanggal Pengambilan : *${formatIndoDate(currentPODate)}*
+Target Jam Ambil    : 05:30 WIB (Pagi)
+Jumlah Armada Sales : ${posOnDate.length} Tim Keliling
+----------------------------------------------
+*DAFTAR ROTI HARUS DIAMBIL DARI PABRIK:*
+${itemsText}
+----------------------------------------------
+*TOTAL KESELURUHAN : ${grandTotalPcs} Pcs*
+----------------------------------------------
+Mohon diproduksi dan disiapkan tepat waktu dalam kondisi fresh oven per krat armada CV. Alfaris Enam Delapan.
+Terima kasih atas kerja samanya! 🙏🍞`;
+
+      const promptPhone = prompt("Masukkan nomor WhatsApp Pabrik Roti Rekanan:", "081234567890");
+      if (promptPhone !== null) {
+        let cleanPhone = promptPhone.replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
+        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        showToast('Rekap PO pabrik disiapkan untuk WhatsApp!');
+      }
+    }
+
+    function printPORecap() {
+      window.print();
+    }
+
+    // --- 5. BACKUP BULANAN (JSON) DILENGKAPI PO SALES ---
+    function downloadMonthlyBackup() {
+      const backupPayload = {
+        metadata: {
+          company: 'CV. Alfaris Enam Delapan',
+          system: 'Sistem Manajemen Distribusi Roti',
+          exportDate: new Date().toISOString(),
+          version: '2.6.0-rekap-po'
+        },
+        database: {
+          sales: getSalesData(),
+          products: getProductsData(),
+          transactions: getTransactionsData(),
+          expenses: getExpensesData(),
+          retur: getReturData(),
+          tokoLangsung: getTokoData(),
+          poSales: getPOSalesData()
+        }
+      };
+
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backupPayload, null, 2));
+      const downloadAnchor = document.createElement('a');
+      const filename = `backup_cv_alfaris_68_${todayStr.replace(/-/g, '_')}.json`;
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      showToast(`Backup berhasil diunduh: ${filename}`);
+    }
+
+    // --- 6. PENGELUARAN OPERASIONAL & EXECUTIVE P&L ---
+    function openExpenseModal() {
+      document.getElementById('modal-expense').classList.remove('hidden');
+      document.getElementById('expense-form-date').value = getTodayYMD();
+      lucide.createIcons();
+    }
+    function closeExpenseModal() { document.getElementById('modal-expense').classList.add('hidden'); }
+
+    function saveExpense(e) {
+      e.preventDefault();
+      const category = document.getElementById('expense-form-category').value;
+      const amount = parseFloat(document.getElementById('expense-form-amount').value) || 0;
+      const desc = document.getElementById('expense-form-desc').value.trim();
+      const date = document.getElementById('expense-form-date').value || getTodayYMD();
+
+      if (amount <= 0 || !desc) return;
+      const catLabels = { sewa_mobil: 'Sewa Mobil', solar: 'Solar BBM', gaji: 'Gaji 4 Karyawan', pajak: 'Pajak', nabung: 'Alokasi Nabung', lainnya: 'Operasional' };
+
+      const expenses = getExpensesData();
+      expenses.unshift({ id: 'EXP-' + String(Date.now()).slice(-5), date, category, categoryLabel: catLabels[category], amount, desc });
+      saveExpensesData(expenses);
+      closeExpenseModal();
+      showToast('Pengeluaran operasional dicatat.');
+    }
+
+    function renderExpenseTable() {
+      const expenses = getExpensesData();
+      const tbody = document.getElementById('expense-table-body');
+      const filterCat = document.getElementById('filter-expense-cat').value;
+      let filtered = expenses.filter(exp => filterCat === 'all' || exp.category === filterCat);
+
+      tbody.innerHTML = filtered.map(item => `
+        <tr class="hover:bg-slate-50/80 transition">
+          <td class="py-3 px-3.5 text-slate-500">${formatIndoDate(item.date)}</td>
+          <td class="py-3 px-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100">${escapeHtml(item.categoryLabel)}</span></td>
+          <td class="py-3 px-3.5 font-semibold text-slate-800">${escapeHtml(item.desc)}</td>
+          <td class="py-3 px-3.5 text-right font-extrabold text-slate-900">${formatRupiah(item.amount)}</td>
+          <td class="py-3 px-3.5 text-center"><button onclick="deleteExpense('${item.id}')" class="p-1 text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+        </tr>
+      `).join('');
+      lucide.createIcons();
+    }
+    function deleteExpense(id) {
+      if (confirm('Hapus pengeluaran ini?')) {
+        saveExpensesData(getExpensesData().filter(e => e.id !== id), true);
+        deleteItemFromSupabase('expenses', id);
+        showToast('Pengeluaran berhasil dihapus');
+      }
+    }
+
+    function updateDashboardAndPL() {
+      const trxList = getTransactionsData();
+      const expenses = getExpensesData();
+      const returList = getReturData();
+
+      let totalOmset = 0;
+      let totalKulakan = 0;
+      let totalKasbonBelumLunas = 0;
+      let countKasbonUnpaid = 0;
+
+      trxList.forEach(t => {
+        totalOmset += (t.totalAmount || 0);
+        totalKulakan += (t.totalFactoryCost || 0);
+        if (t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas') {
+          totalKasbonBelumLunas += (t.totalAmount || 0);
+          countKasbonUnpaid++;
+        }
+      });
+
+      const grossProfit = Math.max(0, totalOmset - totalKulakan);
+      let costSewaMobil = 0, costSolar = 0, costGaji = 0, costPajak = 0, costNabung = 0, costLainnya = 0;
+
+      expenses.forEach(e => {
+        const amt = e.amount || 0;
+        if (e.category === 'sewa_mobil') costSewaMobil += amt;
+        else if (e.category === 'solar') costSolar += amt;
+        else if (e.category === 'gaji') costGaji += amt;
+        else if (e.category === 'pajak') costPajak += amt;
+        else if (e.category === 'nabung') costNabung += amt;
+        else costLainnya += amt;
+      });
+
+      let costWasteRetur = 0;
+      returList.forEach(r => { if (r.actionType === 'waste') costWasteRetur += (r.wasteHppAmount || 0); });
+
+      const totalOperasionalBeban = costSewaMobil + costSolar + costGaji + costPajak + costLainnya + costWasteRetur;
+      const netProfitAkhir = grossProfit - totalOperasionalBeban - costNabung;
+      const profitMarginPct = totalOmset > 0 ? Math.round((netProfitAkhir / totalOmset) * 100) : 0;
+
+      // P&L elements
+      const elOmset = document.getElementById('pl-total-omset');
+      if (elOmset) {
+        elOmset.innerText = formatRupiah(totalOmset);
+        document.getElementById('pl-total-kulakan').innerText = '-' + formatRupiah(totalKulakan);
+        document.getElementById('pl-laba-kotor').innerText = formatRupiah(grossProfit);
+        document.getElementById('pl-total-operasional').innerText = '-' + formatRupiah(totalOperasionalBeban);
+        document.getElementById('pl-total-tabungan').innerText = '-' + formatRupiah(costNabung);
+
+        document.getElementById('sub-sewa-mobil').innerText = formatRupiah(costSewaMobil);
+        document.getElementById('sub-solar').innerText = formatRupiah(costSolar);
+        document.getElementById('sub-gaji').innerText = formatRupiah(costGaji);
+        document.getElementById('sub-pajak').innerText = formatRupiah(costPajak);
+        document.getElementById('sub-waste-retur').innerText = '-' + formatRupiah(costWasteRetur);
+
+        const elNet = document.getElementById('pl-laba-bersih-akhir');
+        elNet.innerText = (netProfitAkhir < 0 ? '-' : '') + formatRupiah(Math.abs(netProfitAkhir));
+        document.getElementById('pl-profit-margin-badge').innerText = `Margin: ${profitMarginPct}%`;
+      }
+
+      document.getElementById('kpi-omset').innerText = formatRupiah(totalOmset);
+      document.getElementById('kpi-kasbon').innerText = formatRupiah(totalKasbonBelumLunas);
+      document.getElementById('kpi-kasbon-sub').innerText = `${countKasbonUnpaid} nota tempo berjalan`;
+      document.getElementById('kpi-profit').innerText = (netProfitAkhir < 0 ? '-' : '') + formatRupiah(Math.abs(netProfitAkhir));
+    }
+
+    // --- 7. TRANSAKSI, RETUR, RUTE, SALES & PRODUK LOGIC ---
+    function openReturModal() {
+      document.getElementById('modal-retur').classList.remove('hidden');
+      document.getElementById('retur-form-toko').innerHTML = getTokoData().map(t => `<option value="${t.id}">${t.name} (${t.route})</option>`).join('');
+      document.getElementById('retur-form-product').innerHTML = getProductsData().map(p => `<option value="${p.id}" data-factory="${p.factoryPrice || 0}">${p.name} - HPP: ${formatRupiah(p.factoryPrice)}</option>`).join('');
+      calculateReturFinancialImpact();
+      lucide.createIcons();
+    }
+    function closeReturModal() { document.getElementById('modal-retur').classList.add('hidden'); }
+    function calculateReturFinancialImpact() {
+      const selectProduct = document.getElementById('retur-form-product');
+      const fPrice = parseFloat(selectProduct.options[selectProduct.selectedIndex]?.getAttribute('data-factory')) || 0;
+      const qty = parseInt(document.getElementById('retur-form-qty').value) || 0;
+      const action = document.querySelector('input[name="retur_action_type"]:checked')?.value || 'pabrik';
+      const calcDisplay = document.getElementById('retur-calc-display');
+      if (action === 'pabrik') {
+        calcDisplay.innerHTML = `Rp 0 (100% Ganti Pabrik)`;
+      } else {
+        calcDisplay.innerHTML = `-${formatRupiah(fPrice * qty)} (Potong Laba HPP)`;
+      }
+    }
+    function saveRetur(e) {
+      e.preventDefault();
+      const toko = getTokoData().find(t => t.id === document.getElementById('retur-form-toko').value);
+      const product = getProductsData().find(p => p.id === document.getElementById('retur-form-product').value);
+      const qty = parseInt(document.getElementById('retur-form-qty').value) || 0;
+      const actionType = document.querySelector('input[name="retur_action_type"]:checked')?.value || 'pabrik';
+      if (!toko || !product || qty <= 0) return;
+
+      const waste = actionType === 'waste' ? ((product.factoryPrice || 0) * qty) : 0;
+      const list = getReturData();
+      list.unshift({ id: 'RTR-' + String(Date.now()).slice(-4), date: getTodayYMD(), tokoName: toko.name, productName: product.name, qty, reason: document.getElementById('retur-form-reason').value, actionType, wasteHppAmount: waste });
+      saveReturData(list);
+      closeReturModal();
+      showToast('Retur berhasil dicatat.');
+    }
+    function renderReturTable() {
+      const list = getReturData();
+      const tbody = document.getElementById('retur-table-body');
+      tbody.innerHTML = list.map(r => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-2.5 px-3 font-bold">${r.id}</td>
+          <td class="py-2.5 px-3 font-semibold">${escapeHtml(r.tokoName)}</td>
+          <td class="py-2.5 px-3">${escapeHtml(r.productName)} (${r.qty} pcs)</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-[10px]">${escapeHtml(r.reason)}</span></td>
+          <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.actionType === 'pabrik' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'}">${r.actionType === 'pabrik' ? 'Tukar Pabrik' : 'Waste HPP'}</span></td>
+          <td class="py-2.5 px-3 text-right font-bold ${r.actionType === 'waste' ? 'text-rose-700' : 'text-slate-400'}">${r.actionType === 'waste' ? '-' + formatRupiah(r.wasteHppAmount) : 'Rp 0'}</td>
+          <td class="py-2.5 px-3 text-center"><button onclick="deleteRetur('${r.id}')" class="text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+        </tr>
+      `).join('');
+      lucide.createIcons();
+    }
+    function deleteRetur(id) {
+      if (confirm('Hapus retur ini?')) {
+        saveReturData(getReturData().filter(r => r.id !== id), true);
+        deleteItemFromSupabase('retur', id);
+        showToast('Data retur berhasil dihapus');
+      }
+    }
+
+    function renderRuteKosongPanel() {
+      const list = getTokoData();
+      const container = document.getElementById('rute-kosong-container');
+      const filter = document.getElementById('filter-rute-days').value;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const enriched = list.map(t => ({ ...t, diffDays: Math.max(0, Math.round((today - new Date(t.lastVisitDate)) / 86400000)) }));
+      let filtered = enriched.filter(t => filter === 'idle3' ? t.diffDays >= 3 : (filter === 'idle7' ? t.diffDays >= 7 : true));
+      filtered.sort((a,b) => b.diffDays - a.diffDays);
+      document.getElementById('kpi-idle-toko').innerText = `${enriched.filter(t => t.diffDays >= 3).length} Toko`;
+
+      container.innerHTML = filtered.map(t => `
+        <div class="p-3 rounded-2xl border ${t.diffDays >= 7 ? 'border-rose-300 bg-rose-50/20' : 'border-amber-200 bg-amber-50/15'} flex justify-between items-center">
+          <div>
+            <div class="font-bold text-slate-900">${escapeHtml(t.name)} <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.diffDays >= 7 ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">${t.diffDays} Hari Kosong</span></div>
+            <div class="text-[11px] text-slate-500">Sales: ${escapeHtml(t.salesName)} &bull; ${escapeHtml(t.route)}</div>
+          </div>
+          <button onclick="followUpTokoWA('${t.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs">WA Toko</button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+    function followUpTokoWA(id) {
+      const t = getTokoData().find(i => i.id === id);
+      if (!t) return;
+      let clean = (t.phone || '').replace(/\D/g, ''); if (clean.startsWith('0')) clean = '62' + clean.slice(1);
+      const msg = `Halo *${t.pic}* (${t.name}), salam dari CV. Alfaris Enam Delapan. Rute pengantaran ke toko Anda sudah beberapa hari belum ada pengisian roti segar. Sales kami siap drop varian roti segar hari ini. Mohon konfirmasi pesanan roti Anda. Terima kasih! 🙏🍞`;
+      window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function calculateDueStatus(dueDateStr) {
+      if (!dueDateStr) return { diffDays: 999, label: '-', badgeClass: 'bg-slate-100 text-slate-600', isOverdue: false };
+      const diff = Math.round((new Date(dueDateStr) - new Date().setHours(0,0,0,0)) / 86400000);
+      if (diff < 0) return { label: `Lewat Tempo ${Math.abs(diff)} Hari`, badgeClass: 'bg-rose-100 text-rose-800 border border-rose-300 font-extrabold', pulse: true, isOverdue: true };
+      if (diff === 0) return { label: 'Jatuh Tempo Hari Ini!', badgeClass: 'bg-rose-50 text-rose-700 font-bold', pulse: true, isOverdue: true };
+      if (diff === 1) return { label: 'H-1 Jatuh Tempo', badgeClass: 'bg-amber-100 text-amber-900 font-bold', pulse: false, isOverdue: false };
+      return { label: `Sisa ${diff} Hari`, badgeClass: 'bg-blue-50 text-blue-800', pulse: false, isOverdue: false };
+    }
+
+    function renderDashboardKasbon() {
+      const list = getTransactionsData().filter(t => t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas');
+      const tbody = document.getElementById('dashboard-kasbon-table-body');
+      document.getElementById('badge-kasbon-count').innerText = `${list.length} Tagihan`;
+
+      tbody.innerHTML = list.map(t => {
+        const d = calculateDueStatus(t.dueDate);
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-bold">${t.id}</td>
+            <td class="py-2.5 px-3 font-semibold">${escapeHtml(t.salesName)}</td>
+            <td class="py-2.5 px-3 font-extrabold text-slate-900">${formatRupiah(t.totalAmount)}</td>
+            <td class="py-2.5 px-3 font-bold">${formatIndoDate(t.dueDate)}</td>
+            <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] ${d.badgeClass}">${d.label}</span></td>
+            <td class="py-2.5 px-3 text-center"><button onclick="settleKasbonTransaction('${t.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Lunasi</button></td>
+          </tr>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+    function settleKasbonTransaction(id) {
+      saveTransactionsData(getTransactionsData().map(t => t.id === id ? { ...t, paymentStatus: 'lunas' } : t));
+      showToast(`Nota ${id} telah dilunasi.`);
+    }
+
+    function openTransactionModal() {
+      document.getElementById('trx-form-sales').innerHTML = getSalesData().filter(s => s.status === 'aktif').map(s => `<option value="${s.id}">${s.name} - ${s.route}</option>`).join('');
+      document.getElementById('trx-product-rows-container').innerHTML = '';
+      addTrxProductRow();
+      document.getElementById('modal-transaction').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeTransactionModal() { document.getElementById('modal-transaction').classList.add('hidden'); }
+    function addTrxProductRow() {
+      const c = document.getElementById('trx-product-rows-container');
+      const p = getProductsData();
+      const rId = 'row-' + Date.now();
+      const div = document.createElement('div');
+      div.id = rId;
+      div.className = 'trx-product-row flex gap-2 items-center';
+      div.innerHTML = `
+        <select onchange="updateTrxRowCalculations('${rId}')" class="trx-select-product px-2 py-1.5 border rounded-lg flex-1">
+          ${p.map(i => `<option value="${i.id}" data-factory="${i.factoryPrice || 0}" data-prices='${JSON.stringify(i.prices || {})}'>${i.name}</option>`).join('')}
+        </select>
+        <input type="number" min="1" value="50" oninput="updateTrxRowCalculations('${rId}')" class="trx-input-qty w-20 px-2 py-1.5 border rounded-lg font-bold text-center">
+        <div class="trx-subtotal-display font-bold w-24 text-right">Rp 0</div>
+        <button type="button" onclick="this.parentElement.remove(); recalculateTrxGrandTotal();" class="text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      `;
+      c.appendChild(div);
+      updateTrxRowCalculations(rId);
+      lucide.createIcons();
+    }
+    function handleTierChangeInForm() { document.querySelectorAll('.trx-product-row').forEach(r => updateTrxRowCalculations(r.id)); }
+    function updateTrxRowCalculations(rId) {
+      const r = document.getElementById(rId); if (!r) return;
+      const tier = document.getElementById('trx-form-tier').value;
+      const pSel = r.querySelector('.trx-select-product');
+      const prices = JSON.parse(pSel.options[pSel.selectedIndex]?.getAttribute('data-prices') || '{}');
+      const uPrice = prices[tier] || 0;
+      const qty = parseInt(r.querySelector('.trx-input-qty').value) || 0;
+      const sub = uPrice * qty;
+      r.querySelector('.trx-subtotal-display').innerText = formatRupiah(sub);
+      r.setAttribute('data-subtotal', sub);
+      r.setAttribute('data-qty', qty);
+      r.setAttribute('data-unit-price', uPrice);
+      recalculateTrxGrandTotal();
+    }
+    function recalculateTrxGrandTotal() {
+      let g = 0; let q = 0;
+      document.querySelectorAll('.trx-product-row').forEach(r => {
+        g += parseFloat(r.getAttribute('data-subtotal')) || 0;
+        q += parseInt(r.getAttribute('data-qty')) || 0;
+      });
+      document.getElementById('trx-form-total-qty').innerText = `${q} Pcs`;
+      document.getElementById('trx-form-grand-total').innerText = formatRupiah(g);
+    }
+    function handlePaymentMethodChange() {
+      const m = document.querySelector('input[name="trx_payment_method"]:checked')?.value || 'tunai';
+      document.getElementById('trx-kasbon-info-box').className = m === 'kasbon' ? 'text-amber-800 text-[11px] p-2 bg-amber-50 rounded-lg' : 'hidden';
+      document.getElementById('trx-calculated-due-date').innerText = formatIndoDate(addDaysYMD(getTodayYMD(), 3));
+    }
+    function saveTransaction(e) {
+      e.preventDefault();
+      const s = getSalesData().find(i => i.id === document.getElementById('trx-form-sales').value);
+      const tier = PRICE_TIERS.find(t => t.id === document.getElementById('trx-form-tier').value);
+      const method = document.querySelector('input[name="trx_payment_method"]:checked')?.value || 'tunai';
+      let totalQty = 0; let totalAmount = 0; let totalFactoryCost = 0;
+      const items = [];
+      const prods = getProductsData();
+
+      document.querySelectorAll('.trx-product-row').forEach(r => {
+        const prod = prods.find(p => p.id === r.querySelector('.trx-select-product').value);
+        const qty = parseInt(r.getAttribute('data-qty')) || 0;
+        const u = parseFloat(r.getAttribute('data-unit-price')) || 0;
+        if (qty > 0 && prod) {
+          items.push({ productName: prod.name, qty, unitPrice: u, subtotal: u * qty });
+          totalQty += qty; totalAmount += (u * qty); totalFactoryCost += ((prod.factoryPrice || 0) * qty);
+        }
+      });
+      if (items.length === 0) return;
+
+      const isKasbon = method === 'kasbon';
+      const list = getTransactionsData();
+      list.unshift({
+        id: 'TRX-' + String(Date.now()).slice(-4),
+        date: getTodayYMD(),
+        salesId: s.id, salesName: s.name, salesPhone: s.phone, salesRoute: s.route,
+        tierName: tier.name, paymentMethod: method, paymentStatus: isKasbon ? 'belum_lunas' : 'lunas',
+        dueDate: isKasbon ? addDaysYMD(getTodayYMD(), 3) : null,
+        items, totalQty, totalAmount, totalFactoryCost
+      });
+      saveTransactionsData(list);
+      closeTransactionModal();
+      showToast('Transaksi berhasil disimpan.');
+    }
+
+    function renderTransactionList() {
+      const list = getTransactionsData();
+      const container = document.getElementById('trx-container');
+      const search = (document.getElementById('search-trx').value || '').toLowerCase();
+      let filtered = list.filter(t => currentTrxFilter === 'kasbon' ? (t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas') : (currentTrxFilter === 'lunas' ? t.paymentStatus === 'lunas' : true));
+      if (search) filtered = filtered.filter(t => (t.id || '').toLowerCase().includes(search) || (t.salesName || '').toLowerCase().includes(search));
+
+      container.innerHTML = filtered.map(t => `
+        <div class="p-3 flex justify-between items-center hover:bg-slate-50">
+          <div>
+            <div class="font-bold">${t.id} <span class="px-2 py-0.5 rounded text-[10px] ${t.paymentStatus === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${t.paymentStatus === 'lunas' ? 'Lunas' : 'Kasbon'}</span></div>
+            <div class="text-xs text-slate-500">${escapeHtml(t.salesName)} &bull; ${formatIndoDate(t.date)}</div>
+          </div>
+          <div class="font-extrabold text-sm ${t.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-rose-700'}">${formatRupiah(t.totalAmount)}</div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+    function setTrxFilter(f) { currentTrxFilter = f; renderTransactionList(); }
+
+    function renderSalesList() {
+      const list = getSalesData();
+      document.getElementById('count-all-sales').innerText = list.length;
+      document.getElementById('count-aktif-sales').innerText = list.filter(s => s.status === 'aktif').length;
+      document.getElementById('count-nonaktif-sales').innerText = list.filter(s => s.status === 'nonaktif').length;
+      document.getElementById('sales-badge-count').innerText = `${list.filter(s => s.status === 'aktif').length} Aktif`;
+      document.getElementById('sidebar-sales-count').innerText = list.filter(s => s.status === 'aktif').length;
+
+      document.getElementById('sales-container').innerHTML = list.filter(s => currentSalesFilter === 'all' || s.status === currentSalesFilter).map(s => `
+        <div class="bg-white p-3.5 rounded-2xl border flex justify-between items-center">
+          <div>
+            <div class="font-bold">${escapeHtml(s.name)} <span class="text-[10px] px-1.5 py-0.5 rounded ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200'}">${s.status.toUpperCase()}</span></div>
+            <div class="text-xs text-slate-500">${escapeHtml(s.phone)} &bull; ${escapeHtml(s.route)}</div>
+          </div>
+          <button onclick="toggleSalesStatus('${s.id}')" class="px-2.5 py-1 text-xs border rounded-lg">${s.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+    function setSalesFilter(f) { currentSalesFilter = f; renderSalesList(); }
+    function toggleSalesStatus(id) { saveSalesData(getSalesData().map(s => s.id === id ? { ...s, status: s.status === 'aktif' ? 'nonaktif' : 'aktif' } : s)); }
+    function openSalesModal() { document.getElementById('modal-sales').classList.remove('hidden'); }
+    function closeSalesModal() { document.getElementById('modal-sales').classList.add('hidden'); }
+    function saveSales(e) {
+      e.preventDefault();
+      const n = document.getElementById('sales-form-name').value.trim();
+      const p = document.getElementById('sales-form-phone').value.trim();
+      if (!n || !p) return;
+      const list = getSalesData();
+      list.unshift({ id: 'SLS-' + String(Date.now()).slice(-4), name: n, phone: p, route: document.getElementById('sales-form-route').value.trim() || 'Rute Bebas', status: 'aktif' });
+      saveSalesData(list);
+      closeSalesModal();
+    }
+
+    function renderProductsTable() {
+      const list = getProductsData();
+      const thead = document.getElementById('product-table-head');
+      const tbody = document.getElementById('product-table-body');
+      const tier = document.getElementById('select-active-tier').value;
+      document.getElementById('product-total-badge').innerText = `${list.length} Varian`;
+
+      let head = `<th class="py-2.5 px-3">Kode & Nama</th><th class="py-2.5 px-3 text-center">Stok</th><th class="owner-only py-2.5 px-3 bg-amber-50 text-amber-900 border-x text-right">Kulakan</th>`;
+      if (tier === 'all') {
+        PRICE_TIERS.forEach(t => head += `<th class="py-2.5 px-2 text-right font-bold text-slate-700">${t.name}</th>`);
+      } else {
+        const to = PRICE_TIERS.find(t => t.id === tier);
+        head += `<th class="py-2.5 px-3 text-right font-bold text-${to.color}-900 bg-${to.color}-50">${to.name}</th>`;
+      }
+      head += `<th class="py-2.5 px-3 text-center">Aksi</th>`;
+      thead.innerHTML = head;
+
+      tbody.innerHTML = list.map(p => {
+        let row = `<tr><td class="py-2.5 px-3 font-bold">${escapeHtml(p.name)}</td><td class="py-2.5 px-3 text-center">${p.stock}</td><td class="owner-only py-2.5 px-3 bg-amber-50/40 text-right font-bold text-amber-900 border-x">${formatRupiah(p.factoryPrice)}</td>`;
+        if (tier === 'all') {
+          PRICE_TIERS.forEach(t => row += `<td class="py-2.5 px-2 text-right font-semibold">${formatRupiah((p.prices && p.prices[t.id]) || 0)}</td>`);
+        } else {
+          row += `<td class="py-2.5 px-3 text-right font-bold">${formatRupiah((p.prices && p.prices[tier]) || 0)}</td>`;
+        }
+        row += `<td class="py-2.5 px-3 text-center"><button onclick="openProductModal('${p.id}')" class="text-slate-400 hover:text-brand-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button></td></tr>`;
+        return row;
+      }).join('');
+      applyRoleVisibility();
+      lucide.createIcons();
+    }
+    function autoCalculatePriceLevels() {
+      const f = parseFloat(document.getElementById('product-form-factory-price').value) || 0;
+      if (!f) return;
+      PRICE_TIERS.forEach(t => document.getElementById('price-' + t.id).value = Math.round((f * (1 + (t.marginPct / 100))) / 50) * 50);
+    }
+    function openProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
+    function closeProductModal() { document.getElementById('modal-product').classList.add('hidden'); }
+    function saveProduct(e) {
+      e.preventDefault();
+      const name = document.getElementById('product-form-name').value.trim();
+      const factoryPrice = parseFloat(document.getElementById('product-form-factory-price').value) || 0;
+      const prices = {};
+      PRICE_TIERS.forEach(t => prices[t.id] = parseFloat(document.getElementById('price-' + t.id).value) || factoryPrice);
+      const list = getProductsData();
+      list.unshift({ id: 'PRD-' + String(Date.now()).slice(-4), code: 'ROTI-' + String(Date.now()).slice(-3), name, stock: 100, factoryPrice, prices });
+      saveProductsData(list);
+      closeProductModal();
+    }
+
+    function populateSalesDropdown() {
+      const s = document.getElementById('trx-form-sales');
+      if (s) s.innerHTML = getSalesData().filter(i => i.status === 'aktif').map(i => `<option value="${i.id}">${i.name} - ${i.route}</option>`).join('');
+      const poS = document.getElementById('po-form-sales');
+      if (poS) poS.innerHTML = getSalesData().filter(i => i.status === 'aktif').map(i => `<option value="${i.id}">${i.name} - ${i.route}</option>`).join('');
+    }
+
+    function setMode(role) {
+      currentRole = role;
+      const btnKasir = document.getElementById('btn-mode-kasir');
+      const btnOwner = document.getElementById('btn-mode-owner');
+      const roleBadge = document.getElementById('role-badge');
+      const noticeText = document.getElementById('mode-notice-text');
+
+      if (role === 'kasir') {
+        btnKasir.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-emerald-700 shadow-sm border';
+        btnOwner.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600';
+        roleBadge.innerText = 'Mode Kasir';
+        roleBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border';
+        noticeText.innerHTML = '<strong>Mode Kasir Aktif:</strong> Laporan laba rugi, HPP kulakan & rincian profit disembunyikan.';
+      } else {
+        btnOwner.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-brand-600 shadow-sm border';
+        btnKasir.className = 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600';
+        roleBadge.innerText = 'Mode Owner';
+        roleBadge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border';
+        noticeText.innerHTML = '<strong>Mode Owner Aktif:</strong> Akses penuh terbuka (Laporan laba rugi, HPP kulakan & total modal PO pabrik ditampilkan).';
+      }
+      applyRoleVisibility();
+      renderProductsTable();
+      renderPOSalesMatrix();
+      lucide.createIcons();
+    }
+
+    function applyRoleVisibility() {
+      document.querySelectorAll('.owner-only').forEach(el => currentRole === 'kasir' ? el.classList.add('hidden') : el.classList.remove('hidden'));
+      document.querySelectorAll('.kasir-only').forEach(el => currentRole === 'kasir' ? el.classList.remove('hidden') : el.classList.add('hidden'));
+    }
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+      document.getElementById('tab-' + tabId)?.classList.add('active');
+
+      document.querySelectorAll('.nav-item-desktop').forEach(b => {
+        b.className = b.getAttribute('data-tab') === currentTab 
+          ? 'nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-brand-500 text-white shadow-sm'
+          : 'nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50';
+      });
+
+      document.querySelectorAll('.nav-item-mobile').forEach(b => {
+        b.className = b.getAttribute('data-tab') === currentTab 
+          ? 'nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-bold text-brand-600'
+          : 'nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500';
+      });
+
+      if (tabId === 'po') {
+        renderPOSalesMatrix();
+      }
+
+      lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // --- 8. INITIAL BOOTSTRAP ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Render data awal dari cache lokal (cepat 0ms)
+      renderAllViews();
+
+      // 2. Coba hubungkan dan sinkronkan dengan Cloud Supabase
+      await initSupabase(false);
+    });
+  </script>
+</body>
+</html>
