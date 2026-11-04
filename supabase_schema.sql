@@ -98,6 +98,17 @@ CREATE TABLE IF NOT EXISTS po_sales (
 );
 
 -- ====================================================================
+-- PERMISSIONS & PRIVILEGES (GRANT AKSES KE ROLE ANON / PUBLISHABLE KEY)
+-- ====================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
+-- ====================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- Memberikan izin SELECT, INSERT, UPDATE, DELETE untuk publik/anon
 -- ====================================================================
@@ -110,25 +121,25 @@ ALTER TABLE toko_langsung ENABLE ROW LEVEL SECURITY;
 ALTER TABLE po_sales ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public access for sales" ON sales;
-CREATE POLICY "Public access for sales" ON sales FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for sales" ON sales FOR ALL TO public USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for products" ON products;
-CREATE POLICY "Public access for products" ON products FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for products" ON products FOR ALL TO public USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for transactions" ON transactions;
-CREATE POLICY "Public access for transactions" ON transactions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for transactions" ON transactions FOR ALL TO public USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for expenses" ON expenses;
-CREATE POLICY "Public access for expenses" ON expenses FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for expenses" ON expenses FOR ALL TO public USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for retur" ON retur;
-CREATE POLICY "Public access for retur" ON retur FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for retur" ON retur FOR ALL TO public USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for toko_langsung" ON toko_langsung;
-CREATE POLICY "Public access for toko_langsung" ON toko_langsung FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for toko_langsung" ON toko_langsung FOR ALL TO public USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Public access for po_sales" ON po_sales;
-CREATE POLICY "Public access for po_sales" ON po_sales FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public access for po_sales" ON po_sales FOR ALL TO public USING (true) WITH CHECK (true);
 
 -- ====================================================================
 -- REALTIME REPLICATION
