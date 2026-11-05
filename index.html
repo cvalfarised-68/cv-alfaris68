@@ -291,6 +291,17 @@
         <!-- Right Side: Mode Switcher & Cloud Indicator -->
         <div class="flex items-center gap-2 flex-shrink-0">
           
+          <!-- Tombol Cepat Tarik / Sinkron Data Cloud -->
+          <button 
+            id="btn-quick-sync-cloud"
+            type="button"
+            onclick="triggerManualSync()" 
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 transition cursor-pointer" 
+            title="Tarik & sinkronkan data terbaru dari Cloud Supabase">
+            <i id="quick-sync-icon" data-lucide="refresh-cw" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span class="hidden sm:inline">Sinkron Data</span>
+          </button>
+
           <!-- Cloud / Supabase Status Pill (Klik untuk Pengaturan) -->
           <button 
             id="supabase-status-pill" 
@@ -2040,14 +2051,14 @@
 
     async function pullDataFromSupabase(isManual = false) {
       if (!supabaseClient || !isSupabaseConnected) {
-        if (isManual) showToast('Supabase belum terhubung. Silakan simpan kredensial terlebih dahulu.', 'error');
+        if (isManual) showToast('Supabase belum terhubung. Silakan periksa koneksi Cloud.', 'error');
         return;
       }
 
       if (isManual) showToast('Menarik data terbaru dari Supabase...', 'info');
 
       try {
-        const [sRes, pRes, tRes, eRes, rRes, tkRes, poRes] = await Promise.all([
+        const results = await Promise.allSettled([
           supabaseClient.from('sales').select('*').order('id', { ascending: true }),
           supabaseClient.from('products').select('*').order('id', { ascending: true }),
           supabaseClient.from('transactions').select('*').order('date', { ascending: false }),
@@ -2057,33 +2068,36 @@
           supabaseClient.from('po_sales').select('*').order('date', { ascending: false })
         ]);
 
+        const [sSettled, pSettled, tSettled, eSettled, rSettled, tkSettled, poSettled] = results;
+
         let tablesUpdated = 0;
-        if (sRes.data && sRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(sRes.data.map(objectToCamel)));
+        // Simpan data dari Supabase tanpa syarat length > 0 agar saat owner menghapus data di cloud, kasir ikut bersih
+        if (sSettled.status === 'fulfilled' && !sSettled.value.error && Array.isArray(sSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(sSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
-        if (pRes.data && pRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(pRes.data.map(objectToCamel)));
+        if (pSettled.status === 'fulfilled' && !pSettled.value.error && Array.isArray(pSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(pSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
-        if (tRes.data && tRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(tRes.data.map(objectToCamel)));
+        if (tSettled.status === 'fulfilled' && !tSettled.value.error && Array.isArray(tSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(tSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
-        if (eRes.data && eRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(eRes.data.map(objectToCamel)));
+        if (eSettled.status === 'fulfilled' && !eSettled.value.error && Array.isArray(eSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(eSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
-        if (rRes.data && rRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(rRes.data.map(objectToCamel)));
+        if (rSettled.status === 'fulfilled' && !rSettled.value.error && Array.isArray(rSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(rSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
-        if (tkRes.data && tkRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(tkRes.data.map(objectToCamel)));
+        if (tkSettled.status === 'fulfilled' && !tkSettled.value.error && Array.isArray(tkSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(tkSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
-        if (poRes.data && poRes.data.length > 0) {
-          localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(poRes.data.map(objectToCamel)));
+        if (poSettled.status === 'fulfilled' && !poSettled.value.error && Array.isArray(poSettled.value.data)) {
+          localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(poSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
         }
 
@@ -2091,15 +2105,26 @@
         updateSupabaseUIStatus();
 
         if (isManual) {
-          if (tablesUpdated > 0) {
-            showToast(`Data Cloud berhasil disinkronkan (${tablesUpdated} tabel diperbarui)!`, 'success');
-          } else {
-            showToast('Koneksi berhasil, namun database Supabase masih kosong. Silakan gunakan tombol "Upload Data Lokal".', 'info');
-          }
+          showToast(`Data Cloud berhasil disinkronkan (${tablesUpdated} modul terhubung)!`, 'success');
         }
       } catch (err) {
         console.error('[Supabase Pull Error]:', err);
         if (isManual) showToast('Gagal memuat data dari Supabase: ' + err.message, 'error');
+      }
+    }
+
+    async function triggerManualSync() {
+      const icon = document.getElementById('quick-sync-icon');
+      if (icon) icon.classList.add('animate-spin');
+      try {
+        if (!supabaseClient || !isSupabaseConnected) {
+          await initSupabase(false);
+        }
+        await pullDataFromSupabase(true);
+      } finally {
+        if (icon) {
+          setTimeout(() => icon.classList.remove('animate-spin'), 600);
+        }
       }
     }
 
@@ -2145,7 +2170,13 @@
             console.log('[Supabase Realtime] Perubahan data terdeteksi:', payload.table, payload.eventType);
             pullDataFromSupabase(false);
           })
-          .subscribe();
+          .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[Supabase Realtime] Realtime channel aktif & mendengarkan pembaruan.');
+            } else if (err) {
+              console.warn('[Supabase Realtime] Status channel:', status, err);
+            }
+          });
       } catch (e) {
         console.warn('[Supabase Realtime] Listener error:', e);
       }
@@ -2206,131 +2237,78 @@
     const tomorrowStr = addDaysYMD(todayStr, 1);
     currentPODate = tomorrowStr; // Default PO focus ke besok (pengambilan pabrik)
 
-    // Seed Data Pre-Order (PO) Sales
-    const DEFAULT_PO_SALES = [
-      {
-        id: 'PO-001',
-        date: tomorrowStr,
-        salesId: 'SLS-001',
-        salesName: 'Budi Santoso',
-        salesRoute: 'Pasar Besar - Dinoyo',
-        items: { 'PRD-001': 200, 'PRD-002': 100, 'PRD-003': 50, 'PRD-004': 60, 'PRD-005': 30 },
-        notes: 'Pagi jam 06:00 sudah siap jalan'
-      },
-      {
-        id: 'PO-002',
-        date: tomorrowStr,
-        salesId: 'SLS-002',
-        salesName: 'Agus Wahyudi',
-        salesRoute: 'Sukun - Kepanjen',
-        items: { 'PRD-001': 150, 'PRD-002': 120, 'PRD-003': 80, 'PRD-004': 40, 'PRD-005': 50 },
-        notes: 'Tambahan roti tawar untuk toko langganan'
-      },
-      {
-        id: 'PO-003',
-        date: tomorrowStr,
-        salesId: 'SLS-003',
-        salesName: 'Rian Dani',
-        salesRoute: 'Singosari - Lawang',
-        items: { 'PRD-001': 180, 'PRD-002': 80, 'PRD-003': 40, 'PRD-004': 70, 'PRD-005': 20 },
-        notes: 'Rute Singosari'
-      },
-      {
-        id: 'PO-004',
-        date: tomorrowStr,
-        salesId: 'SLS-004',
-        salesName: 'Hendra Saputra',
-        salesRoute: 'Blimbing - Sawojajar',
-        items: { 'PRD-001': 300, 'PRD-002': 200, 'PRD-003': 100, 'PRD-004': 120, 'PRD-005': 80 },
-        notes: 'Mobil Grand Max Box'
-      },
-      {
-        id: 'PO-005',
-        date: todayStr,
-        salesId: 'SLS-001',
-        salesName: 'Budi Santoso',
-        salesRoute: 'Pasar Besar - Dinoyo',
-        items: { 'PRD-001': 150, 'PRD-002': 80, 'PRD-003': 40, 'PRD-004': 50, 'PRD-005': 20 },
-        notes: 'PO hari ini'
-      }
-    ];
-
-    // Seed Data Pengeluaran
-    const DEFAULT_EXPENSES = [
-      { id: 'EXP-001', date: todayStr, category: 'solar', categoryLabel: 'Solar BBM', amount: 180000, desc: 'Solar armada 4 motor & mobil' },
-      { id: 'EXP-002', date: addDaysYMD(todayStr, -2), category: 'sewa_mobil', categoryLabel: 'Sewa Mobil', amount: 750000, desc: 'Sewa mingguan armada box' },
-      { id: 'EXP-003', date: addDaysYMD(todayStr, -3), category: 'gaji', categoryLabel: 'Gaji 4 Karyawan', amount: 2400000, desc: 'Kasir & 3 Kru bongkar muat' },
-      { id: 'EXP-004', date: addDaysYMD(todayStr, -4), category: 'pajak', categoryLabel: 'Pajak', amount: 250000, desc: 'Setoran PPh Final & retribusi' },
-      { id: 'EXP-005', date: addDaysYMD(todayStr, -1), category: 'nabung', categoryLabel: 'Alokasi Nabung', amount: 1000000, desc: 'Cadangan kas CV Alfaris' }
-    ];
-
-    // Seed Toko, Retur, Sales, Produk, Transaksi
+    // Seed Data Bersih (Data produksi langsung disinkronkan otomatis dari Cloud Supabase)
+    const DEFAULT_PO_SALES = [];
+    const DEFAULT_EXPENSES = [];
     const DEFAULT_TOKO = [
-      { id: 'TKO-001', name: 'Toko Berkah Dinoyo', pic: 'Ibu Hj. Aminah', phone: '081233445566', route: 'Pasar Besar - Dinoyo', salesName: 'Budi Santoso', lastVisitDate: addDaysYMD(todayStr, -8) },
-      { id: 'TKO-002', name: 'Minimarket Barokah Kepanjen', pic: 'Pak Gunawan', phone: '085711223344', route: 'Sukun - Kepanjen', salesName: 'Agus Wahyudi', lastVisitDate: addDaysYMD(todayStr, -5) },
-      { id: 'TKO-003', name: 'Toko Rejeki Singosari', pic: 'Pak Bambang', phone: '082199887766', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: addDaysYMD(todayStr, -1) },
-      { id: 'TKO-004', name: 'Toko Sentosa Lawang Indah', pic: 'Ibu Ratna', phone: '081955667788', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: addDaysYMD(todayStr, -10) }
+      { id: 'TKO-003', name: 'Toko Rejeki Singosari', pic: 'Pak Bambang', phone: '082199887766', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: '2026-11-03' }
     ];
-
-    const DEFAULT_RETUR = [
-      { id: 'RTR-001', date: todayStr, tokoName: 'Toko Berkah Dinoyo', productName: 'Roti Manis Coklat Lumer', qty: 20, reason: 'Kadaluwarsa', actionType: 'pabrik', wasteHppAmount: 0 },
-      { id: 'RTR-002', date: addDaysYMD(todayStr, -1), tokoName: 'Toko Sentosa Lawang', productName: 'Roti Tawar Kupas Premium', qty: 15, reason: 'Kempes', actionType: 'waste', wasteHppAmount: 127500 }
-    ];
-
-    const DEFAULT_SALES = [
-      { id: 'SLS-001', name: 'Budi Santoso', phone: '081234567890', route: 'Pasar Besar - Dinoyo', status: 'aktif' },
-      { id: 'SLS-002', name: 'Agus Wahyudi', phone: '085798761234', route: 'Sukun - Kepanjen', status: 'aktif' },
-      { id: 'SLS-003', name: 'Rian Dani', phone: '082144556677', route: 'Singosari - Lawang', status: 'aktif' },
-      { id: 'SLS-004', name: 'Hendra Saputra', phone: '083811223344', route: 'Blimbing - Sawojajar', status: 'aktif' }
-    ];
-
+    const DEFAULT_RETUR = [];
+    const DEFAULT_SALES = [];
     const DEFAULT_PRODUCTS = [
-      { id: 'PRD-001', code: 'ROTI-MC-01', name: 'Roti Manis Coklat Lumer', category: 'Roti Manis', stock: 850, factoryPrice: 3500, prices: { level1: 4400, level2: 4600, level3: 4800, level4: 5100, level5: 4500, level6: 4200 } },
-      { id: 'PRD-002', code: 'ROTI-MK-02', name: 'Roti Manis Keju Spesial', category: 'Roti Manis', stock: 620, factoryPrice: 3700, prices: { level1: 4600, level2: 4800, level3: 5000, level4: 5400, level5: 4750, level6: 4450 } },
-      { id: 'PRD-003', code: 'ROTI-TW-03', name: 'Roti Tawar Kupas Premium', category: 'Roti Tawar', stock: 410, factoryPrice: 8500, prices: { level1: 10600, level2: 11000, level3: 11500, level4: 12500, level5: 10900, level6: 10200 } },
-      { id: 'PRD-004', code: 'ROTI-SS-04', name: 'Roti Sisir Mentega Jadul', category: 'Roti Sisir', stock: 300, factoryPrice: 4200, prices: { level1: 5250, level2: 5500, level3: 5700, level4: 6100, level5: 5400, level6: 5050 } },
-      { id: 'PRD-005', code: 'ROTI-SB-05', name: 'Roti Sobek Coklat Keju', category: 'Roti Sobek', stock: 80, factoryPrice: 9000, prices: { level1: 11250, level2: 11700, level3: 12200, level4: 13000, level5: 11500, level6: 10800 } }
+      { id: 'PRD-0066', code: 'ROTI-066', name: 'NP', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-0595', code: 'ROTI-595', name: 'JASUKE', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3620, level3: 3650, level4: 3900, level5: 3600, level6: 3900 } },
+      { id: 'PRD-0633', code: 'ROTI-633', name: 'SC', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-1607', code: 'ROTI-607', name: 'MPS', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3620, level3: 3650, level4: 3900, level5: 3600, level6: 3900 } },
+      { id: 'PRD-2002', code: 'ROTI-002', name: 'NANA COKELAT PANDAN', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-2217', code: 'ROTI-217', name: 'MPKH', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3620, level3: 3650, level4: 3900, level5: 3600, level6: 3900 } },
+      { id: 'PRD-3646', code: 'ROTI-646', name: 'MCN', category: 'Roti Manis', stock: 100, factoryPrice: 6500, prices: { level1: 6900, level2: 7120, level3: 7200, level4: 7900, level5: 7150, level6: 7300 } },
+      { id: 'PRD-4489', code: 'ROTI-489', name: 'NCB', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-4710', code: 'ROTI-710', name: 'SK', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-4776', code: 'ROTI-776', name: 'NCS', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-5968', code: 'ROTI-968', name: 'MPC', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3620, level3: 3650, level4: 3900, level5: 3600, level6: 3900 } },
+      { id: 'PRD-6229', code: 'ROTI-229', name: 'MPK', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3620, level3: 3650, level4: 3900, level5: 3600, level6: 3900 } },
+      { id: 'PRD-9030', code: 'ROTI-030', name: 'NANA COKELAT KELAPA', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } },
+      { id: 'PRD-9068', code: 'ROTI-068', name: 'NANA COKLAT', category: 'Roti Manis', stock: 100, factoryPrice: 1300, prices: { level1: 1400, level2: 1460, level3: 1460, level4: 1500, level5: 1450, level6: 1500 } }
     ];
+    const DEFAULT_TRANSACTIONS = [];
 
-    const DEFAULT_TRANSACTIONS = [
-      {
-        id: 'TRX-2026-0041',
-        date: todayStr,
-        salesId: 'SLS-001',
-        salesName: 'Budi Santoso',
-        salesPhone: '081234567890',
-        salesRoute: 'Pasar Besar - Dinoyo',
-        tierName: 'Sales Besar',
-        paymentMethod: 'tunai',
-        paymentStatus: 'lunas',
-        totalQty: 250,
-        totalAmount: 1100000,
-        totalFactoryCost: 875000,
-        items: [{ productName: 'Roti Manis Coklat Lumer', qty: 250, unitPrice: 4400, subtotal: 1100000 }]
-      },
-      {
-        id: 'TRX-2026-0038',
-        date: addDaysYMD(todayStr, -4),
-        salesId: 'SLS-002',
-        salesName: 'Agus Wahyudi',
-        salesPhone: '085798761234',
-        salesRoute: 'Sukun - Kepanjen',
-        tierName: 'Sales Sedang',
-        paymentMethod: 'kasbon',
-        paymentStatus: 'belum_lunas',
-        dueDate: addDaysYMD(todayStr, -1),
-        totalQty: 120,
-        totalAmount: 1320000,
-        totalFactoryCost: 1020000,
-        items: [{ productName: 'Roti Tawar Kupas Premium', qty: 120, unitPrice: 11000, subtotal: 1320000 }]
+    // Fungsi pembersihan data dummy lawas dari browser kasir/owner jika ada sisa cache
+    function cleanupLegacyDummyData() {
+      const CLEANUP_KEY = 'alfaris_clean_sync_v4';
+      if (localStorage.getItem(CLEANUP_KEY) === 'true') return;
+
+      try {
+        const s = localStorage.getItem(STORAGE_KEY_SALES);
+        if (s && (s.includes('SLS-001') || s.includes('Budi Santoso') || s.includes('Agus Wahyudi'))) {
+          localStorage.removeItem(STORAGE_KEY_SALES);
+        }
+        const t = localStorage.getItem(STORAGE_KEY_TRX);
+        if (t && (t.includes('TRX-2026-0041') || t.includes('TRX-2026-0038'))) {
+          localStorage.removeItem(STORAGE_KEY_TRX);
+        }
+        const e = localStorage.getItem(STORAGE_KEY_EXPENSES);
+        if (e && (e.includes('EXP-001') || e.includes('Solar armada 4 motor') || e.includes('Sewa mingguan armada box'))) {
+          localStorage.removeItem(STORAGE_KEY_EXPENSES);
+        }
+        const r = localStorage.getItem(STORAGE_KEY_RETUR);
+        if (r && (r.includes('RTR-001') || r.includes('RTR-002'))) {
+          localStorage.removeItem(STORAGE_KEY_RETUR);
+        }
+        const p = localStorage.getItem(STORAGE_KEY_PRODUCTS);
+        if (p && (p.includes('ROTI-MC-01') || p.includes('Roti Manis Coklat Lumer') || p.includes('Roti Sisir Mentega Jadul'))) {
+          localStorage.removeItem(STORAGE_KEY_PRODUCTS);
+        }
+        const tk = localStorage.getItem(STORAGE_KEY_TOKO);
+        if (tk && (tk.includes('TKO-001') || tk.includes('Toko Berkah Dinoyo') || tk.includes('Minimarket Barokah Kepanjen'))) {
+          localStorage.removeItem(STORAGE_KEY_TOKO);
+        }
+        const po = localStorage.getItem(STORAGE_KEY_PO);
+        if (po && (po.includes('PO-001') || po.includes('Mobil Grand Max Box'))) {
+          localStorage.removeItem(STORAGE_KEY_PO);
+        }
+      } catch (err) {
+        console.warn('[Cleanup] Error membersihkan cache lawas:', err);
       }
-    ];
+
+      localStorage.setItem(CLEANUP_KEY, 'true');
+    }
 
     // --- 3. STORAGE GETTERS & SETTERS (DUAL SYNC: LOCALSTORAGE + SUPABASE) ---
     function getPOSalesData() {
       const s = localStorage.getItem(STORAGE_KEY_PO);
-      if (!s) { localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(DEFAULT_PO_SALES)); return DEFAULT_PO_SALES; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_PO_SALES; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(DEFAULT_PO_SALES)); return DEFAULT_PO_SALES; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function savePOSalesData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(list));
@@ -2340,8 +2318,8 @@
 
     function getExpensesData() {
       const s = localStorage.getItem(STORAGE_KEY_EXPENSES);
-      if (!s) { localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(DEFAULT_EXPENSES)); return DEFAULT_EXPENSES; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_EXPENSES; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(DEFAULT_EXPENSES)); return DEFAULT_EXPENSES; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function saveExpensesData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(list));
@@ -2352,8 +2330,8 @@
 
     function getTokoData() {
       const s = localStorage.getItem(STORAGE_KEY_TOKO);
-      if (!s) { localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(DEFAULT_TOKO)); return DEFAULT_TOKO; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_TOKO; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(DEFAULT_TOKO)); return DEFAULT_TOKO; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function saveTokoData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(list));
@@ -2363,8 +2341,8 @@
 
     function getReturData() {
       const s = localStorage.getItem(STORAGE_KEY_RETUR);
-      if (!s) { localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(DEFAULT_RETUR)); return DEFAULT_RETUR; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_RETUR; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(DEFAULT_RETUR)); return DEFAULT_RETUR; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function saveReturData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_RETUR, JSON.stringify(list));
@@ -2375,8 +2353,8 @@
 
     function getSalesData() {
       const s = localStorage.getItem(STORAGE_KEY_SALES);
-      if (!s) { localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(DEFAULT_SALES)); return DEFAULT_SALES; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_SALES; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(DEFAULT_SALES)); return DEFAULT_SALES; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function saveSalesData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(list));
@@ -2388,8 +2366,8 @@
 
     function getProductsData() {
       const s = localStorage.getItem(STORAGE_KEY_PRODUCTS);
-      if (!s) { localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS)); return DEFAULT_PRODUCTS; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_PRODUCTS; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS)); return DEFAULT_PRODUCTS; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function saveProductsData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(list));
@@ -2401,8 +2379,8 @@
 
     function getTransactionsData() {
       const s = localStorage.getItem(STORAGE_KEY_TRX);
-      if (!s) { localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(DEFAULT_TRANSACTIONS)); return DEFAULT_TRANSACTIONS; }
-      try { return JSON.parse(s); } catch (e) { return DEFAULT_TRANSACTIONS; }
+      if (s === null) { localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(DEFAULT_TRANSACTIONS)); return DEFAULT_TRANSACTIONS; }
+      try { return JSON.parse(s) || []; } catch (e) { return []; }
     }
     function saveTransactionsData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(list));
@@ -2897,20 +2875,31 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const filterCat = document.getElementById('filter-expense-cat').value;
       let filtered = expenses.filter(exp => filterCat === 'all' || exp.category === filterCat);
 
-      tbody.innerHTML = filtered.map(item => `
-        <tr class="hover:bg-slate-50/80 transition">
-          <td class="py-3 px-3.5 text-slate-500">${formatIndoDate(item.date)}</td>
-          <td class="py-3 px-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100">${escapeHtml(item.categoryLabel)}</span></td>
-          <td class="py-3 px-3.5 font-semibold text-slate-800">${escapeHtml(item.desc)}</td>
-          <td class="py-3 px-3.5 text-right font-extrabold text-slate-900">${formatRupiah(item.amount)}</td>
-          <td class="py-3 px-3.5 text-center">
-            <div class="flex items-center justify-center gap-1.5">
-              <button onclick="openExpenseModal('${item.id}')" title="Edit Biaya" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-              <button onclick="deleteExpense('${item.id}')" title="Hapus Biaya" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
+              <i data-lucide="receipt" class="w-6 h-6 mx-auto mb-1 text-slate-300"></i>
+              Belum ada data pengeluaran operasional.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = filtered.map(item => `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3 px-3.5 text-slate-500">${formatIndoDate(item.date)}</td>
+            <td class="py-3 px-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100">${escapeHtml(item.categoryLabel)}</span></td>
+            <td class="py-3 px-3.5 font-semibold text-slate-800">${escapeHtml(item.desc)}</td>
+            <td class="py-3 px-3.5 text-right font-extrabold text-slate-900">${formatRupiah(item.amount)}</td>
+            <td class="py-3 px-3.5 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="openExpenseModal('${item.id}')" title="Edit Biaya" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                <button onclick="deleteExpense('${item.id}')" title="Hapus Biaya" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
       lucide.createIcons();
     }
     function deleteExpense(id) {
@@ -3270,22 +3259,33 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     function renderReturTable() {
       const list = getReturData();
       const tbody = document.getElementById('retur-table-body');
-      tbody.innerHTML = list.map(r => `
-        <tr class="hover:bg-slate-50 transition">
-          <td class="py-2.5 px-3 font-bold">${r.id}</td>
-          <td class="py-2.5 px-3 font-semibold">${escapeHtml(r.tokoName)}</td>
-          <td class="py-2.5 px-3">${escapeHtml(r.productName)} (${r.qty} pcs)</td>
-          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-[10px]">${escapeHtml(r.reason)}</span></td>
-          <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.actionType === 'pabrik' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'}">${r.actionType === 'pabrik' ? 'Tukar Pabrik' : 'Waste HPP'}</span></td>
-          <td class="py-2.5 px-3 text-right font-bold ${r.actionType === 'waste' ? 'text-rose-700' : 'text-slate-400'}">${r.actionType === 'waste' ? '-' + formatRupiah(r.wasteHppAmount) : 'Rp 0'}</td>
-          <td class="py-2.5 px-3 text-center">
-            <div class="flex items-center justify-center gap-1.5">
-              <button onclick="openReturModal('${r.id}')" title="Edit Retur" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-              <button onclick="deleteRetur('${r.id}')" title="Hapus Retur" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
+              <i data-lucide="rotate-ccw" class="w-6 h-6 mx-auto mb-1 text-slate-300"></i>
+              Belum ada catatan retur roti toko.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = list.map(r => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-bold">${r.id}</td>
+            <td class="py-2.5 px-3 font-semibold">${escapeHtml(r.tokoName)}</td>
+            <td class="py-2.5 px-3">${escapeHtml(r.productName)} (${r.qty} pcs)</td>
+            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-[10px]">${escapeHtml(r.reason)}</span></td>
+            <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.actionType === 'pabrik' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'}">${r.actionType === 'pabrik' ? 'Tukar Pabrik' : 'Waste HPP'}</span></td>
+            <td class="py-2.5 px-3 text-right font-bold ${r.actionType === 'waste' ? 'text-rose-700' : 'text-slate-400'}">${r.actionType === 'waste' ? '-' + formatRupiah(r.wasteHppAmount) : 'Rp 0'}</td>
+            <td class="py-2.5 px-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="openReturModal('${r.id}')" title="Edit Retur" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                <button onclick="deleteRetur('${r.id}')" title="Hapus Retur" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
       lucide.createIcons();
     }
     function deleteRetur(id) {
@@ -3506,19 +3506,30 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const tbody = document.getElementById('dashboard-kasbon-table-body');
       document.getElementById('badge-kasbon-count').innerText = `${list.length} Tagihan`;
 
-      tbody.innerHTML = list.map(t => {
-        const d = calculateDueStatus(t.dueDate);
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-2.5 px-3 font-bold">${t.id}</td>
-            <td class="py-2.5 px-3 font-semibold">${escapeHtml(t.salesName)}</td>
-            <td class="py-2.5 px-3 font-extrabold text-slate-900">${formatRupiah(t.totalAmount)}</td>
-            <td class="py-2.5 px-3 font-bold">${formatIndoDate(t.dueDate)}</td>
-            <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] ${d.badgeClass}">${d.label}</span></td>
-            <td class="py-2.5 px-3 text-center"><button onclick="settleKasbonTransaction('${t.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Lunasi</button></td>
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-slate-400 text-xs">
+              <i data-lucide="check-circle" class="w-6 h-6 mx-auto mb-1 text-emerald-500"></i>
+              Semua kasbon lancar / belum ada piutang tempo.
+            </td>
           </tr>
         `;
-      }).join('');
+      } else {
+        tbody.innerHTML = list.map(t => {
+          const d = calculateDueStatus(t.dueDate);
+          return `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-2.5 px-3 font-bold">${t.id}</td>
+              <td class="py-2.5 px-3 font-semibold">${escapeHtml(t.salesName)}</td>
+              <td class="py-2.5 px-3 font-extrabold text-slate-900">${formatRupiah(t.totalAmount)}</td>
+              <td class="py-2.5 px-3 font-bold">${formatIndoDate(t.dueDate)}</td>
+              <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] ${d.badgeClass}">${d.label}</span></td>
+              <td class="py-2.5 px-3 text-center"><button onclick="settleKasbonTransaction('${t.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white">Lunasi</button></td>
+            </tr>
+          `;
+        }).join('');
+      }
       lucide.createIcons();
     }
     function settleKasbonTransaction(id) {
@@ -3527,7 +3538,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function openTransactionModal() {
-      document.getElementById('trx-form-sales').innerHTML = getSalesData().filter(s => s.status === 'aktif').map(s => `<option value="${s.id}">${s.name} - ${s.route}</option>`).join('');
+      populateSalesDropdown();
       document.getElementById('trx-product-rows-container').innerHTML = '';
       addTrxProductRow();
       document.getElementById('modal-transaction').classList.remove('hidden');
@@ -3624,27 +3635,37 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       let filtered = list.filter(t => currentTrxFilter === 'kasbon' ? (t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas') : (currentTrxFilter === 'lunas' ? t.paymentStatus === 'lunas' : true));
       if (search) filtered = filtered.filter(t => (t.id || '').toLowerCase().includes(search) || (t.salesName || '').toLowerCase().includes(search));
 
-      container.innerHTML = filtered.map(t => `
-        <div class="p-3 flex justify-between items-center hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-          <div>
-            <div class="font-bold flex items-center gap-2">
-              <span>${t.id}</span>
-              <span class="px-2 py-0.5 rounded text-[10px] ${t.paymentStatus === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${t.paymentStatus === 'lunas' ? 'Lunas' : 'Kasbon'}</span>
-              <span class="text-[10px] text-slate-400 font-normal">(${t.items ? t.items.length : 0} item)</span>
-            </div>
-            <div class="text-xs text-slate-500">${escapeHtml(t.salesName)} &bull; ${formatIndoDate(t.date)} ${t.salesRoute ? '&bull; ' + escapeHtml(t.salesRoute) : ''}</div>
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-400">
+            <i data-lucide="receipt" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+            <p class="text-xs font-semibold text-slate-600">Belum ada transaksi</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Catatan transaksi harian akan muncul di sini.</p>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="text-right">
-              <div class="font-extrabold text-sm ${t.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-rose-700'}">${formatRupiah(t.totalAmount)}</div>
-              ${t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas' ? `<button onclick="settleKasbonTransaction('${t.id}')" class="text-[10px] text-emerald-600 hover:underline font-bold mt-0.5">Lunasi Kasbon</button>` : ''}
+        `;
+      } else {
+        container.innerHTML = filtered.map(t => `
+          <div class="p-3 flex justify-between items-center hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
+            <div>
+              <div class="font-bold flex items-center gap-2">
+                <span>${t.id}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] ${t.paymentStatus === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${t.paymentStatus === 'lunas' ? 'Lunas' : 'Kasbon'}</span>
+                <span class="text-[10px] text-slate-400 font-normal">(${t.items ? t.items.length : 0} item)</span>
+              </div>
+              <div class="text-xs text-slate-500">${escapeHtml(t.salesName)} &bull; ${formatIndoDate(t.date)} ${t.salesRoute ? '&bull; ' + escapeHtml(t.salesRoute) : ''}</div>
             </div>
-            <button onclick="deleteTransaction('${t.id}')" title="Batalkan Transaksi" class="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <div class="font-extrabold text-sm ${t.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-rose-700'}">${formatRupiah(t.totalAmount)}</div>
+                ${t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas' ? `<button onclick="settleKasbonTransaction('${t.id}')" class="text-[10px] text-emerald-600 hover:underline font-bold mt-0.5">Lunasi Kasbon</button>` : ''}
+              </div>
+              <button onclick="deleteTransaction('${t.id}')" title="Batalkan Transaksi" class="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
       lucide.createIcons();
     }
     function setTrxFilter(f) { currentTrxFilter = f; renderTransactionList(); }
@@ -3665,19 +3686,30 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       document.getElementById('sales-badge-count').innerText = `${list.filter(s => s.status === 'aktif').length} Aktif`;
       document.getElementById('sidebar-sales-count').innerText = list.filter(s => s.status === 'aktif').length;
 
-      document.getElementById('sales-container').innerHTML = list.filter(s => currentSalesFilter === 'all' || s.status === currentSalesFilter).map(s => `
-        <div class="bg-white p-3.5 rounded-2xl border flex justify-between items-center shadow-sm">
-          <div>
-            <div class="font-bold text-slate-900">${escapeHtml(s.name)} <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">${s.status.toUpperCase()}</span></div>
-            <div class="text-xs text-slate-500">${escapeHtml(s.phone)} &bull; ${escapeHtml(s.route)}</div>
+      const filteredSales = list.filter(s => currentSalesFilter === 'all' || s.status === currentSalesFilter);
+      if (filteredSales.length === 0) {
+        document.getElementById('sales-container').innerHTML = `
+          <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <i data-lucide="users" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
+            <p class="text-xs font-semibold text-slate-600">Belum ada data sales</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Klik tombol "+ Tambah Sales" untuk mendaftarkan sales baru.</p>
           </div>
-          <div class="flex items-center gap-1.5">
-            <button onclick="openSalesModal('${s.id}')" title="Edit Sales" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-brand-600 hover:bg-slate-50 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-            <button onclick="toggleSalesStatus('${s.id}')" class="px-2.5 py-1 text-xs border border-slate-200 font-medium rounded-lg hover:bg-slate-50 transition">${s.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>
-            <button onclick="deleteSales('${s.id}')" title="Hapus Sales" class="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+        `;
+      } else {
+        document.getElementById('sales-container').innerHTML = filteredSales.map(s => `
+          <div class="bg-white p-3.5 rounded-2xl border flex justify-between items-center shadow-sm">
+            <div>
+              <div class="font-bold text-slate-900">${escapeHtml(s.name)} <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">${s.status.toUpperCase()}</span></div>
+              <div class="text-xs text-slate-500">${escapeHtml(s.phone)} &bull; ${escapeHtml(s.route)}</div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="openSalesModal('${s.id}')" title="Edit Sales" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-brand-600 hover:bg-slate-50 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+              <button onclick="toggleSalesStatus('${s.id}')" class="px-2.5 py-1 text-xs border border-slate-200 font-medium rounded-lg hover:bg-slate-50 transition">${s.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>
+              <button onclick="deleteSales('${s.id}')" title="Hapus Sales" class="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
       lucide.createIcons();
     }
     function setSalesFilter(f) { currentSalesFilter = f; renderSalesList(); }
@@ -3866,10 +3898,23 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function populateSalesDropdown() {
+      const activeSales = getSalesData().filter(i => i.status === 'aktif');
       const s = document.getElementById('trx-form-sales');
-      if (s) s.innerHTML = getSalesData().filter(i => i.status === 'aktif').map(i => `<option value="${i.id}">${i.name} - ${i.route}</option>`).join('');
+      if (s) {
+        if (activeSales.length === 0) {
+          s.innerHTML = '<option value="">-- Belum ada Sales Terdaftar --</option>';
+        } else {
+          s.innerHTML = activeSales.map(i => `<option value="${i.id}">${escapeHtml(i.name)} - ${escapeHtml(i.route)}</option>`).join('');
+        }
+      }
       const poS = document.getElementById('po-form-sales');
-      if (poS) poS.innerHTML = getSalesData().filter(i => i.status === 'aktif').map(i => `<option value="${i.id}">${i.name} - ${i.route}</option>`).join('');
+      if (poS) {
+        if (activeSales.length === 0) {
+          poS.innerHTML = '<option value="">-- Belum ada Sales Terdaftar --</option>';
+        } else {
+          poS.innerHTML = activeSales.map(i => `<option value="${i.id}">${escapeHtml(i.name)} - ${escapeHtml(i.route)}</option>`).join('');
+        }
+      }
     }
 
     // --- 0. SISTEM AUTENTIKASI & KEAMANAN PIN ---
@@ -4102,7 +4147,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
     // --- 8. INITIAL BOOTSTRAP ---
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. Render data awal dari cache lokal (cepat 0ms)
+      // 0. Bersihkan cache dummy lama jika ada
+      cleanupLegacyDummyData();
+
+      // 1. Render data awal dari cache lokal
       renderAllViews();
 
       // 2. Cek sesi autentikasi pengguna (Login check)
@@ -4119,9 +4167,28 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         showLoginScreen();
       }
 
-      // 3. Coba hubungkan dan sinkronkan dengan Cloud Supabase
+      // 3. Hubungkan dan sinkronkan dengan Cloud Supabase
       await initSupabase(false);
     });
+
+    // Otomatis sinkron ulang saat tab browser kembali dibuka / difokuskan
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && isSupabaseConnected) {
+        pullDataFromSupabase(false);
+      }
+    });
+    window.addEventListener('focus', () => {
+      if (isSupabaseConnected) {
+        pullDataFromSupabase(false);
+      }
+    });
+
+    // Sinkronisasi otomatis periodik setiap 25 detik di latar belakang
+    setInterval(() => {
+      if (isSupabaseConnected) {
+        pullDataFromSupabase(false);
+      }
+    }, 25000);
   </script>
 </body>
 </html>
