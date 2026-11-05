@@ -936,18 +936,28 @@
           </div>
         </div>
 
-        <!-- PANEL CEK RUTE KOSONG -->
+        <!-- PANEL CEK RUTE KOSONG & MASTER TOKO -->
         <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-4 space-y-3">
-          <div class="flex justify-between items-center border-b pb-3">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center"><i data-lucide="map-pin" class="w-4 h-4"></i></div>
-              <h3 class="font-bold text-slate-900 text-sm sm:text-base">Radar Monitoring Kunjungan & Deteksi Rute Kosong</h3>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold shadow-sm">
+                <i data-lucide="store" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base">Daftar Toko & Radar Rute Kosong</h3>
+                <p class="text-[11px] text-slate-500">Kelola master toko/minimarket rekanan dan pantau jadwal dropping roti</p>
+              </div>
             </div>
-            <select id="filter-rute-days" onchange="renderRuteKosongPanel()" class="text-xs bg-slate-50 border rounded-xl px-2.5 py-1.5 font-semibold">
-              <option value="all">Semua Toko</option>
-              <option value="idle3" selected>Belum Dikunjungi > 3 Hari</option>
-              <option value="idle7">Kritis > 7 Hari</option>
-            </select>
+            <div class="flex items-center gap-2">
+              <select id="filter-rute-days" onchange="renderRuteKosongPanel()" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 font-semibold text-slate-700">
+                <option value="all">Semua Toko</option>
+                <option value="idle3" selected>Belum Dikunjungi > 3 Hari</option>
+                <option value="idle7">Kritis > 7 Hari</option>
+              </select>
+              <button onclick="openTokoModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Toko
+              </button>
+            </div>
           </div>
           <div id="rute-kosong-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1"></div>
         </div>
@@ -1136,6 +1146,52 @@
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" onclick="closeReturModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
           <button type="submit" id="retur-submit-btn" class="px-4 py-1.5 rounded-lg bg-rose-600 text-white font-semibold">Simpan Retur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL MASTER TOKO LANGSUNG & MINIMARKET -->
+  <div id="modal-toko" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="p-4 border-b bg-amber-600 text-white flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <i data-lucide="store" class="w-4 h-4"></i>
+          <h3 id="toko-modal-title" class="text-sm font-bold">Tambah Toko / Minimarket</h3>
+        </div>
+        <button type="button" onclick="closeTokoModal()" class="text-amber-100 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form id="form-toko" onsubmit="saveToko(event)" class="p-4 space-y-3.5 text-xs">
+        <input type="hidden" id="toko-form-id" value="">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Toko / Minimarket *</label>
+          <input type="text" id="toko-form-name" required placeholder="Contoh: Minimarket Barokah Dinoyo" class="w-full px-3 py-2 border rounded-xl font-medium">
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Pemilik / PIC Toko</label>
+            <input type="text" id="toko-form-pic" placeholder="Contoh: Pak Gunawan" class="w-full px-3 py-2 border rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">No WhatsApp Toko *</label>
+            <input type="tel" id="toko-form-phone" required placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 border rounded-xl">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Wilayah / Rute Pengantaran</label>
+          <input type="text" id="toko-form-route" placeholder="Contoh: Sukun - Kepanjen" class="w-full px-3 py-2 border rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Sales Penanggung Jawab</label>
+          <select id="toko-form-sales" class="w-full px-3 py-2 border rounded-xl bg-white font-medium"></select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Tanggal Terakhir Dikunjungi</label>
+          <input type="date" id="toko-form-visit-date" class="w-full px-3 py-2 border rounded-xl">
+        </div>
+        <div class="pt-3 border-t flex justify-end gap-2">
+          <button type="button" onclick="closeTokoModal()" class="px-3.5 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition">Batal</button>
+          <button type="submit" id="toko-submit-btn" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-sm transition">Simpan Toko</button>
         </div>
       </form>
     </div>
@@ -2734,6 +2790,102 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     }
 
+    function openTokoModal(tokoId = null) {
+      const modal = document.getElementById('modal-toko');
+      const title = document.getElementById('toko-modal-title');
+      const submitBtn = document.getElementById('toko-submit-btn');
+      const hiddenId = document.getElementById('toko-form-id');
+      const nameInput = document.getElementById('toko-form-name');
+      const picInput = document.getElementById('toko-form-pic');
+      const phoneInput = document.getElementById('toko-form-phone');
+      const routeInput = document.getElementById('toko-form-route');
+      const salesSelect = document.getElementById('toko-form-sales');
+      const dateInput = document.getElementById('toko-form-visit-date');
+
+      // Populate sales dropdown
+      const salesList = getSalesData().filter(s => s.status === 'aktif');
+      salesSelect.innerHTML = salesList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)} (${escapeHtml(s.route)})</option>`).join('');
+
+      if (tokoId && typeof tokoId === 'string') {
+        const t = getTokoData().find(x => x.id === tokoId);
+        if (t) {
+          if (title) title.innerText = 'Edit Data Toko / Minimarket';
+          if (submitBtn) submitBtn.innerText = 'Perbarui Toko';
+          if (hiddenId) hiddenId.value = t.id;
+          if (nameInput) nameInput.value = t.name || '';
+          if (picInput) picInput.value = t.pic || '';
+          if (phoneInput) phoneInput.value = t.phone || '';
+          if (routeInput) routeInput.value = t.route || '';
+          if (salesSelect && t.salesName) salesSelect.value = t.salesName;
+          if (dateInput) dateInput.value = t.lastVisitDate || getTodayYMD();
+          modal.classList.remove('hidden');
+          lucide.createIcons();
+          return;
+        }
+      }
+
+      // Mode Tambah Baru
+      if (title) title.innerText = 'Tambah Toko / Minimarket';
+      if (submitBtn) submitBtn.innerText = 'Simpan Toko';
+      if (hiddenId) hiddenId.value = '';
+      if (nameInput) nameInput.value = '';
+      if (picInput) picInput.value = '';
+      if (phoneInput) phoneInput.value = '';
+      if (routeInput) routeInput.value = '';
+      if (dateInput) dateInput.value = getTodayYMD();
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeTokoModal() {
+      document.getElementById('modal-toko').classList.add('hidden');
+    }
+
+    function saveToko(e) {
+      e.preventDefault();
+      const tokoId = document.getElementById('toko-form-id').value;
+      const name = document.getElementById('toko-form-name').value.trim();
+      const pic = document.getElementById('toko-form-pic').value.trim() || 'Pemilik Toko';
+      const phone = document.getElementById('toko-form-phone').value.trim();
+      const route = document.getElementById('toko-form-route').value.trim() || 'Rute Bebas';
+      const salesName = document.getElementById('toko-form-sales').value || 'Sales Reguler';
+      const lastVisitDate = document.getElementById('toko-form-visit-date').value || getTodayYMD();
+
+      if (!name || !phone) return;
+
+      let list = getTokoData();
+      if (tokoId) {
+        list = list.map(item => item.id === tokoId ? { ...item, name, pic, phone, route, salesName, lastVisitDate } : item);
+        saveTokoData(list);
+        showToast(`Toko "${name}" berhasil diperbarui.`);
+      } else {
+        const newId = 'TKO-' + String(Date.now()).slice(-4);
+        list.unshift({
+          id: newId,
+          name,
+          pic,
+          phone,
+          route,
+          salesName,
+          lastVisitDate
+        });
+        saveTokoData(list);
+        showToast(`Toko "${name}" berhasil ditambahkan.`);
+      }
+      closeTokoModal();
+    }
+
+    function deleteToko(id) {
+      const t = getTokoData().find(i => i.id === id);
+      const tName = t ? t.name : id;
+      if (confirm(`Hapus toko "${tName}" dari daftar monitoring?`)) {
+        const list = getTokoData().filter(i => i.id !== id);
+        saveTokoData(list, true);
+        deleteItemFromSupabase('toko_langsung', id);
+        showToast(`Toko "${tName}" berhasil dihapus.`);
+      }
+    }
+
     function renderRuteKosongPanel() {
       const list = getTokoData();
       const container = document.getElementById('rute-kosong-container');
@@ -2742,17 +2894,50 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const enriched = list.map(t => ({ ...t, diffDays: Math.max(0, Math.round((today - new Date(t.lastVisitDate)) / 86400000)) }));
       let filtered = enriched.filter(t => filter === 'idle3' ? t.diffDays >= 3 : (filter === 'idle7' ? t.diffDays >= 7 : true));
       filtered.sort((a,b) => b.diffDays - a.diffDays);
-      document.getElementById('kpi-idle-toko').innerText = `${enriched.filter(t => t.diffDays >= 3).length} Toko`;
+      const kpiIdle = document.getElementById('kpi-idle-toko');
+      if (kpiIdle) kpiIdle.innerText = `${enriched.filter(t => t.diffDays >= 3).length} Toko`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center text-slate-400 text-xs bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            <i data-lucide="store" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+            <p class="font-medium text-slate-600">Tidak ada toko dalam filter ini.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Klik tombol <strong>+ Tambah Toko</strong> untuk mendaftarkan toko baru.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
 
       container.innerHTML = filtered.map(t => `
-        <div class="p-3 rounded-2xl border ${t.diffDays >= 7 ? 'border-rose-300 bg-rose-50/20' : 'border-amber-200 bg-amber-50/15'} flex justify-between items-center">
-          <div>
-            <div class="font-bold text-slate-900">${escapeHtml(t.name)} <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.diffDays >= 7 ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">${t.diffDays} Hari Kosong</span></div>
-            <div class="text-[11px] text-slate-500">Sales: ${escapeHtml(t.salesName)} &bull; ${escapeHtml(t.route)}</div>
+        <div class="p-3.5 rounded-2xl border ${t.diffDays >= 7 ? 'border-rose-300 bg-rose-50/20' : (t.diffDays >= 3 ? 'border-amber-200 bg-amber-50/15' : 'border-slate-200 bg-white')} flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:shadow transition">
+          <div class="space-y-1">
+            <div class="font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+              <span>${escapeHtml(t.name)}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.diffDays >= 7 ? 'bg-rose-100 text-rose-800' : (t.diffDays >= 3 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')}">
+                ${t.diffDays === 0 ? 'Dikunjungi Hari Ini' : `${t.diffDays} Hari Kosong`}
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-500">
+              <span class="font-medium text-slate-700">${escapeHtml(t.pic || 'PIC')}</span> &bull; 
+              <span>${escapeHtml(t.phone || '-')}</span> &bull; 
+              <span>Rute: ${escapeHtml(t.route || '-')}</span> &bull; 
+              <span>Sales: ${escapeHtml(t.salesName || '-')}</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5">
-            <button onclick="markTokoVisited('${t.id}')" title="Tandai toko telah dikunjungi hari ini" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">Sudah Kunjung</button>
-            <button onclick="followUpTokoWA('${t.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition">WA Toko</button>
+          <div class="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-center">
+            <button onclick="openTokoModal('${t.id}')" title="Edit Data Toko" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-brand-600 hover:bg-slate-50 transition">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteToko('${t.id}')" title="Hapus Toko" class="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="markTokoVisited('${t.id}')" title="Tandai toko telah dikunjungi hari ini" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+              Sudah Kunjung
+            </button>
+            <button onclick="followUpTokoWA('${t.id}')" title="Chat WhatsApp Toko" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center gap-1">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WA Toko
+            </button>
           </div>
         </div>
       `).join('');
