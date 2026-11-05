@@ -129,7 +129,7 @@
         color: #0f172a !important;
       }
 
-      /* Mode Cetak Surat Jalan & Nota Drop Roti Sales */
+      /* Mode Cetak Nota Penjualan Sales (Ukuran Kertas A5) */
       body.printing-nota #print-area-nota, 
       body.printing-nota #print-area-nota * {
         visibility: visible !important;
@@ -138,7 +138,8 @@
         position: static !important;
         display: block !important;
         width: 100% !important;
-        margin: 0 !important;
+        max-width: 148mm !important;
+        margin: 0 auto !important;
         padding: 0 !important;
         background: #ffffff !important;
         color: #0f172a !important;
@@ -190,7 +191,7 @@
   <!-- ROOT PRINT CONTAINER UNTUK LAPORAN KEUANGAN KORPORAT (BEBAS DARI OVERFLOW/SCROLL MODAL) -->
   <div id="print-area-financial" class="hidden"></div>
 
-  <!-- ROOT PRINT CONTAINER UNTUK SURAT JALAN & NOTA DROP ROTI SALES -->
+  <!-- ROOT PRINT CONTAINER UNTUK NOTA PENJUALAN SALES (UKURAN A5) -->
   <div id="print-area-nota" class="hidden"></div>
 
   <!-- ROOT PRINT CONTAINER UNTUK KARTU REKAP PRE-ORDER SALES (FORMAT FISIK) -->
@@ -1525,7 +1526,7 @@
         <div class="pt-2 flex flex-col gap-2">
           <button type="button" onclick="printFromSuccessModal()" class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Cetak Surat Jalan & Nota Sekarang</span>
+            <span>Cetak Nota Sales (A5) Sekarang</span>
           </button>
           <button type="button" onclick="closeTrxSuccessModal()" class="w-full py-2 px-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition cursor-pointer">
             Selesai / Cetak Nanti Dari Tabel
@@ -1546,10 +1547,11 @@
           </div>
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>Surat Jalan & Nota Drop Roti</span>
+              <span>Nota Penjualan Sales</span>
               <span id="preview-nota-id-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">TRX-XXXX</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-400/30">UKURAN A5</span>
             </h3>
-            <p class="text-[11px] text-slate-400">Bukti resmi serah terima barang sales & penagihan pembayaran toko</p>
+            <p class="text-[11px] text-slate-400">Bukti penyerahan barang & tagihan resmi kepada Sales CV. Alfaris Enam Delapan</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -1558,7 +1560,7 @@
             onclick="printActiveNota()" 
             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm transition cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Cetak / Print PDF</span>
+            <span>Cetak Nota Sales (A5)</span>
           </button>
           <button 
             type="button" 
@@ -1571,7 +1573,7 @@
 
       <!-- Modal Body (Paper Sheet) -->
       <div class="p-3 sm:p-6 bg-slate-100 overflow-y-auto flex-1">
-        <div id="nota-preview-sheet" class="max-w-2xl mx-auto bg-white p-6 sm:p-8 shadow-md border border-slate-200 rounded-xl text-slate-900">
+        <div id="nota-preview-sheet" class="max-w-[155mm] mx-auto bg-white p-4 sm:p-5 shadow-lg border border-slate-300 rounded-lg text-slate-900">
           <!-- Rendered Nota Content -->
         </div>
       </div>
@@ -4896,7 +4898,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     }
 
-    // --- TEMPLATE & FITUR SURAT JALAN & NOTA DROP ROTI ---
+    // --- TEMPLATE & FITUR NOTA PENJUALAN SALES (UKURAN KERTAS A5) ---
+    function setPrintPageSize(sizeCSS) {
+      let styleEl = document.getElementById('dynamic-page-print-style');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dynamic-page-print-style';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.innerHTML = `@media print { @page { size: ${sizeCSS}; margin: 6mm 8mm; } }`;
+    }
+
     function buildNotaHTML(trx) {
       const activeUser = (typeof currentRole !== 'undefined' && currentRole === 'owner') ? 'Owner / Pimpinan' : 'Kasir Operasional';
       const dropDate = formatIndoDate(trx.date || getTodayYMD());
@@ -4907,43 +4919,51 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       let statusBadgeText = '';
       if (trx.paymentMethod === 'menunggu_setoran' || trx.deliveryStatus === 'menunggu_setoran') {
-        statusBadgeText = 'DIBAWA SALES (TAGIHAN BELUM DISETOR / MENUNGGU PEMBAYARAN TOKO)';
+        statusBadgeText = 'DIBAWA SALES (TAGIHAN BELUM DISETOR)';
       } else if (trx.paymentMethod === 'transfer') {
-        statusBadgeText = 'LUNAS VIA TRANSFER BANK';
+        statusBadgeText = 'LUNAS (TRANSFER BANK)';
       } else if (trx.paymentMethod === 'tunai') {
-        statusBadgeText = 'LUNAS TUNAI (CASH)';
+        statusBadgeText = 'LUNAS (TUNAI / CASH)';
       } else if (trx.paymentMethod === 'kasbon') {
         if (trx.paymentStatus === 'lunas') {
           statusBadgeText = 'LUNAS (KASBON TERSELESAIKAN)';
         } else if (dpAmt > 0) {
-          statusBadgeText = `KASBON / TEMPO (DP: ${formatRupiah(dpAmt)}, SISA: ${formatRupiah(sisaAmt)})`;
+          statusBadgeText = `KASBON TEMPO (DP: ${formatRupiah(dpAmt)}, SISA: ${formatRupiah(sisaAmt)})`;
         } else {
-          statusBadgeText = `KASBON / PIUTANG TEMPO (SISA: ${formatRupiah(trx.totalAmount)})`;
+          statusBadgeText = `KASBON TEMPO (SISA: ${formatRupiah(trx.totalAmount)})`;
         }
       } else {
         statusBadgeText = 'LUNAS';
       }
 
-      const sortedTrxItems = [...(trx.items || [])].sort((a, b) => {
-        const idxA = getProductSortIndex(a.productName || a.product || a.name);
-        const idxB = getProductSortIndex(b.productName || b.product || b.name);
-        return idxA - idxB;
-      });
+      // 1. Filter HANYA nama barang yang di-order (qty > 0)
+      // 2. Tetap diurutkan secara baku sesuai urutan 25 roti standar
+      const sortedTrxItems = (trx.items || [])
+        .filter(it => Number(it.qty) > 0)
+        .sort((a, b) => {
+          const idxA = getProductSortIndex(a.productName || a.product || a.name);
+          const idxB = getProductSortIndex(b.productName || b.product || b.name);
+          return idxA - idxB;
+        });
 
-      const itemsRows = sortedTrxItems.map((it, idx) => `
-        <tr class="border-b border-slate-300">
-          <td class="border border-slate-300 py-1.5 px-2 text-center text-slate-500">${idx + 1}</td>
-          <td class="border border-slate-300 py-1.5 px-2 text-left font-bold text-slate-800">${escapeHtml(it.productName)}</td>
-          <td class="border border-slate-300 py-1.5 px-2 text-center font-bold text-slate-900">${it.qty} Pcs</td>
-          <td class="border border-slate-300 py-1.5 px-2 text-right text-slate-700">${formatRupiah(it.unitPrice)}</td>
-          <td class="border border-slate-300 py-1.5 px-2 text-right font-bold text-slate-900">${formatRupiah(it.subtotal || (it.qty * it.unitPrice))}</td>
+      const itemsRows = sortedTrxItems.length > 0 ? sortedTrxItems.map((it, idx) => `
+        <tr class="border-b border-slate-300 text-slate-900">
+          <td class="border border-slate-400 py-1 px-1.5 text-center text-slate-500 font-mono">${idx + 1}</td>
+          <td class="border border-slate-400 py-1 px-2.5 text-left font-bold text-slate-900">${escapeHtml(it.productName)}</td>
+          <td class="border border-slate-400 py-1 px-2 text-center font-bold text-slate-950">${it.qty} Pcs</td>
+          <td class="border border-slate-400 py-1 px-2 text-right font-mono text-slate-700">${formatRupiah(it.unitPrice)}</td>
+          <td class="border border-slate-400 py-1 px-2.5 text-right font-mono font-bold text-slate-950">${formatRupiah(it.subtotal || (it.qty * it.unitPrice))}</td>
         </tr>
-      `).join('');
+      `).join('') : `
+        <tr>
+          <td colspan="5" class="py-3 text-center text-slate-400 italic border border-slate-400">Tidak ada produk yang dipesan</td>
+        </tr>
+      `;
 
       const kasbonBox = (trx.paymentMethod === 'kasbon' && trx.paymentStatus !== 'lunas') ? `
-        <div class="mb-3 p-2 bg-amber-50 border border-amber-300 rounded text-[10px]">
+        <div class="mb-2 p-1.5 bg-amber-50 border border-amber-300 rounded text-[9px]">
           <div class="flex justify-between font-bold text-amber-950">
-            <span>Uang Muka / DP Diterima: <strong>${formatRupiah(dpAmt)}</strong></span>
+            <span>DP Diterima: <strong>${formatRupiah(dpAmt)}</strong></span>
             <span class="text-rose-700 font-black">Sisa Kasbon Tempo: ${formatRupiah(sisaAmt)}</span>
             <span>Jatuh Tempo: <strong>${formatIndoDate(trx.dueDate || addDaysYMD(trx.date, 3))}</strong></span>
           </div>
@@ -4951,55 +4971,73 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       ` : '';
 
       return `
-        <div class="p-4 sm:p-6 max-w-3xl mx-auto bg-white text-slate-900 text-xs font-sans print:p-0">
-          <!-- KOP CV ALFARIS ENAM DELAPAN -->
-          <div class="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-3">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-amber-600 text-white font-black text-xl flex items-center justify-center border border-amber-700 shadow-sm flex-shrink-0">
+        <div class="nota-a5-sheet bg-white text-slate-900 font-sans mx-auto text-xs" style="width: 100%; max-width: 148mm; margin: 0 auto; padding: 2mm 3mm; box-sizing: border-box; page-break-inside: avoid;">
+          <!-- KOP PERUSAHAAN & IDENTITAS NOTA -->
+          <div class="flex items-center justify-between border-b-2 border-slate-900 pb-2 mb-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-10 h-10 rounded-lg bg-amber-600 text-white font-black text-lg flex items-center justify-center border border-amber-700 shadow-xs flex-shrink-0">
                 68
               </div>
               <div>
-                <h1 class="text-base sm:text-lg font-black tracking-wide text-slate-900 uppercase">CV. ALFARIS ENAM DELAPAN</h1>
-                <p class="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Distributor Resmi Roti & Makanan Hot Bread</p>
-                <p class="text-[9px] text-slate-600 leading-tight">Malang, Jawa Timur &bull; Telp/WA: +62 812-3590-3990 &bull; Email: cv.alfaris68@gmail.com</p>
+                <h1 class="text-sm font-black tracking-wide text-slate-900 uppercase leading-none">CV. ALFARIS ENAM DELAPAN</h1>
+                <p class="text-[9px] font-bold text-amber-800 uppercase tracking-wider mt-0.5">Distributor Resmi Roti & Makanan Hot Bread</p>
+                <p class="text-[8.5px] text-slate-600 leading-tight mt-0.5">Malang, Jawa Timur &bull; Telp/WA: +62 812-3590-3990 &bull; Email: cv.alfaris68@gmail.com</p>
               </div>
             </div>
             <div class="text-right">
-              <div class="inline-block bg-slate-900 text-white font-black text-[10px] sm:text-[11px] px-2.5 sm:px-3 py-1 rounded">
-                SURAT JALAN & NOTA DROP ROTI
+              <div class="inline-block bg-slate-900 text-white font-black text-[10.5px] px-2.5 py-0.5 rounded tracking-wide">
+                NOTA PENJUALAN SALES
               </div>
               <div class="text-[10px] font-bold text-slate-800 mt-1">NO: <span class="font-black text-amber-700">${trx.id}</span></div>
-              <div class="text-[9px] text-slate-500">Tanggal: ${dropDate} (${dropTime})</div>
+              <div class="text-[8.5px] text-slate-500">Tanggal: ${dropDate} (${dropTime})</div>
             </div>
           </div>
 
-          <!-- INFORMASI PENGIRIMAN & PENERIMA -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 p-2.5 bg-slate-50 border border-slate-300 rounded text-[10px]">
+          <!-- INFORMASI SALES PENERIMA & TRANSAKSI (DITUJUKAN KEPADA SALES BUKAN TOKO) -->
+          <div class="grid grid-cols-2 gap-2 mb-2 p-2 bg-slate-50 border border-slate-300 rounded text-[9.5px]">
             <div>
               <table class="w-full">
-                <tr><td class="font-bold text-slate-600 w-24">Sales Pembawa</td><td class="font-black text-slate-900">: ${escapeHtml(trx.salesName || '-')}</td></tr>
-                <tr><td class="font-bold text-slate-600">No. HP Sales</td><td class="text-slate-800">: ${escapeHtml(trx.salesPhone || '-')}</td></tr>
-                <tr><td class="font-bold text-slate-600">Level Harga</td><td class="text-slate-800">: ${escapeHtml(trx.tierName || '-')}</td></tr>
+                <tr>
+                  <td class="font-bold text-slate-600 w-24">Sales (Penerima)</td>
+                  <td class="font-black text-slate-900">: ${escapeHtml(trx.salesName || '-')}</td>
+                </tr>
+                <tr>
+                  <td class="font-bold text-slate-600">Rute Sales</td>
+                  <td class="text-slate-800">: ${escapeHtml(trx.salesRoute || '-')}</td>
+                </tr>
+                <tr>
+                  <td class="font-bold text-slate-600">No. Kontak HP</td>
+                  <td class="text-slate-800">: ${escapeHtml(trx.salesPhone || '-')}</td>
+                </tr>
               </table>
             </div>
             <div>
               <table class="w-full">
-                <tr><td class="font-bold text-slate-600 w-24">Toko / Tujuan</td><td class="font-black text-slate-900">: ${escapeHtml(trx.tokoName || trx.salesRoute || 'Rute Toko Langganan')}</td></tr>
-                <tr><td class="font-bold text-slate-600">Petugas Kasir</td><td class="text-slate-800">: ${activeUser}</td></tr>
-                <tr><td class="font-bold text-slate-600">Status Transaksi</td><td class="font-bold text-slate-900">: <span class="${trx.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-amber-700'}">${statusBadgeText}</span></td></tr>
+                <tr>
+                  <td class="font-bold text-slate-600 w-24">Petugas Kasir</td>
+                  <td class="font-semibold text-slate-800">: ${activeUser}</td>
+                </tr>
+                <tr>
+                  <td class="font-bold text-slate-600">Level Harga</td>
+                  <td class="text-slate-800">: ${escapeHtml(trx.tierName || '-')}</td>
+                </tr>
+                <tr>
+                  <td class="font-bold text-slate-600">Status Pembayaran</td>
+                  <td class="font-bold">: <span class="${trx.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-amber-700'}">${statusBadgeText}</span></td>
+                </tr>
               </table>
             </div>
           </div>
 
-          <!-- TABEL RINCIAN ROTI YANG DIBAWA -->
-          <table class="w-full border-collapse border border-slate-900 text-[10px] mb-3">
+          <!-- TABEL RINCIAN ROTI BERKOLOM (HANYA ROTI YANG DIORDER DENGAN URUTAN BAKU 25 ROTI) -->
+          <table class="w-full border-collapse border border-slate-900 text-[9.5px] mb-2">
             <thead>
               <tr class="bg-slate-200 text-slate-900 font-bold border-b border-slate-900">
-                <th class="border border-slate-400 py-1.5 px-2 text-center w-8">No</th>
-                <th class="border border-slate-400 py-1.5 px-2 text-left">Nama Varian Roti</th>
-                <th class="border border-slate-400 py-1.5 px-2 text-center w-20">Qty Dibawa</th>
+                <th class="border border-slate-400 py-1.5 px-1.5 text-center w-7">No</th>
+                <th class="border border-slate-400 py-1.5 px-2.5 text-left">Nama Barang</th>
+                <th class="border border-slate-400 py-1.5 px-2 text-center w-16">Qty</th>
                 <th class="border border-slate-400 py-1.5 px-2 text-right w-24">Harga Satuan</th>
-                <th class="border border-slate-400 py-1.5 px-2 text-right w-28">Total Tagihan Toko</th>
+                <th class="border border-slate-400 py-1.5 px-2.5 text-right w-28">Jumlah (Rp)</th>
               </tr>
             </thead>
             <tbody>
@@ -5007,43 +5045,37 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             </tbody>
             <tfoot>
               <tr class="bg-slate-100 font-bold border-t-2 border-slate-900">
-                <td colspan="2" class="border border-slate-400 py-2 px-2 text-right uppercase">TOTAL ROTI & TAGIHAN:</td>
-                <td class="border border-slate-400 py-2 px-2 text-center font-black">${trx.totalQty} Pcs</td>
-                <td class="border border-slate-400 py-2 px-2 text-right"></td>
-                <td class="border border-slate-400 py-2 px-2 text-right text-xs font-black text-slate-900">${formatRupiah(trx.totalAmount)}</td>
+                <td colspan="2" class="border border-slate-400 py-1.5 px-2.5 text-right uppercase font-black text-slate-900">TOTAL:</td>
+                <td class="border border-slate-400 py-1.5 px-2 text-center font-black text-slate-950">${trx.totalQty} Pcs</td>
+                <td class="border border-slate-400 py-1.5 px-2 text-right"></td>
+                <td class="border border-slate-400 py-1.5 px-2.5 text-right text-xs font-black text-slate-950">${formatRupiah(trx.totalAmount)}</td>
               </tr>
             </tfoot>
           </table>
 
           ${kasbonBox}
 
-          <!-- KETENTUAN PENGIRIMAN -->
-          <div class="mb-4 text-[9px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-200 leading-relaxed">
-            <span class="font-bold">Ketentuan & Serah Terima Drop Roti:</span><br>
-            1. Surat Jalan & Nota ini merupakan bukti sah penyerahan barang dan dasar penagihan pembayaran oleh Sales CV. Alfaris Enam Delapan.<br>
-            2. Mohon periksa jumlah fisik dan kondisi kemasan roti saat serah terima. Segala bentuk komplain/retur mengikuti ketentuan distributor.<br>
-            3. Jika pembayaran dilakukan secara tempo (kasbon), pelunasan wajib diselesaikan pada batas jatuh tempo yang telah ditentukan.
+          <!-- CATATAN NOTA KHUSUS SALES -->
+          <div class="mb-2.5 text-[8.5px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-200 leading-snug">
+            <span class="font-bold text-slate-700">Catatan Nota:</span><br>
+            1. Nota ini adalah bukti penyerahan barang dan tagihan resmi kepada Sales CV. Alfaris Enam Delapan.<br>
+            2. Sales bertanggung jawab penuh atas fisik roti yang dibawa dan setoran hasil penjualan (Tunai, Transfer, atau Kasbon Toko).<br>
+            3. Pelunasan kasbon tempo wajib disetorkan paling lambat sesuai dengan batas waktu jatuh tempo.
           </div>
 
-          <!-- KOLOM TANDA TANGAN (KASIR, SALES, TOKO) -->
-          <div class="grid grid-cols-3 gap-3 text-center text-[10px] avoid-break">
-            <div class="border border-slate-300 rounded p-2">
-              <div class="text-slate-600 font-medium">Petugas Gudang / Kasir</div>
-              <div class="text-[9px] text-slate-400">Yang Menyerahkan</div>
-              <div class="h-10 sm:h-12"></div>
-              <div class="border-t border-slate-400 font-bold pt-1 text-slate-800">( Kasir Alfaris )</div>
+          <!-- KOLOM TANDA TANGAN (KASIR & SALES - TIDAK ADA PIHAK TOKO) -->
+          <div class="grid grid-cols-2 gap-4 text-center text-[9.5px] avoid-break">
+            <div class="border border-slate-300 rounded p-1.5">
+              <div class="text-slate-700 font-bold">Kasir / Admin Gudang</div>
+              <div class="text-[8.5px] text-slate-500">Yang Menyerahkan Barang</div>
+              <div class="h-9"></div>
+              <div class="border-t border-slate-400 font-black pt-1 text-slate-900">( Kasir Alfaris )</div>
             </div>
-            <div class="border border-slate-300 rounded p-2">
-              <div class="text-slate-600 font-medium">Sales Pengirim</div>
-              <div class="text-[9px] text-slate-400">Yang Membawa & Menagih</div>
-              <div class="h-10 sm:h-12"></div>
-              <div class="border-t border-slate-400 font-bold pt-1 text-slate-800">( ${escapeHtml(trx.salesName || 'Sales')} )</div>
-            </div>
-            <div class="border border-slate-300 rounded p-2">
-              <div class="text-slate-600 font-medium">Penerima Toko</div>
-              <div class="text-[9px] text-slate-400">Cap & Tanda Tangan</div>
-              <div class="h-10 sm:h-12"></div>
-              <div class="border-t border-slate-400 font-bold pt-1 text-slate-800">( ${escapeHtml(trx.tokoName || 'Toko / Klien')} )</div>
+            <div class="border border-slate-300 rounded p-1.5">
+              <div class="text-slate-700 font-bold">Sales Penerima Barang</div>
+              <div class="text-[8.5px] text-slate-500">Yang Membawa & Bertanggung Jawab</div>
+              <div class="h-9"></div>
+              <div class="border-t border-slate-400 font-black pt-1 text-slate-900">( ${escapeHtml(trx.salesName || 'Sales')} )</div>
             </div>
           </div>
         </div>
@@ -5068,7 +5100,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function closeNotaModal() {
-      document.getElementById('modal-nota-preview').classList.add('hidden');
+      const modal = document.getElementById('modal-nota-preview');
+      if (modal) modal.classList.add('hidden');
     }
 
     function printActiveNota() {
@@ -5087,9 +5120,11 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const printArea = document.getElementById('print-area-nota');
       if (!printArea) return;
 
+      // Atur ukuran halaman print ke A5 Portrait secara dinamis
+      setPrintPageSize('A5 portrait');
       printArea.innerHTML = buildNotaHTML(trx);
 
-      document.body.classList.remove('printing-financial', 'printing-po');
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-po-card');
       document.body.classList.add('printing-nota');
 
       setTimeout(() => {
@@ -5364,7 +5399,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                   <!-- Tombol Preview & Cetak Surat Jalan / Nota -->
                   <button 
                     onclick="openNotaModal('${t.id}')" 
-                    title="Lihat & Cetak Surat Jalan & Nota Drop Roti" 
+                    title="Lihat & Cetak Nota Penjualan Sales (Ukuran A5)" 
                     class="px-2.5 py-1.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1 shadow-2xs transition cursor-pointer"
                   >
                     <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-600"></i>
