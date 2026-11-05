@@ -2987,6 +2987,7 @@
     }
 
     function renderAllViews() {
+      autoSyncAllPOsToTransactions();
       renderSalesList();
       renderProductsTable();
       renderDashboardKasbon();
@@ -3862,7 +3863,17 @@
         let allPO = getPOSalesData().filter(p => p.id !== poId);
         savePOSalesData(allPO, true);
         deleteItemFromSupabase('po_sales', poId);
-        showToast('Data PO sales dihapus.');
+
+        // Hapus juga transaksi drop roti terkait jika masih berstatus menunggu_setoran
+        let allTrx = getTransactionsData();
+        const linkedTrx = allTrx.find(t => t.poId === poId || (t.source === 'auto_po' && t.poId === poId));
+        if (linkedTrx && (linkedTrx.paymentMethod === 'menunggu_setoran' || linkedTrx.deliveryStatus === 'menunggu_setoran')) {
+          allTrx = allTrx.filter(t => t.id !== linkedTrx.id);
+          saveTransactionsData(allTrx, true);
+          deleteItemFromSupabase('transactions', linkedTrx.id);
+        }
+
+        showToast('Data PO sales & transaksi terkait dihapus.');
       }
     }
 
@@ -3921,13 +3932,9 @@
       savePOSalesData(allPO);
       closePOInputModal();
 
-      // Jika pada tanggal ini sudah ada transaksi sales yang terhubung, perbarui otomatis transaksi tersebut!
-      const currentTrx = getTransactionsData();
-      const hasLinkedTrx = currentTrx.some(t => t.date === targetDate && (t.source === 'auto_po' || t.poId));
-      if (hasLinkedTrx) {
-        publishPOToTransactions(targetDate, false);
-        showToast(`Transaksi Drop Roti Sales untuk ${sales.name} otomatis diperbarui mengikuti muatan PO terbaru!`, 'info');
-      }
+      // OTOMATIS LANGSUNG TERBITKAN / SINKRONKAN KE TRANSAKSI SALES (ZERO STOCK)!
+      publishPOToTransactions(targetDate, false);
+      showToast(`PO ${sales.name} disimpan & otomatis masuk ke Transaksi Sales (Siap Cetak Nota A5)!`, 'success');
     }
 
     // Kirim Rekapitulasi PO ke WhatsApp Pabrik Roti
@@ -4520,6 +4527,29 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (confirm(promptMsg)) {
         closePabrikReconciliationModal();
         publishPOToTransactions(currentPODate, true);
+      }
+    }
+
+    let isSyncingPOToTrx = false;
+    function autoSyncAllPOsToTransactions() {
+      if (isSyncingPOToTrx) return;
+      isSyncingPOToTrx = true;
+      try {
+        const allPO = getPOSalesData();
+        if (!allPO || allPO.length === 0) return;
+        const allTrx = getTransactionsData();
+        const dates = [...new Set(allPO.map(p => p.date).filter(Boolean))];
+
+        dates.forEach(d => {
+          const posOnDate = allPO.filter(p => p.date === d);
+          // Jika ada PO pada tanggal d yang belum memiliki transaksi di tabel Transaksi Sales
+          const missingTrx = posOnDate.some(po => !allTrx.some(t => t.poId === po.id || (t.date === po.date && t.salesId === po.salesId)));
+          if (missingTrx) {
+            publishPOToTransactions(d, false);
+          }
+        });
+      } finally {
+        isSyncingPOToTrx = false;
       }
     }
 
@@ -6439,6 +6469,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     });
 
     function renderTransactionList() {
+      autoSyncAllPOsToTransactions();
       const list = getTransactionsData();
       const container = document.getElementById('trx-container');
       const search = (document.getElementById('search-trx').value || '').toLowerCase();
@@ -7065,6 +7096,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       if (tabId === 'po') {
         renderPOSalesMatrix();
+      } else if (tabId === 'transaksi') {
+        renderTransactionList();
       }
 
       lucide.createIcons();
