@@ -1634,76 +1634,208 @@
     </div>
   </div>
 
-  <!-- MODAL PENYESUAIAN PEROLEHAN MUATAN PABRIK & ZERO STOCK -->
+  <!-- MODAL PENYESUAIAN PEROLEHAN MUATAN PABRIK & ZERO STOCK (INTEGRASI KALKULATOR SPREADSHEET PABRIK) -->
   <div id="modal-pabrik-reconciliation" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-backdrop">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[94vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
       <!-- Header -->
       <div class="p-3.5 sm:p-4 border-b flex justify-between items-center bg-slate-900 text-white">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs">
+          <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shadow-sm">
             <i data-lucide="truck" class="w-4 h-4"></i>
           </div>
           <div>
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>Perolehan Muatan Pabrik & Slot Armada</span>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+              <span>Kalkulator Muatan Pabrik & Slot Armada</span>
               <span id="recon-modal-date-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">05/11/2026</span>
+              <span id="recon-modal-armada-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">S 9631 NF</span>
             </h3>
-            <p class="text-[11px] text-slate-400">Verifikasi muatan mobil dari pabrik & pastikan nol stok mengendap di gudang</p>
+            <p class="text-[11px] text-slate-400">Formula Resmi Isi Keranjang Pabrik &bull; Zero Stock (Semua Roti Dibawa Sales)</p>
           </div>
         </div>
-        <button onclick="closePabrikReconciliationModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition">
+        <button onclick="closePabrikReconciliationModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <!-- Body -->
       <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs bg-slate-50">
-        <!-- Card KPI Muatan Mobil vs Sales -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-            <div class="text-[10px] text-slate-500 font-semibold">Total Pesanan Sales</div>
-            <div id="recon-kpi-sales-pcs" class="text-lg font-black text-slate-900 mt-0.5">0 Pcs</div>
-            <div class="text-[9.5px] text-slate-400">Akumulasi PO tim sales</div>
+        <!-- Control Bar: Pilih Armada & Kapasitas Real -->
+        <div class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+              <i data-lucide="car" class="w-4 h-4 text-brand-600"></i>
+              <span>Kendaraan Armada:</span>
+            </label>
+            <select 
+              id="recon-armada-select" 
+              onchange="onReconArmadaChanged()" 
+              class="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
+              <!-- Diisi otomatis oleh JS -->
+            </select>
           </div>
-          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
-            <div class="text-[10px] text-slate-500 font-semibold">Estimasi Modal Pabrik</div>
-            <div id="recon-kpi-factory-cost" class="text-lg font-black text-amber-700 mt-0.5">Rp 0</div>
-            <div class="text-[9.5px] text-slate-400">Total HPP ke pabrik</div>
-          </div>
-          <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-300 shadow-xs">
-            <div class="text-[10px] text-emerald-800 font-bold flex items-center gap-1">
-              <i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i>
-              <span>Target Stok Gudang</span>
+
+          <div class="flex items-center gap-2 text-[11px]">
+            <span class="text-slate-500 font-medium">Kapasitas Armada:</span>
+            <div class="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+              <span class="font-bold text-slate-700">KB:</span>
+              <input 
+                type="number" 
+                id="recon-armada-kb" 
+                oninput="onReconCapacityCustomInput()" 
+                class="w-14 text-center font-bold text-slate-900 bg-white border border-slate-300 rounded px-1 py-0.5 text-xs" 
+                value="204" min="1" max="999"
+              >
+              <span class="text-slate-400 text-[10px]">krjg</span>
             </div>
-            <div class="text-lg font-black text-emerald-900 mt-0.5">0 Pcs (Zero Stock)</div>
-            <div class="text-[9.5px] text-emerald-700">Semua roti langsung dibawa sales</div>
+            <div class="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+              <span class="font-bold text-slate-700">KMK:</span>
+              <input 
+                type="number" 
+                id="recon-armada-kmk" 
+                oninput="onReconCapacityCustomInput()" 
+                class="w-12 text-center font-bold text-slate-900 bg-white border border-slate-300 rounded px-1 py-0.5 text-xs" 
+                value="33" min="0" max="999"
+              >
+              <span class="text-slate-400 text-[10px]">krjg</span>
+            </div>
           </div>
         </div>
 
-        <!-- Penjelasan Alur Operasional -->
-        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 leading-relaxed flex items-start gap-2.5">
-          <i data-lucide="info" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
-          <div>
-            <strong>SOP Muatan Pabrik & Penyesuaian Armada:</strong><br>
-            Jika ada varian roti yang kurang dari pabrik atau kapasitas mobil armada masih longgar sehingga sales menambah pesanan, sesuaikan kuota roti sales terkait lewat tombol <strong>[✏️ Edit PO]</strong> di bawah. Setelah perolehan muatan pabrik sudah Fix, klik tombol <strong>Fix-kan & Terbitkan Transaksi Sales</strong> agar kasir langsung memiliki nota drop roti tanpa perlu input manual.
+        <!-- BIG STATUS & GAUGE CAPACITY CARD -->
+        <div id="recon-status-card" class="p-4 rounded-xl border transition shadow-xs bg-amber-500/10 border-amber-300 text-slate-900">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span id="recon-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500 text-slate-950">
+                  KURANG 27 KB ATAU 63 KMK
+                </span>
+                <span id="recon-percent-text" class="text-xs font-bold text-slate-700">88% Terisi</span>
+              </div>
+              <p id="recon-status-message" class="text-[11.5px] text-slate-700 mt-1 leading-snug font-medium">
+                Mobil armada masih longgar. Sales dapat menambah pesanan langsung agar mobil pas 100%.
+              </p>
+            </div>
+            <div class="text-left sm:text-right">
+              <div class="text-[10px] text-slate-500 font-semibold">Total Tagihan HPP Pabrik</div>
+              <div id="recon-kpi-factory-cost" class="text-lg sm:text-xl font-black text-amber-700">Rp 0</div>
+            </div>
+          </div>
+
+          <!-- Capacity Progress Bar -->
+          <div class="mt-3">
+            <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden shadow-inner flex">
+              <div 
+                id="recon-capacity-bar" 
+                class="bg-amber-500 h-3 rounded-full transition-all duration-300" 
+                style="width: 88%;">
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Grid KPIs -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-slate-200/80">
+            <div class="bg-white/80 p-2.5 rounded-lg border border-slate-200/80">
+              <div class="text-[9.5px] text-slate-500 font-medium">Keranjang Besar (KB)</div>
+              <div id="recon-kpi-kb" class="text-sm font-black text-slate-900 mt-0.5">0 / 204 KB</div>
+              <div id="recon-kpi-kb-sub" class="text-[9px] text-slate-400">Order vs Kapasitas</div>
+            </div>
+            <div class="bg-white/80 p-2.5 rounded-lg border border-slate-200/80">
+              <div class="text-[9.5px] text-slate-500 font-medium">Keranjang Kecil (KMK)</div>
+              <div id="recon-kpi-kmk" class="text-sm font-black text-slate-900 mt-0.5">0 / 33 KMK</div>
+              <div id="recon-kpi-kmk-sub" class="text-[9px] text-slate-400">Order vs Kapasitas</div>
+            </div>
+            <div class="bg-white/80 p-2.5 rounded-lg border border-slate-200/80">
+              <div class="text-[9.5px] text-slate-500 font-medium">Ekuivalen Mobil (3KB=7KMK)</div>
+              <div id="recon-kpi-equiv" class="text-sm font-black text-slate-900 mt-0.5">0 / 219 KB</div>
+              <div class="text-[9px] text-slate-400">Standar Rumus Pabrik</div>
+            </div>
+            <div class="bg-emerald-50/90 p-2.5 rounded-lg border border-emerald-300">
+              <div class="text-[9.5px] text-emerald-800 font-bold flex items-center gap-1">
+                <i data-lucide="check-circle" class="w-3 h-3 text-emerald-600"></i>
+                <span>Target Gudang</span>
+              </div>
+              <div class="text-sm font-black text-emerald-900 mt-0.5">0 Pcs (Zero Stock)</div>
+              <div class="text-[9px] text-emerald-700">Semua langsung dibawa sales</div>
+            </div>
           </div>
         </div>
 
-        <!-- Daftar Sales Pada Tanggal Terpilih -->
-        <div>
-          <h4 class="font-bold text-slate-800 mb-2 flex items-center justify-between">
-            <span>Alokasi Roti per Tim Sales (Rute):</span>
-            <span id="recon-sales-count-badge" class="text-[10px] text-slate-500 font-normal">0 Sales</span>
-          </h4>
+        <!-- SMART RECOMMENDATION BOX (Bila mobil masih longgar) -->
+        <div id="recon-recommendation-box" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950 space-y-1.5">
+          <div class="flex items-center gap-2 font-bold text-amber-900">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+            <span>Pilihan Penambahan Roti Cepat Laku (Agar Mobil Pas 100%):</span>
+          </div>
+          <p class="text-[11px] text-amber-800 leading-snug">
+            Karena mobil armada masih longgar, sales bisa menambah PO salah satu varian cepat laku di bawah langsung di tempat:
+          </p>
+          <div id="recon-recommendation-items" class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
+            <!-- Diisi oleh JS -->
+          </div>
+        </div>
+
+        <!-- TAB NAVIGATION (Sales vs Rincian 25 Keranjang Pabrik) -->
+        <div class="border-b border-slate-200 flex items-center gap-2">
+          <button 
+            id="tab-btn-recon-sales" 
+            onclick="switchReconTab('sales')" 
+            class="px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Alokasi Tim Sales & Edit PO</span>
+            <span id="recon-tab-sales-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-brand-100 text-brand-800">0</span>
+          </button>
+          <button 
+            id="tab-btn-recon-baskets" 
+            onclick="switchReconTab('baskets')" 
+            class="px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="package" class="w-4 h-4"></i>
+            <span>Rincian 25 Keranjang Pabrik</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">25 Varian</span>
+          </button>
+        </div>
+
+        <!-- TAB CONTENT 1: DAFTAR SALES & TOMBOL EDIT PO -->
+        <div id="recon-tab-content-sales" class="space-y-2">
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span>Daftar pesanan sales yang siap dialokasikan dari muatan mobil:</span>
+            <span class="text-blue-600 font-semibold">*Klik [✏️ Edit PO] bila kiriman pabrik kurang / sales tambah order</span>
+          </div>
           <div id="recon-sales-list" class="space-y-2">
             <!-- Diisi oleh JS -->
+          </div>
+        </div>
+
+        <!-- TAB CONTENT 2: RINCIAN 25 KERANJANG PABRIK -->
+        <div id="recon-tab-content-baskets" class="hidden space-y-2">
+          <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table class="w-full text-[11px] text-left">
+              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2 px-2.5 text-center w-8">No</th>
+                  <th class="py-2 px-2.5">Inisial / Roti</th>
+                  <th class="py-2 px-2.5">Nama Varian</th>
+                  <th class="py-2 px-2.5 text-center">Tipe Krjg</th>
+                  <th class="py-2 px-2.5 text-center">Isi/Krjg</th>
+                  <th class="py-2 px-2.5 text-right">Order Sales</th>
+                  <th class="py-2 px-2.5 text-right font-extrabold text-brand-900">Hasil Keranjang</th>
+                  <th class="py-2 px-2.5 text-right">HPP Pabrik</th>
+                  <th class="py-2 px-2.5 text-right">Subtotal HPP</th>
+                </tr>
+              </thead>
+              <tbody id="recon-basket-tbody" class="divide-y divide-slate-100">
+                <!-- Diisi oleh JS -->
+              </tbody>
+              <tfoot id="recon-basket-tfoot" class="bg-slate-50 font-bold border-t border-slate-200">
+                <!-- Diisi oleh JS -->
+              </tfoot>
+            </table>
           </div>
         </div>
       </div>
 
       <!-- Footer -->
       <div class="p-3 sm:p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
-        <button onclick="closePabrikReconciliationModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl hover:bg-slate-200 transition">
+        <button onclick="closePabrikReconciliationModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl hover:bg-slate-200 transition cursor-pointer">
           Tutup
         </button>
         <button onclick="publishPOToTransactionsConfirm()" class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer">
@@ -2975,6 +3107,169 @@
       });
     }
 
+    // --- 2.2 KONSTANTA & KALKULATOR RESMI PABRIK (FRIEND'S BAKERY SPREADSHEET) ---
+    const FACTORY_BREAD_CONVERSIONS = {
+      'MCN': { type: 'KB', unitsPerBasket: 18, unit: 'bdl', fullName: 'MCN' },
+      'MPC': { type: 'KB', unitsPerBasket: 36, unit: 'bdl', fullName: 'MP COKLAT' },
+      'MPS': { type: 'KB', unitsPerBasket: 36, unit: 'bdl', fullName: 'MP SUSU' },
+      'MPK': { type: 'KB', unitsPerBasket: 36, unit: 'bdl', fullName: 'MP KACANG TANAH' },
+      'MPKH': { type: 'KB', unitsPerBasket: 36, unit: 'bdl', fullName: 'MP KACANG HIJAU' },
+      'JASUKE': { type: 'KB', unitsPerBasket: 36, unit: 'bdl', fullName: 'MP JASUKE' },
+      'PIA K. HIJAU': { type: 'KB', unitsPerBasket: 20, unit: 'bdl', fullName: 'PIA KACANG HIJAU' },
+      'NC': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA COKLAT' },
+      'NCK': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA COKLAT KELAPA' },
+      'NCP': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA COKLAT PANDAN' },
+      'NCB': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA COKLAT STRAWBERRY' },
+      'NCS': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA COKLAT SUSU' },
+      'NP': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA PANDAN' },
+      'SC': { type: 'KMK', unitsPerBasket: 60, unit: 'pcs', fullName: 'NANA SANDWICH COKLAT' },
+      'SK': { type: 'KMK', unitsPerBasket: 60, unit: 'pcs', fullName: 'NANA SANDWICH KELAPA' },
+      'SB': { type: 'KMK', unitsPerBasket: 60, unit: 'pcs', fullName: 'NANA SANDWICH STRAWBERRY' },
+      'SS': { type: 'KMK', unitsPerBasket: 60, unit: 'pcs', fullName: 'NANA SANDWICH SUSU' },
+      'MOONCAKE': { type: 'KB', unitsPerBasket: 150, unit: 'pcs', fullName: 'NANA MOONCAKE' },
+      'SUSU KEJU': { type: 'KB', unitsPerBasket: 60, unit: 'pcs', fullName: 'NANA SUSU KEJU' },
+      'SUJU MINI': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA SUSU KEJU MINI' },
+      'SISIR': { type: 'KMK', unitsPerBasket: 30, unit: 'pcs', fullName: 'SANDWICH SISIR' },
+      'NC. KACANG': { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: 'NANA COKLAT KACANG' },
+      'TM': { type: 'KB', unitsPerBasket: 15, unit: 'pcs', fullName: 'TAWAR MANIS' },
+      'TP': { type: 'KB', unitsPerBasket: 15, unit: 'pcs', fullName: 'TAWAR PANDAN' },
+      'TF': { type: 'KB', unitsPerBasket: 15, unit: 'pcs', fullName: 'TAWAR KUNCIR' }
+    };
+
+    const FACTORY_ARMADA_LIST = [
+      { nopol: 'S 9631 NF', kb: 204, kmk: 33, desc: 'Grand Max Box (204 KB + 33 KMK)' },
+      { nopol: 'W 8050 NW', kb: 186, kmk: 31, desc: 'Grand Max Box (186 KB + 31 KMK)' },
+      { nopol: 'W 8683 PA', kb: 204, kmk: 32, desc: 'Grand Max Box (204 KB + 32 KMK)' },
+      { nopol: 'W 8351 QG', kb: 210, kmk: 0,  desc: 'Armada Box L300 (210 KB)' },
+      { nopol: 'W 9469 PE', kb: 204, kmk: 33, desc: 'Grand Max Box (204 KB + 33 KMK)' },
+      { nopol: 'S 8846 NI', kb: 222, kmk: 37, desc: 'Grand Max Jumbo (222 KB + 37 KMK)' },
+      { nopol: 'S 9147 JF', kb: 216, kmk: 35, desc: 'Grand Max Box (216 KB + 35 KMK)' },
+      { nopol: 'W 9280 UT', kb: 258, kmk: 43, desc: 'Truk Sedang (258 KB + 43 KMK)' },
+      { nopol: 'N 9857 TM', kb: 144, kmk: 23, desc: 'Armada Kecil (144 KB + 23 KMK)' },
+      { nopol: 'CUSTOM',    kb: 204, kmk: 33, desc: 'Kapasitas Kustom...' }
+    ];
+
+    function getFactoryArmadaForDate(dateStr) {
+      try {
+        const saved = localStorage.getItem(`alfaris_armada_${dateStr}`);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      return { nopol: 'S 9631 NF', kb: 204, kmk: 33, desc: 'Grand Max Box (204 KB + 33 KMK)' };
+    }
+
+    function saveFactoryArmadaForDate(dateStr, armadaObj) {
+      try {
+        localStorage.setItem(`alfaris_armada_${dateStr}`, JSON.stringify(armadaObj));
+      } catch (e) {}
+    }
+
+    function calculateFactoryLoad(itemsMap, truckKB = 204, truckKMK = 33) {
+      const products = getProductsData();
+      const aggregatedByStdCode = {};
+
+      Object.entries(itemsMap || {}).forEach(([key, qty]) => {
+        const q = Number(qty) || 0;
+        if (q <= 0) return;
+        const p = products.find(prod => prod.id === key || prod.code === key || prod.name === key);
+        const rawName = p ? p.name : key;
+        const stdCode = getProductStandardCode(rawName);
+        aggregatedByStdCode[stdCode] = (aggregatedByStdCode[stdCode] || 0) + q;
+      });
+
+      let totalOrderKB = 0;
+      let totalOrderKMK = 0;
+      let totalCost = 0;
+      let totalUnits = 0;
+      const itemsBreakdown = [];
+
+      STANDARD_PRODUCT_ORDER.forEach((code, idx) => {
+        const conv = FACTORY_BREAD_CONVERSIONS[code] || { type: 'KB', unitsPerBasket: 100, unit: 'pcs', fullName: code };
+        const p = products.find(prod => getProductStandardCode(prod.name) === code);
+        const fPrice = p ? (p.factoryPrice || 0) : 0;
+        const orderQty = aggregatedByStdCode[code] || 0;
+        const baskets = conv.unitsPerBasket > 0 ? (orderQty / conv.unitsPerBasket) : 0;
+        const subtotalHPP = orderQty * fPrice;
+
+        if (conv.type === 'KB') {
+          totalOrderKB += baskets;
+        } else {
+          totalOrderKMK += baskets;
+        }
+
+        totalUnits += orderQty;
+        totalCost += subtotalHPP;
+
+        itemsBreakdown.push({
+          no: idx + 1,
+          code,
+          name: conv.fullName || code,
+          orderQty,
+          unit: conv.unit,
+          basketType: conv.type,
+          unitsPerBasket: conv.unitsPerBasket,
+          baskets: Number(baskets.toFixed(2)),
+          fPrice,
+          subtotalHPP
+        });
+      });
+
+      // Rumus Resmi Spreadsheet Friend's Bakery
+      const sisaKMK = Number((truckKMK - totalOrderKMK).toFixed(1));
+
+      function excelRoundUp(x) {
+        if (x === 0) return 0;
+        return x > 0 ? Math.ceil(x) : Math.floor(x);
+      }
+
+      // D13 = IFERROR(ROUNDDOWN(B14-(C14+(ROUNDUP((D15/-7),0.1)*3)),0.1),0)
+      const kmkShift = excelRoundUp(sisaKMK / -7) * 3;
+      const d13 = Math.floor(truckKB - (totalOrderKB + kmkShift));
+
+      // Total Kapasitas Mobil Ekuivalen KB: D18 = ROUNDUP((B16 / 7) * 3) + B14
+      const totalEquivKB = Math.ceil((truckKMK / 7) * 3) + Number(truckKB);
+      const usedEquivKB = Math.max(0, totalEquivKB - d13);
+      const percentFilled = totalEquivKB > 0 ? Math.min(100, Math.max(0, Math.round((usedEquivKB / totalEquivKB) * 100))) : 0;
+
+      let status = 'PAS';
+      let statusText = 'ORDER PAS';
+      let badgeClass = 'bg-emerald-500 text-white';
+      let message = 'Muatan armada pas 100%. Kapasitas mobil terisi penuh dan siap kirim ke pabrik.';
+
+      if (d13 > 0) {
+        status = 'KURANG';
+        const kmkAlt = Math.ceil(d13 / 3) * 7;
+        statusText = `KURANG ${d13} KB ATAU ${kmkAlt} KMK`;
+        badgeClass = 'bg-amber-500 text-slate-950 font-black';
+        message = `Mobil armada masih longgar sisa ${d13} Keranjang Besar (KB) atau ${kmkAlt} Keranjang Kecil (KMK). Sales bisa tambah PO di tempat!`;
+      } else if (d13 < 0) {
+        status = 'LEBIH';
+        const overKB = Math.abs(d13);
+        const overKMK = Math.ceil(overKB / 3) * 7;
+        statusText = `LEBIH ${overKB} KB ATAU ${overKMK} KMK`;
+        badgeClass = 'bg-rose-600 text-white font-black';
+        message = `Pesanan melebihi kapasitas armada sebesar ${overKB} KB atau ${overKMK} KMK. Kurangi pesanan sebelum order diproses agar pabrik tidak memotong kuota sepihak.`;
+      }
+
+      return {
+        truckKB: Number(truckKB),
+        truckKMK: Number(truckKMK),
+        totalUnits,
+        totalCost,
+        totalOrderKB: Number(totalOrderKB.toFixed(2)),
+        totalOrderKMK: Number(totalOrderKMK.toFixed(2)),
+        sisaKMK,
+        sisaKB: d13,
+        totalEquivKB,
+        usedEquivKB: Number(usedEquivKB.toFixed(1)),
+        percentFilled,
+        status,
+        statusText,
+        badgeClass,
+        message,
+        itemsBreakdown
+      };
+    }
+
     // Inisialisasi State Awal Default Aplikasi
     const DEFAULT_PO_SALES = [
       {
@@ -3694,6 +3989,81 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     // FITUR INTEGRASI OTOMATIS: REKAP PO PABRIK KE TRANSAKSI SALES
     // ========================================================
 
+    let currentReconTab = 'sales';
+
+    function switchReconTab(tabName) {
+      currentReconTab = tabName;
+      const btnSales = document.getElementById('tab-btn-recon-sales');
+      const btnBaskets = document.getElementById('tab-btn-recon-baskets');
+      const contentSales = document.getElementById('recon-tab-content-sales');
+      const contentBaskets = document.getElementById('recon-tab-content-baskets');
+
+      if (tabName === 'sales') {
+        if (btnSales) btnSales.className = 'px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer';
+        if (btnBaskets) btnBaskets.className = 'px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer';
+        if (contentSales) contentSales.classList.remove('hidden');
+        if (contentBaskets) contentBaskets.classList.add('hidden');
+      } else {
+        if (btnSales) btnSales.className = 'px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer';
+        if (btnBaskets) btnBaskets.className = 'px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer';
+        if (contentSales) contentSales.classList.add('hidden');
+        if (contentBaskets) contentBaskets.classList.remove('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function populateReconArmadaDropdown(selectedNopol) {
+      const select = document.getElementById('recon-armada-select');
+      if (!select) return;
+      select.innerHTML = FACTORY_ARMADA_LIST.map(arm => `
+        <option value="${escapeHtml(arm.nopol)}" ${arm.nopol === selectedNopol ? 'selected' : ''}>
+          ${escapeHtml(arm.desc || arm.nopol)}
+        </option>
+      `).join('');
+    }
+
+    function onReconArmadaChanged() {
+      const select = document.getElementById('recon-armada-select');
+      if (!select) return;
+      const nopol = select.value;
+      const arm = FACTORY_ARMADA_LIST.find(a => a.nopol === nopol) || FACTORY_ARMADA_LIST[0];
+
+      const inputKb = document.getElementById('recon-armada-kb');
+      const inputKmk = document.getElementById('recon-armada-kmk');
+      if (inputKb) inputKb.value = arm.kb;
+      if (inputKmk) inputKmk.value = arm.kmk;
+
+      saveFactoryArmadaForDate(currentPODate, {
+        nopol: arm.nopol,
+        kb: arm.kb,
+        kmk: arm.kmk,
+        desc: arm.desc
+      });
+
+      renderReconModalContent();
+      renderPOSalesMatrix();
+    }
+
+    function onReconCapacityCustomInput() {
+      const inputKb = document.getElementById('recon-armada-kb');
+      const inputKmk = document.getElementById('recon-armada-kmk');
+      const select = document.getElementById('recon-armada-select');
+
+      const kb = Math.max(1, parseInt(inputKb?.value || '204', 10));
+      const kmk = Math.max(0, parseInt(inputKmk?.value || '33', 10));
+
+      const currentArmada = getFactoryArmadaForDate(currentPODate);
+      saveFactoryArmadaForDate(currentPODate, {
+        nopol: select?.value || currentArmada.nopol || 'CUSTOM',
+        kb,
+        kmk,
+        desc: `Armada (${kb} KB + ${kmk} KMK)`
+      });
+
+      renderReconModalContent();
+      renderPOSalesMatrix();
+    }
+
     function updatePOIntegrationBanner(isFixed, linkedCount, poCount) {
       const banner = document.getElementById('po-integration-banner');
       const iconBox = document.getElementById('po-status-icon-box');
@@ -3706,11 +4076,25 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       if (!banner) return;
 
+      // Hitung live load muatan armada dari data PO aktif
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const armada = getFactoryArmadaForDate(currentPODate);
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+      const calc = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
+
       if (isFixed) {
         banner.className = 'p-3.5 sm:p-4 rounded-2xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs';
         if (iconBox) iconBox.className = 'w-10 h-10 rounded-xl bg-emerald-200 text-emerald-900 flex items-center justify-center font-bold flex-shrink-0';
         if (iconBox) iconBox.innerHTML = '<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-700"></i>';
-        if (title) title.innerText = `Status PO: FIX & Terhubung ke Transaksi Sales (${linkedCount} Transaksi Terbit)`;
+        if (title) title.innerHTML = `<span>Status PO: FIX & Terhubung ke Transaksi Sales (${linkedCount} Transaksi)</span> <span class="text-[11px] font-normal text-emerald-700 block sm:inline sm:ml-2">• 🚚 Armada: <strong>${escapeHtml(armada.nopol)}</strong> (${calc.percentFilled}% Pas)</span>`;
         if (badge) {
           badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900 border border-emerald-300';
           badge.innerText = 'FIX & TERHUBUNG';
@@ -3723,7 +4107,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         banner.className = 'p-3.5 sm:p-4 rounded-2xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50 border-amber-300 text-amber-950 shadow-xs';
         if (iconBox) iconBox.className = 'w-10 h-10 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center font-bold flex-shrink-0';
         if (iconBox) iconBox.innerHTML = '<i data-lucide="clock" class="w-5 h-5 text-amber-800"></i>';
-        if (title) title.innerText = `Status PO: Menunggu Realisasi Muatan Pabrik (Draft - ${poCount} Sales)`;
+        if (title) title.innerHTML = `<span>Status PO: Draft (${poCount} Sales)</span> <span class="text-[11px] font-semibold text-amber-800 block sm:inline sm:ml-2">• 🚚 Armada ${escapeHtml(armada.nopol)}: <strong>${calc.percentFilled}% Terisi (${calc.statusText})</strong></span>`;
         if (badge) {
           badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 border border-amber-300';
           badge.innerText = 'Draft PO';
@@ -3737,95 +4121,260 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function openPabrikReconciliationModal() {
-      const allPO = getPOSalesData();
-      const posOnDate = allPO.filter(po => po.date === currentPODate);
-      const products = getProductsData();
-
       const modal = document.getElementById('modal-pabrik-reconciliation');
       if (!modal) return;
 
-      document.getElementById('recon-modal-date-badge').innerText = formatIndoDate(currentPODate);
+      const armada = getFactoryArmadaForDate(currentPODate);
+      populateReconArmadaDropdown(armada.nopol);
 
-      let totalPcs = 0;
-      let totalCost = 0;
+      const inputKb = document.getElementById('recon-armada-kb');
+      const inputKmk = document.getElementById('recon-armada-kmk');
+      if (inputKb) inputKb.value = armada.kb;
+      if (inputKmk) inputKmk.value = armada.kmk;
 
+      switchReconTab(currentReconTab || 'sales');
+      renderReconModalContent();
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function renderReconModalContent() {
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const products = getProductsData();
+      const armada = getFactoryArmadaForDate(currentPODate);
+
+      const inputKb = document.getElementById('recon-armada-kb');
+      const inputKmk = document.getElementById('recon-armada-kmk');
+      const truckKB = Math.max(1, parseInt(inputKb?.value || armada.kb || 204, 10));
+      const truckKMK = Math.max(0, parseInt(inputKmk?.value || armada.kmk || 33, 10));
+
+      const dateBadge = document.getElementById('recon-modal-date-badge');
+      if (dateBadge) dateBadge.innerText = formatIndoDate(currentPODate);
+      const armBadge = document.getElementById('recon-modal-armada-badge');
+      if (armBadge) armBadge.innerText = `${armada.nopol} (${truckKB} KB + ${truckKMK} KMK)`;
+
+      // Agregasi seluruh item PO sales pada tanggal ini
+      const aggItems = {};
       posOnDate.forEach(po => {
-        products.forEach(p => {
-          const qty = (po.items && (
-            po.items[p.id] !== undefined ? po.items[p.id] :
-            (po.items[p.code] !== undefined ? po.items[p.code] :
-            (po.items[p.name] !== undefined ? po.items[p.name] : 0))
-          )) || 0;
-          totalPcs += qty;
-          totalCost += (qty * (p.factoryPrice || 0));
-        });
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
       });
 
-      document.getElementById('recon-kpi-sales-pcs').innerText = `${totalPcs.toLocaleString('id-ID')} Pcs`;
-      document.getElementById('recon-kpi-factory-cost').innerText = formatRupiah(totalCost);
-      document.getElementById('recon-sales-count-badge').innerText = `${posOnDate.length} Tim Sales Aktif`;
+      // Hitung muatan pabrik dengan rumus resmi Friend's Bakery
+      const calc = calculateFactoryLoad(aggItems, truckKB, truckKMK);
+
+      // Render KPI Muatan & Status Card
+      const statusBadge = document.getElementById('recon-status-badge');
+      const percentText = document.getElementById('recon-percent-text');
+      const statusMsg = document.getElementById('recon-status-message');
+      const capBar = document.getElementById('recon-capacity-bar');
+      const statusCard = document.getElementById('recon-status-card');
+
+      if (statusBadge) {
+        statusBadge.className = `px-2.5 py-0.5 rounded-full text-xs font-black ${calc.badgeClass}`;
+        statusBadge.innerText = calc.statusText;
+      }
+      if (percentText) {
+        percentText.innerText = `${calc.percentFilled}% Kapasitas Terisi`;
+      }
+      if (statusMsg) {
+        statusMsg.innerText = calc.message;
+      }
+      if (capBar) {
+        capBar.style.width = `${Math.min(100, calc.percentFilled)}%`;
+        if (calc.status === 'PAS') {
+          capBar.className = 'bg-emerald-500 h-3 rounded-full transition-all duration-300';
+          if (statusCard) statusCard.className = 'p-4 rounded-xl border transition shadow-xs bg-emerald-500/10 border-emerald-300 text-slate-900';
+        } else if (calc.status === 'LEBIH') {
+          capBar.className = 'bg-rose-600 h-3 rounded-full transition-all duration-300';
+          if (statusCard) statusCard.className = 'p-4 rounded-xl border transition shadow-xs bg-rose-500/10 border-rose-300 text-slate-900';
+        } else {
+          capBar.className = 'bg-amber-500 h-3 rounded-full transition-all duration-300';
+          if (statusCard) statusCard.className = 'p-4 rounded-xl border transition shadow-xs bg-amber-500/10 border-amber-300 text-slate-900';
+        }
+      }
+
+      const costEl = document.getElementById('recon-kpi-factory-cost');
+      if (costEl) costEl.innerText = formatRupiah(calc.totalCost);
+
+      const kbEl = document.getElementById('recon-kpi-kb');
+      if (kbEl) kbEl.innerText = `${calc.totalOrderKB} / ${calc.truckKB} KB`;
+      const kbSubEl = document.getElementById('recon-kpi-kb-sub');
+      if (kbSubEl) kbSubEl.innerText = calc.sisaKB > 0 ? `Sisa ${calc.sisaKB} KB` : (calc.sisaKB === 0 ? 'Pas 100%' : `Lebih ${Math.abs(calc.sisaKB)} KB`);
+
+      const kmkEl = document.getElementById('recon-kpi-kmk');
+      if (kmkEl) kmkEl.innerText = `${calc.totalOrderKMK} / ${calc.truckKMK} KMK`;
+      const kmkSubEl = document.getElementById('recon-kpi-kmk-sub');
+      if (kmkSubEl) kmkSubEl.innerText = calc.sisaKMK > 0 ? `Sisa ${calc.sisaKMK} KMK` : (calc.sisaKMK === 0 ? 'Pas 100%' : `Lebih ${Math.abs(calc.sisaKMK)} KMK`);
+
+      const eqEl = document.getElementById('recon-kpi-equiv');
+      if (eqEl) eqEl.innerText = `${calc.usedEquivKB} / ${calc.totalEquivKB} KB Eq`;
+
+      // Smart Recommendation Box (Jika mobil masih longgar sisaKB > 0)
+      const recBox = document.getElementById('recon-recommendation-box');
+      const recItems = document.getElementById('recon-recommendation-items');
+      if (recBox && recItems) {
+        if (calc.sisaKB > 0) {
+          recBox.classList.remove('hidden');
+          const sKB = calc.sisaKB;
+          const kmkAlt = Math.ceil(sKB / 3) * 7;
+          recItems.innerHTML = `
+            <div class="bg-white p-2 rounded-lg border border-amber-300 shadow-2xs text-center">
+              <div class="font-black text-amber-900 text-xs">NC (Nana Coklat)</div>
+              <div class="text-[11px] font-bold text-emerald-700 mt-0.5">+${(sKB * 100).toLocaleString('id-ID')} pcs</div>
+              <div class="text-[9px] text-slate-400">Isi 100/KB (${sKB} KB)</div>
+            </div>
+            <div class="bg-white p-2 rounded-lg border border-amber-300 shadow-2xs text-center">
+              <div class="font-black text-amber-900 text-xs">TM (Tawar Manis)</div>
+              <div class="text-[11px] font-bold text-emerald-700 mt-0.5">+${(sKB * 15).toLocaleString('id-ID')} pcs</div>
+              <div class="text-[9px] text-slate-400">Isi 15/KB (${sKB} KB)</div>
+            </div>
+            <div class="bg-white p-2 rounded-lg border border-amber-300 shadow-2xs text-center">
+              <div class="font-black text-amber-900 text-xs">MPS (MP Susu)</div>
+              <div class="text-[11px] font-bold text-emerald-700 mt-0.5">+${(sKB * 36).toLocaleString('id-ID')} bdl</div>
+              <div class="text-[9px] text-slate-400">Isi 36/KB (${sKB} KB)</div>
+            </div>
+            <div class="bg-white p-2 rounded-lg border border-amber-300 shadow-2xs text-center">
+              <div class="font-black text-amber-900 text-xs">SC (Nana Sandwich)</div>
+              <div class="text-[11px] font-bold text-emerald-700 mt-0.5">+${(kmkAlt * 60).toLocaleString('id-ID')} pcs</div>
+              <div class="text-[9px] text-slate-400">Isi 60/KMK (${kmkAlt} KMK)</div>
+            </div>
+            <div class="bg-white p-2 rounded-lg border border-amber-300 shadow-2xs text-center">
+              <div class="font-black text-amber-900 text-xs">SISIR (S. Sisir)</div>
+              <div class="text-[11px] font-bold text-emerald-700 mt-0.5">+${(kmkAlt * 30).toLocaleString('id-ID')} pcs</div>
+              <div class="text-[9px] text-slate-400">Isi 30/KMK (${kmkAlt} KMK)</div>
+            </div>
+          `;
+        } else {
+          recBox.classList.add('hidden');
+        }
+      }
+
+      // Tab 1: Render Daftar Sales
+      const tabBadge = document.getElementById('recon-tab-sales-badge');
+      if (tabBadge) tabBadge.innerText = `${posOnDate.length} Tim`;
 
       const listContainer = document.getElementById('recon-sales-list');
-      if (posOnDate.length === 0) {
-        listContainer.innerHTML = `
-          <div class="p-6 text-center text-slate-400 bg-white rounded-xl border border-slate-200">
-            <i data-lucide="package-x" class="w-8 h-8 mx-auto mb-1 text-slate-300"></i>
-            <p class="font-bold">Belum ada PO sales pada tanggal ${formatIndoDate(currentPODate)}</p>
-            <p class="text-[10px] text-slate-400">Silakan input PO Sales terlebih dahulu.</p>
-          </div>
-        `;
-      } else {
-        listContainer.innerHTML = posOnDate.map(po => {
-          let sPcs = 0;
-          let sAmount = 0;
-          const salesList = getSalesData();
-          const sObj = salesList.find(s => s.id === po.salesId || s.name === po.salesName);
-          const tierId = (sObj && sObj.priceLevel) ? sObj.priceLevel : 'level1';
-
-          products.forEach(p => {
-            const qty = (po.items && (
-              po.items[p.id] !== undefined ? po.items[p.id] :
-              (po.items[p.code] !== undefined ? po.items[p.code] :
-              (po.items[p.name] !== undefined ? po.items[p.name] : 0))
-            )) || 0;
-            if (qty > 0) {
-              sPcs += qty;
-              const uPrice = (p.prices && p.prices[tierId]) ? p.prices[tierId] : (p.prices?.level1 || p.factoryPrice || 0);
-              sAmount += (qty * uPrice);
-            }
-          });
-
-          return `
-            <div class="p-3 bg-white rounded-xl border border-slate-200 hover:border-brand-400 transition flex items-center justify-between gap-3 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-800 font-extrabold flex items-center justify-center text-xs">
-                  ${(po.salesName || 'S').slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <div class="font-bold text-slate-900">${escapeHtml(po.salesName)}</div>
-                  <div class="text-[10px] text-slate-500 font-normal">Rute: ${escapeHtml(po.salesRoute || '-')} &bull; ${sPcs.toLocaleString('id-ID')} Pcs</div>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <div class="text-right">
-                  <div class="font-black text-slate-900">${formatRupiah(sAmount)}</div>
-                  <div class="text-[9.5px] text-emerald-600 font-semibold">${sPcs} Pcs siap bawa</div>
-                </div>
-                <button 
-                  onclick="closePabrikReconciliationModal(); openPOInputModal('${po.id}');"
-                  class="px-2.5 py-1.5 rounded-lg border border-slate-300 hover:border-brand-500 hover:bg-brand-50 text-slate-700 hover:text-brand-800 text-[11px] font-bold transition inline-flex items-center gap-1 cursor-pointer"
-                  title="Sesuaikan roti sales ini karena barang pabrik kurang atau mobil masih longgar">
-                  <i data-lucide="edit-3" class="w-3 h-3"></i>
-                  <span>Edit PO</span>
-                </button>
-              </div>
+      if (listContainer) {
+        if (posOnDate.length === 0) {
+          listContainer.innerHTML = `
+            <div class="p-6 text-center text-slate-400 bg-white rounded-xl border border-slate-200">
+              <i data-lucide="package-x" class="w-8 h-8 mx-auto mb-1 text-slate-300"></i>
+              <p class="font-bold">Belum ada PO sales pada tanggal ${formatIndoDate(currentPODate)}</p>
+              <p class="text-[10px] text-slate-400">Silakan input PO Sales terlebih dahulu.</p>
             </div>
+          `;
+        } else {
+          listContainer.innerHTML = posOnDate.map(po => {
+            let sPcs = 0;
+            let sAmount = 0;
+            const salesList = getSalesData();
+            const sObj = salesList.find(s => s.id === po.salesId || s.name === po.salesName);
+            const tierId = (sObj && sObj.priceLevel) ? sObj.priceLevel : 'level1';
+
+            // Ringkasan item orderan sales
+            const itemSummaryList = [];
+            products.forEach(p => {
+              const qty = (po.items && (
+                po.items[p.id] !== undefined ? po.items[p.id] :
+                (po.items[p.code] !== undefined ? po.items[p.code] :
+                (po.items[p.name] !== undefined ? po.items[p.name] : 0))
+              )) || 0;
+              if (qty > 0) {
+                sPcs += qty;
+                const uPrice = (p.prices && p.prices[tierId]) ? p.prices[tierId] : (p.prices?.level1 || p.factoryPrice || 0);
+                sAmount += (qty * uPrice);
+                itemSummaryList.push(`${p.name} (${qty})`);
+              }
+            });
+
+            return `
+              <div class="p-3 bg-white rounded-xl border border-slate-200 hover:border-brand-400 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div class="flex items-start gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-800 font-extrabold flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                    ${(po.salesName || 'S').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-bold text-slate-900">${escapeHtml(po.salesName)}</span>
+                      <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">Rute: ${escapeHtml(po.salesRoute || '-')}</span>
+                    </div>
+                    <div class="text-[10.5px] text-slate-500 mt-0.5">
+                      <strong>${sPcs.toLocaleString('id-ID')} Pcs</strong> siap bawa &bull; <span class="text-slate-400 truncate inline-block max-w-xs align-bottom">${itemSummaryList.slice(0, 4).join(', ')}${itemSummaryList.length > 4 ? ` +${itemSummaryList.length - 4} lainnya` : ''}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                  <div class="text-left sm:text-right">
+                    <div class="font-black text-slate-900">${formatRupiah(sAmount)}</div>
+                    <div class="text-[9.5px] text-emerald-600 font-semibold">${sPcs} Pcs siap bawa</div>
+                  </div>
+                  <button 
+                    onclick="closePabrikReconciliationModal(); openPOInputModal('${po.id}');"
+                    class="px-3 py-1.5 rounded-lg border border-slate-300 hover:border-brand-500 hover:bg-brand-50 text-slate-700 hover:text-brand-800 text-[11px] font-bold transition inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Sesuaikan pesanan sales ini bila barang pabrik kurang atau mobil masih longgar">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-brand-600"></i>
+                    <span>Edit PO</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      // Tab 2: Render 25 Rincian Keranjang Pabrik
+      const basketTbody = document.getElementById('recon-basket-tbody');
+      const basketTfoot = document.getElementById('recon-basket-tfoot');
+      if (basketTbody) {
+        basketTbody.innerHTML = calc.itemsBreakdown.map(item => {
+          const isOrdered = item.orderQty > 0;
+          return `
+            <tr class="hover:bg-slate-50/80 ${isOrdered ? 'bg-amber-50/20' : 'opacity-60'}">
+              <td class="py-2 px-2.5 text-center text-slate-400">${item.no}</td>
+              <td class="py-2 px-2.5 font-bold ${isOrdered ? 'text-slate-900' : 'text-slate-400'}">${escapeHtml(item.code)}</td>
+              <td class="py-2 px-2.5 ${isOrdered ? 'text-slate-800 font-medium' : 'text-slate-400'}">${escapeHtml(item.name)}</td>
+              <td class="py-2 px-2.5 text-center">
+                <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold ${item.basketType === 'KB' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                  ${item.basketType}
+                </span>
+              </td>
+              <td class="py-2 px-2.5 text-center text-slate-500 font-mono">${item.unitsPerBasket} ${item.unit}</td>
+              <td class="py-2 px-2.5 text-right font-semibold ${isOrdered ? 'text-slate-900' : 'text-slate-300'}">
+                ${isOrdered ? `${item.orderQty} ${item.unit}` : '-'}
+              </td>
+              <td class="py-2 px-2.5 text-right font-black ${isOrdered ? 'text-brand-900 bg-brand-50/40' : 'text-slate-300'}">
+                ${isOrdered ? `${item.baskets} ${item.basketType}` : '-'}
+              </td>
+              <td class="py-2 px-2.5 text-right text-slate-500">${formatRupiah(item.fPrice)}</td>
+              <td class="py-2 px-2.5 text-right font-bold ${isOrdered ? 'text-amber-900' : 'text-slate-300'}">
+                ${isOrdered ? formatRupiah(item.subtotalHPP) : '-'}
+              </td>
+            </tr>
           `;
         }).join('');
       }
 
-      modal.classList.remove('hidden');
+      if (basketTfoot) {
+        basketTfoot.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-2.5 px-3 text-right font-black text-slate-800">TOTAL MUATAN PABRIK:</td>
+            <td class="py-2.5 px-2.5 text-right font-black text-slate-900">${calc.totalUnits.toLocaleString('id-ID')} unit</td>
+            <td class="py-2.5 px-2.5 text-right font-black text-brand-900">
+              ${calc.totalOrderKB} KB &bull; ${calc.totalOrderKMK} KMK
+            </td>
+            <td class="py-2.5 px-2.5 text-right text-slate-500">Estimasi HPP:</td>
+            <td class="py-2.5 px-2.5 text-right font-black text-amber-800 text-xs">${formatRupiah(calc.totalCost)}</td>
+          </tr>
+        `;
+      }
+
       lucide.createIcons();
     }
 
