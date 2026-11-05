@@ -82,45 +82,51 @@
 
     @media print {
       @page {
-        size: A4 portrait;
-        margin: 1.2cm 1.5cm;
+        size: auto;
+        margin: 8mm 12mm;
       }
+      html, body {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Sembunyikan semua elemen layar aplikasi saat print */
       body * {
-        visibility: hidden;
+        visibility: hidden !important;
       }
 
       /* Mode Cetak PO Sales Pabrik */
       body.printing-po #print-area-po, 
       body.printing-po #print-area-po * {
-        visibility: visible;
+        visibility: visible !important;
       }
       body.printing-po #print-area-po {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+        position: static !important;
         display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
       }
 
       /* Mode Cetak Laporan Keuangan Korporat */
-      body.printing-financial #financial-report-sheet, 
-      body.printing-financial #financial-report-sheet * {
-        visibility: visible;
+      body.printing-financial #print-area-financial, 
+      body.printing-financial #print-area-financial * {
+        visibility: visible !important;
       }
-      body.printing-financial #financial-report-sheet {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0 !important;
+      body.printing-financial #print-area-financial {
+        position: static !important;
         display: block !important;
-        background: white !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
         color: #0f172a !important;
-        box-shadow: none !important;
-        border: none !important;
       }
 
       /* Hindari pemotongan baris di tengah tabel atau tanda tangan */
@@ -128,17 +134,20 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
+      .page-break {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
 
       /* Fallback jika tanpa flag */
       body:not(.printing-financial):not(.printing-po) #print-area-po,
       body:not(.printing-financial):not(.printing-po) #print-area-po * {
-        visibility: visible;
+        visibility: visible !important;
       }
       body:not(.printing-financial):not(.printing-po) #print-area-po {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
       }
     }
   </style>
@@ -147,6 +156,9 @@
 
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ROOT PRINT CONTAINER UNTUK LAPORAN KEUANGAN KORPORAT (BEBAS DARI OVERFLOW/SCROLL MODAL) -->
+  <div id="print-area-financial" class="hidden"></div>
 
   <!-- ============================================== -->
   <!-- SCREEN: LOGIN ACCESS CV. ALFARIS ENAM DELAPAN -->
@@ -1359,13 +1371,20 @@
             <p class="text-[11px] text-slate-400">Format Resmi Standar Korporat CV. Alfaris Enam Delapan</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <div class="flex items-center gap-1.5 bg-slate-800 px-2 py-1 rounded-xl border border-slate-700">
             <span class="text-[10px] text-slate-400 font-medium">Periode:</span>
-            <select id="filter-rpt-period" onchange="renderCorporateFinancialReport(this.value)" class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+            <select id="filter-rpt-period" onchange="renderCorporateFinancialReport()" class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
               <option value="all" class="bg-slate-900 text-white">Semua Data Berjalan</option>
               <option value="this_month" class="bg-slate-900 text-white">Bulan Ini</option>
               <option value="today" class="bg-slate-900 text-white">Hari Ini</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-1.5 bg-slate-800 px-2 py-1 rounded-xl border border-slate-700">
+            <span class="text-[10px] text-slate-400 font-medium">Format:</span>
+            <select id="filter-rpt-layout" onchange="renderCorporateFinancialReport()" class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+              <option value="summary" class="bg-slate-900 text-white" selected>Ringkas (1 Lembar Pas A4/Folio)</option>
+              <option value="full" class="bg-slate-900 text-white">Lengkap (+ Rincian Buku Kas)</option>
             </select>
           </div>
           <button onclick="printFinancialReport()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition">
@@ -1379,193 +1398,214 @@
 
       <!-- Modal Body / Paper Sheet Preview -->
       <div class="p-3 sm:p-6 bg-slate-100 overflow-y-auto flex-1">
-        <div id="financial-report-sheet" class="max-w-3xl mx-auto bg-white p-6 sm:p-10 shadow-md border border-slate-200 rounded-xl text-slate-900">
+        <div id="financial-report-sheet" class="max-w-3xl mx-auto bg-white p-6 sm:p-8 shadow-md border border-slate-200 rounded-xl text-slate-900">
           
-          <!-- KOP SURAT FORMAL PERUSAHAAN -->
-          <div class="border-b-2 border-slate-900 pb-3 mb-5 flex items-start justify-between">
+          <!-- KOP SURAT FORMAL PERUSAHAAN (COMPACT & CLEAN) -->
+          <div class="border-b-2 border-slate-900 pb-2.5 mb-4 flex items-start justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-2xl border-2 border-amber-600 shadow-sm flex-shrink-0">
+              <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-xl border-2 border-amber-600 shadow-sm flex-shrink-0">
                 68
               </div>
               <div>
-                <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-wide uppercase leading-tight">CV. ALFARIS ENAM DELAPAN</h1>
-                <p class="text-xs font-bold text-amber-700 tracking-wide">DISTRIBUTOR RESMI & KEAGENAN ROTI SEGAR</p>
-                <p class="text-[10px] sm:text-[11px] text-slate-500 leading-normal">
+                <h1 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase leading-tight">CV. ALFARIS ENAM DELAPAN</h1>
+                <p class="text-[11px] font-bold text-amber-700 tracking-wide">DISTRIBUTOR RESMI & KEAGENAN ROTI SEGAR</p>
+                <p class="text-[9.5px] sm:text-[10px] text-slate-500 leading-normal">
                   Domisili: Malang, Jawa Timur &bull; WhatsApp: +62 812-3456-7890 &bull; Email: cv.alfaris68@gmail.com
                 </p>
               </div>
             </div>
             <div class="text-right flex-shrink-0">
-              <span class="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-300">DOKUMEN RESMI</span>
-              <div class="text-xs font-mono font-bold text-slate-800 mt-1" id="rpt-doc-no">AF68/KEU/2026/XI/001</div>
-              <div class="text-[10px] text-slate-500" id="rpt-doc-date">Tanggal: -</div>
+              <span class="inline-block px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-300">DOKUMEN RESMI</span>
+              <div class="text-[11px] font-mono font-bold text-slate-800 mt-0.5" id="rpt-doc-no">AF68/KEU/2026/XI/001</div>
+              <div class="text-[9.5px] text-slate-500" id="rpt-doc-date">Tanggal: -</div>
             </div>
           </div>
 
           <!-- JUDUL LAPORAN RESMI -->
-          <div class="text-center mb-6">
-            <h2 class="text-base sm:text-lg font-black uppercase text-slate-900 tracking-wider">LAPORAN KEUANGAN, BEBAN OPERASIONAL & LABA RUGI</h2>
-            <p class="text-xs text-slate-600 font-medium" id="rpt-doc-period">Periode: Pembukuan Berjalan</p>
+          <div class="text-center mb-4">
+            <h2 class="text-xs sm:text-sm font-black uppercase text-slate-900 tracking-wider">LAPORAN KEUANGAN, BEBAN OPERASIONAL & LABA RUGI</h2>
+            <p class="text-[10.5px] text-slate-600 font-medium" id="rpt-doc-period">Periode: Pembukuan Berjalan</p>
           </div>
 
-          <!-- TABEL FORMAT AKUNTANSI RESMI -->
-          <table class="w-full text-xs border-collapse border border-slate-300 mb-6">
+          <!-- TABEL FORMAT AKUNTANSI RESMI (COMPACT HEIGHT UNTUK 1 LEMBAR PAS) -->
+          <table class="w-full text-[10.5px] border-collapse border border-slate-300 mb-4">
             <thead>
               <tr class="bg-slate-100 text-slate-800">
-                <th class="border border-slate-300 py-2 px-3 text-left w-16 font-bold">KODE</th>
-                <th class="border border-slate-300 py-2 px-3 text-left font-bold">URAIAN REKENING PEMBUKUAN</th>
-                <th class="border border-slate-300 py-2 px-3 text-right w-32 font-bold">RINCIAN (Rp)</th>
-                <th class="border border-slate-300 py-2 px-3 text-right w-36 font-bold">TOTAL (Rp)</th>
+                <th class="border border-slate-300 py-1.5 px-2 text-left w-14 font-bold">KODE</th>
+                <th class="border border-slate-300 py-1.5 px-2 text-left font-bold">URAIAN REKENING PEMBUKUAN</th>
+                <th class="border border-slate-300 py-1.5 px-2 text-right w-28 font-bold">RINCIAN (Rp)</th>
+                <th class="border border-slate-300 py-1.5 px-2 text-right w-32 font-bold">TOTAL (Rp)</th>
               </tr>
             </thead>
             <tbody>
               <!-- I. PENDAPATAN USAHA -->
               <tr class="bg-slate-50 font-bold text-slate-900">
-                <td class="border border-slate-300 py-2 px-3">4-1000</td>
-                <td class="border border-slate-300 py-2 px-3" colspan="2">PENDAPATAN USAHA (REVENUE OMSET)</td>
-                <td class="border border-slate-300 py-2 px-3 text-right text-emerald-700" id="rpt-total-omset">Rp 0</td>
+                <td class="border border-slate-300 py-1.5 px-2">4-1000</td>
+                <td class="border border-slate-300 py-1.5 px-2" colspan="2">PENDAPATAN USAHA (REVENUE OMSET)</td>
+                <td class="border border-slate-300 py-1.5 px-2 text-right text-emerald-700" id="rpt-total-omset">Rp 0</td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">4-1100</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Penjualan Dropping Roti Sales Lapangan</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-omset">Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">4-1100</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Penjualan Dropping Roti Sales Lapangan</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-omset">Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
               <tr class="border-t border-slate-300 font-bold bg-white">
-                <td class="border border-slate-300 py-1.5 px-3"></td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8">TOTAL PENDAPATAN USAHA BERSIH</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right font-extrabold" id="rpt-net-revenue">Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
+                <td class="border border-slate-300 py-1 px-2 pl-6">TOTAL PENDAPATAN USAHA BERSIH</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
+                <td class="border border-slate-300 py-1 px-2 text-right font-extrabold" id="rpt-net-revenue">Rp 0</td>
               </tr>
 
               <!-- II. HARGA POKOK PENJUALAN (HPP) -->
               <tr class="bg-slate-50 font-bold text-slate-900">
-                <td class="border border-slate-300 py-2 px-3">5-1000</td>
-                <td class="border border-slate-300 py-2 px-3" colspan="2">HARGA POKOK PENJUALAN (HPP PABRIK)</td>
-                <td class="border border-slate-300 py-2 px-3 text-right text-rose-600" id="rpt-total-hpp">-Rp 0</td>
+                <td class="border border-slate-300 py-1.5 px-2">5-1000</td>
+                <td class="border border-slate-300 py-1.5 px-2" colspan="2">HARGA POKOK PENJUALAN (HPP PABRIK)</td>
+                <td class="border border-slate-300 py-1.5 px-2 text-right text-rose-600" id="rpt-total-hpp">-Rp 0</td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">5-1100</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Modal Kulakan Roti Pembelian ke Pabrik Produsen</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-kulakan">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">5-1100</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Modal Kulakan Roti Pembelian ke Pabrik Produsen</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-kulakan">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">5-1200</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Beban Kerugian Retur Toko (Waste HPP Tanggung Sendiri)</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-rose-700" id="rpt-sub-waste">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">5-1200</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Beban Kerugian Retur Toko (Waste HPP Tanggung Sendiri)</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-rose-700" id="rpt-sub-waste">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
 
               <!-- LABA KOTOR (GROSS PROFIT) -->
               <tr class="bg-amber-50 font-black text-slate-900 border-y-2 border-amber-300">
-                <td class="border border-slate-300 py-2 px-3 text-amber-900 font-bold">=</td>
-                <td class="border border-slate-300 py-2 px-3 text-amber-950 font-bold uppercase">LABA KOTOR DISTRIBUTOR (GROSS PROFIT)</td>
-                <td class="border border-slate-300 py-2 px-3"></td>
-                <td class="border border-slate-300 py-2 px-3 text-right text-amber-950 font-black text-sm" id="rpt-laba-kotor">Rp 0</td>
+                <td class="border border-slate-300 py-1.5 px-2 text-amber-900 font-bold">=</td>
+                <td class="border border-slate-300 py-1.5 px-2 text-amber-950 font-bold uppercase">LABA KOTOR DISTRIBUTOR (GROSS PROFIT)</td>
+                <td class="border border-slate-300 py-1.5 px-2"></td>
+                <td class="border border-slate-300 py-1.5 px-2 text-right text-amber-950 font-black" id="rpt-laba-kotor">Rp 0</td>
               </tr>
 
               <!-- III. BEBAN OPERASIONAL USAHA -->
               <tr class="bg-slate-50 font-bold text-slate-900">
-                <td class="border border-slate-300 py-2 px-3">6-1000</td>
-                <td class="border border-slate-300 py-2 px-3" colspan="2">BEBAN OPERASIONAL DISTRIBUSI & KANTOR</td>
-                <td class="border border-slate-300 py-2 px-3 text-right text-rose-600" id="rpt-total-operasional">-Rp 0</td>
+                <td class="border border-slate-300 py-1.5 px-2">6-1000</td>
+                <td class="border border-slate-300 py-1.5 px-2" colspan="2">BEBAN OPERASIONAL DISTRIBUSI & KANTOR</td>
+                <td class="border border-slate-300 py-1.5 px-2 text-right text-rose-600" id="rpt-total-operasional">-Rp 0</td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">6-1100</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Beban Sewa Armada Mobil Grand Max</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-sewa">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">6-1100</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Beban Sewa Armada Mobil Grand Max</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-sewa">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">6-1200</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Beban Bahan Bakar Armada (Solar BBM Harian)</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-solar">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">6-1200</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Beban Bahan Bakar Armada (Solar BBM Harian)</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-solar">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">6-1300</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Beban Gaji Karyawan (4 Kru: Bongkar Muat & Kasir)</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-gaji">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">6-1300</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Beban Gaji Karyawan (4 Kru: Bongkar Muat & Kasir)</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-gaji">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">6-1400</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Beban Pajak & Retribusi Daerah</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-pajak">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">6-1400</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Beban Pajak & Retribusi Daerah</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-pajak">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">6-1500</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Beban Operasional Kantor & Perlengkapan Lainnya</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-slate-700" id="rpt-sub-lainnya">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">6-1500</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Beban Operasional Kantor & Perlengkapan Lainnya</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-slate-700" id="rpt-sub-lainnya">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
 
               <!-- IV. ALOKASI CADANGAN / TABUNGAN USAHA -->
               <tr class="bg-slate-50 font-bold text-slate-900">
-                <td class="border border-slate-300 py-2 px-3">7-1000</td>
-                <td class="border border-slate-300 py-2 px-3" colspan="2">ALOKASI CADANGAN MODAL & TABUNGAN CV</td>
-                <td class="border border-slate-300 py-2 px-3 text-right text-blue-600" id="rpt-total-nabung">-Rp 0</td>
+                <td class="border border-slate-300 py-1.5 px-2">7-1000</td>
+                <td class="border border-slate-300 py-1.5 px-2" colspan="2">ALOKASI CADANGAN MODAL & TABUNGAN CV</td>
+                <td class="border border-slate-300 py-1.5 px-2 text-right text-blue-600" id="rpt-total-nabung">-Rp 0</td>
               </tr>
               <tr>
-                <td class="border border-slate-300 py-1.5 px-3 text-slate-400 font-mono">7-1100</td>
-                <td class="border border-slate-300 py-1.5 px-3 pl-8 text-slate-700">Penyisihan Tabungan Mingguan (Cadangan Darurat / Armada)</td>
-                <td class="border border-slate-300 py-1.5 px-3 text-right text-blue-700" id="rpt-sub-nabung">-Rp 0</td>
-                <td class="border border-slate-300 py-1.5 px-3"></td>
+                <td class="border border-slate-300 py-1 px-2 text-slate-400 font-mono">7-1100</td>
+                <td class="border border-slate-300 py-1 px-2 pl-6 text-slate-700">Penyisihan Tabungan Mingguan (Cadangan Darurat / Armada)</td>
+                <td class="border border-slate-300 py-1 px-2 text-right text-blue-700" id="rpt-sub-nabung">-Rp 0</td>
+                <td class="border border-slate-300 py-1 px-2"></td>
               </tr>
 
               <!-- V. LABA BERSIH AKHIR -->
               <tr class="bg-emerald-600 text-white font-black border-y-2 border-emerald-800">
-                <td class="border border-emerald-700 py-2.5 px-3 text-emerald-100 font-bold">NET</td>
-                <td class="border border-emerald-700 py-2.5 px-3 font-black text-xs sm:text-sm uppercase">LABA BERSIH AKHIR CV. ALFARIS ENAM DELAPAN</td>
-                <td class="border border-emerald-700 py-2.5 px-3 text-right font-medium text-emerald-100" id="rpt-margin-pct">Margin: 0%</td>
-                <td class="border border-emerald-700 py-2.5 px-3 text-right text-sm sm:text-base font-black border-b-4 border-double border-white" id="rpt-laba-bersih-akhir">Rp 0</td>
+                <td class="border border-emerald-700 py-2 px-2 text-emerald-100 font-bold">NET</td>
+                <td class="border border-emerald-700 py-2 px-2 font-black text-xs uppercase">LABA BERSIH AKHIR CV. ALFARIS ENAM DELAPAN</td>
+                <td class="border border-emerald-700 py-2 px-2 text-right font-medium text-emerald-100" id="rpt-margin-pct">Margin: 0%</td>
+                <td class="border border-emerald-700 py-2 px-2 text-right text-xs sm:text-sm font-black border-b-4 border-double border-white" id="rpt-laba-bersih-akhir">Rp 0</td>
               </tr>
             </tbody>
           </table>
 
           <!-- RINGKASAN STATUS PIUTANG KASBON TEMPO -->
-          <div class="mb-6 p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs avoid-break">
-            <div class="flex items-center justify-between font-bold text-slate-900 mb-1">
+          <div class="mb-4 p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-[10.5px] avoid-break">
+            <div class="flex items-center justify-between font-bold text-slate-900 mb-0.5">
               <span>Posisi Piutang Usaha (Kasbon Tempo Sales):</span>
-              <span id="rpt-kasbon-total" class="text-rose-700 font-extrabold text-sm">Rp 0</span>
+              <span id="rpt-kasbon-total" class="text-rose-700 font-extrabold">Rp 0</span>
             </div>
-            <p class="text-[11px] text-slate-600" id="rpt-kasbon-desc">Terdiri dari 0 nota kasbon tempo yang masih berjalan.</p>
+            <p class="text-[9.5px] text-slate-600" id="rpt-kasbon-desc">Terdiri dari 0 nota kasbon tempo yang masih berjalan.</p>
           </div>
 
-          <!-- TABEL RINCIAN PENGELUARAN BIAYA RIIL -->
-          <div class="mb-6 avoid-break">
-            <h4 class="font-bold text-slate-900 text-xs mb-2 uppercase tracking-wider flex items-center justify-between border-b pb-1">
-              <span>Rincian Buku Kas Pengeluaran Operasional</span>
-              <span class="text-[10px] text-slate-500 font-normal" id="rpt-expense-count">0 Catatan Transaksi</span>
-            </h4>
-            <table class="w-full text-[11px] border border-slate-300">
+          <!-- TANDA TANGAN / PENGESAHAN KORPORAT (HALAMAN 1) -->
+          <div id="rpt-signature-section" class="pt-4 mt-4 border-t border-slate-300 grid grid-cols-2 gap-6 text-center text-[10.5px] avoid-break">
+            <div>
+              <p class="text-slate-500 mb-0.5">Dibuat & Diverifikasi Oleh,</p>
+              <p class="font-bold text-slate-800 mb-12">Bagian Administrasi & Keuangan</p>
+              <p class="font-bold text-slate-900 border-t border-slate-400 inline-block pt-1 min-w-[150px]">( ........................................ )</p>
+            </div>
+            <div>
+              <p class="text-slate-500 mb-0.5" id="rpt-sign-city-date">Malang, 5 November 2026</p>
+              <p class="font-bold text-slate-800 mb-12">Disetujui & Disahkan Oleh,</p>
+              <p class="font-bold text-slate-900 border-t border-slate-400 inline-block pt-1 min-w-[150px]">Owner / Direktur Utama</p>
+            </div>
+          </div>
+
+          <!-- TABEL RINCIAN PENGELUARAN BIAYA RIIL (HANYA AKTIF DI FORMAT LENGKAP HALAMAN 2) -->
+          <div id="rpt-expense-section" class="page-break pt-4 hidden">
+            <div class="border-b-2 border-slate-900 pb-2 mb-3 flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-black uppercase text-slate-900">LAMPIRAN BUKU KAS OPERASIONAL & BIAYA</h3>
+                <p class="text-[9.5px] text-slate-500">CV. Alfaris Enam Delapan &bull; Rincian Mutasi Pengeluaran Riil</p>
+              </div>
+              <span class="text-[9.5px] font-mono text-slate-500" id="rpt-expense-count">0 Catatan Transaksi</span>
+            </div>
+            <table class="w-full text-[10px] border border-slate-300 mb-4">
               <thead class="bg-slate-100 text-slate-800 font-bold">
                 <tr>
-                  <th class="border border-slate-300 py-1.5 px-2 text-left w-24">Tanggal</th>
-                  <th class="border border-slate-300 py-1.5 px-2 text-left w-32">Kategori Akun</th>
-                  <th class="border border-slate-300 py-1.5 px-2 text-left">Deskripsi Keperluan</th>
-                  <th class="border border-slate-300 py-1.5 px-2 text-right w-28">Jumlah (Rp)</th>
+                  <th class="border border-slate-300 py-1 px-2 text-left w-20">Tanggal</th>
+                  <th class="border border-slate-300 py-1 px-2 text-left w-28">Kategori Akun</th>
+                  <th class="border border-slate-300 py-1 px-2 text-left">Deskripsi Keperluan</th>
+                  <th class="border border-slate-300 py-1 px-2 text-right w-24">Jumlah (Rp)</th>
                 </tr>
               </thead>
               <tbody id="rpt-expense-tbody"></tbody>
             </table>
+            <!-- Tanda Tangan Lampiran -->
+            <div class="pt-4 border-t border-slate-300 grid grid-cols-2 gap-6 text-center text-[10px] avoid-break">
+              <div>
+                <p class="text-slate-500 mb-0.5">Diperiksa Oleh,</p>
+                <p class="font-bold text-slate-800 mb-10">Staf Pembukuan</p>
+                <p class="font-bold text-slate-900 border-t border-slate-400 inline-block pt-1 min-w-[130px]">( ............................ )</p>
+              </div>
+              <div>
+                <p class="text-slate-500 mb-0.5">Diketahui Oleh,</p>
+                <p class="font-bold text-slate-800 mb-10">Pimpinan Operasional</p>
+                <p class="font-bold text-slate-900 border-t border-slate-400 inline-block pt-1 min-w-[130px]">( ............................ )</p>
+              </div>
+            </div>
           </div>
 
-          <!-- TANDA TANGAN / PENGESAHAN KORPORAT -->
-          <div class="pt-6 mt-8 border-t border-slate-300 grid grid-cols-2 gap-8 text-center text-xs avoid-break">
-            <div>
-              <p class="text-slate-500 mb-1">Dibuat & Diverifikasi Oleh,</p>
-              <p class="font-bold text-slate-800 mb-16">Bagian Administrasi & Keuangan</p>
-              <p class="font-bold text-slate-900 border-t border-slate-400 inline-block pt-1 min-w-[170px]">( ........................................ )</p>
-            </div>
-            <div>
-              <p class="text-slate-500 mb-1" id="rpt-sign-city-date">Malang, 5 November 2026</p>
-              <p class="font-bold text-slate-800 mb-16">Disetujui & Disahkan Oleh,</p>
-              <p class="font-bold text-slate-900 border-t border-slate-400 inline-block pt-1 min-w-[170px]">Owner / Direktur Utama</p>
-            </div>
-          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
         </div>
       </div>
@@ -2950,7 +2990,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     function openFinancialReportModal() {
       const filterSelect = document.getElementById('filter-rpt-period');
       if (filterSelect) filterSelect.value = 'all';
-      renderCorporateFinancialReport('all');
+      const layoutSelect = document.getElementById('filter-rpt-layout');
+      if (layoutSelect) layoutSelect.value = 'summary';
+
+      renderCorporateFinancialReport();
       document.getElementById('modal-financial-report').classList.remove('hidden');
       lucide.createIcons();
     }
@@ -2959,7 +3002,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       document.getElementById('modal-financial-report').classList.add('hidden');
     }
 
-    function renderCorporateFinancialReport(period = 'all') {
+    function renderCorporateFinancialReport() {
+      const period = document.getElementById('filter-rpt-period')?.value || 'all';
+      const layout = document.getElementById('filter-rpt-layout')?.value || 'summary';
       const today = getTodayYMD();
       const currentMonth = today.slice(0, 7); // 'YYYY-MM'
       const year = new Date().getFullYear();
@@ -3068,34 +3113,57 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         kasbonDescEl.innerText = `Terdiri dari ${unpaidKasbon.length} nota kasbon tempo yang masih berjalan (piutang usaha aktif).`;
       }
 
-      // Detailed Expense List Table
-      const expCountEl = document.getElementById('rpt-expense-count');
-      if (expCountEl) expCountEl.innerText = `${expList.length} Catatan Transaksi`;
+      // Handle Layout Mode (Summary 1 Lembar vs Full 2 Lembar)
+      const expenseSection = document.getElementById('rpt-expense-section');
+      if (expenseSection) {
+        if (layout === 'full') {
+          expenseSection.classList.remove('hidden');
+          const expCountEl = document.getElementById('rpt-expense-count');
+          if (expCountEl) expCountEl.innerText = `${expList.length} Catatan Transaksi`;
 
-      const expTbody = document.getElementById('rpt-expense-tbody');
-      if (expTbody) {
-        if (expList.length === 0) {
-          expTbody.innerHTML = `<tr><td colspan="4" class="border border-slate-300 py-3 text-center text-slate-400">Tidak ada pengeluaran operasional tercatat pada periode ini.</td></tr>`;
+          const expTbody = document.getElementById('rpt-expense-tbody');
+          if (expTbody) {
+            if (expList.length === 0) {
+              expTbody.innerHTML = `<tr><td colspan="4" class="border border-slate-300 py-2.5 text-center text-slate-400">Tidak ada pengeluaran operasional tercatat pada periode ini.</td></tr>`;
+            } else {
+              expTbody.innerHTML = expList.map(item => `
+                <tr class="hover:bg-slate-50">
+                  <td class="border border-slate-300 py-1 px-2 text-slate-600">${formatIndoDate(item.date)}</td>
+                  <td class="border border-slate-300 py-1 px-2 font-semibold text-slate-700">${escapeHtml(item.categoryLabel || item.category)}</td>
+                  <td class="border border-slate-300 py-1 px-2 text-slate-800">${escapeHtml(item.desc)}</td>
+                  <td class="border border-slate-300 py-1 px-2 text-right font-bold text-slate-900">${formatRupiah(item.amount)}</td>
+                </tr>
+              `).join('');
+            }
+          }
         } else {
-          expTbody.innerHTML = expList.map(item => `
-            <tr class="hover:bg-slate-50">
-              <td class="border border-slate-300 py-1.5 px-2 text-slate-600">${formatIndoDate(item.date)}</td>
-              <td class="border border-slate-300 py-1.5 px-2 font-semibold text-slate-700">${escapeHtml(item.categoryLabel || item.category)}</td>
-              <td class="border border-slate-300 py-1.5 px-2 text-slate-800">${escapeHtml(item.desc)}</td>
-              <td class="border border-slate-300 py-1.5 px-2 text-right font-bold text-slate-900">${formatRupiah(item.amount)}</td>
-            </tr>
-          `).join('');
+          expenseSection.classList.add('hidden');
         }
       }
     }
 
     function printFinancialReport() {
+      // Pastikan data dan layout ter-render
+      renderCorporateFinancialReport();
+
+      // Kloning sheet langsung ke root print container (#print-area-financial)
+      // Ini 100% menghindarkan masalah scroll offset modal dan tumpang tindih elemen!
+      const sheet = document.getElementById('financial-report-sheet');
+      const rootPrint = document.getElementById('print-area-financial');
+      if (sheet && rootPrint) {
+        rootPrint.innerHTML = sheet.innerHTML;
+      }
+
       document.body.classList.remove('printing-po');
       document.body.classList.add('printing-financial');
-      window.print();
+
+      // Beri sedikit jeda rendering DOM browser sebelum dialog print dipanggil
       setTimeout(() => {
-        document.body.classList.remove('printing-financial');
-      }, 1200);
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-financial');
+        }, 1000);
+      }, 100);
     }
 
     // --- 7. TRANSAKSI, RETUR, RUTE, SALES & PRODUK LOGIC ---
