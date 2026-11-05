@@ -1049,10 +1049,11 @@
   <div id="modal-expense" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
       <div class="p-4 border-b bg-slate-900 text-white flex justify-between items-center">
-        <h3 class="text-sm font-bold">Catat Pengeluaran Operasional</h3>
+        <h3 id="expense-modal-title" class="text-sm font-bold">Catat Pengeluaran Operasional</h3>
         <button onclick="closeExpenseModal()" class="text-slate-400 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
       <form id="form-expense" onsubmit="saveExpense(event)" class="p-4 space-y-3.5 text-xs">
+        <input type="hidden" id="expense-form-id" value="">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Kategori Pengeluaran *</label>
           <select id="expense-form-category" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold">
@@ -1078,7 +1079,7 @@
         </div>
         <div class="pt-3 border-t flex justify-end gap-2">
           <button type="button" onclick="closeExpenseModal()" class="px-3.5 py-2 rounded-xl text-slate-600">Batal</button>
-          <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold">Simpan Pengeluaran</button>
+          <button type="submit" id="expense-submit-btn" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold">Simpan Pengeluaran</button>
         </div>
       </form>
     </div>
@@ -1088,10 +1089,11 @@
   <div id="modal-retur" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-backdrop">
     <div class="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
       <div class="p-4 border-b bg-rose-50/70 flex justify-between items-center">
-        <h3 class="text-sm font-bold text-slate-900">Catat Retur Roti Toko Langsung</h3>
+        <h3 id="retur-modal-title" class="text-sm font-bold text-slate-900">Catat Retur Roti Toko Langsung</h3>
         <button onclick="closeReturModal()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
       <form id="form-retur" onsubmit="saveRetur(event)" class="p-4 space-y-3 text-xs overflow-y-auto flex-1">
+        <input type="hidden" id="retur-form-id" value="">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Pilih Toko Langsung *</label>
           <select id="retur-form-toko" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold"></select>
@@ -1133,7 +1135,7 @@
         </div>
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" onclick="closeReturModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-rose-600 text-white font-semibold">Simpan Retur</button>
+          <button type="submit" id="retur-submit-btn" class="px-4 py-1.5 rounded-lg bg-rose-600 text-white font-semibold">Simpan Retur</button>
         </div>
       </form>
     </div>
@@ -1187,14 +1189,18 @@
 
   <div id="modal-sales" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 space-y-3">
-      <h3 class="text-sm font-bold">Tambah / Edit Sales</h3>
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+        <h3 id="sales-modal-title" class="text-sm font-bold text-slate-900">Tambah Sales Baru</h3>
+        <button type="button" onclick="closeSalesModal()" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
       <form id="form-sales" onsubmit="saveSales(event)" class="space-y-3 text-xs">
-        <div><label class="block font-semibold mb-1">Nama Sales</label><input type="text" id="sales-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
-        <div><label class="block font-semibold mb-1">No WA</label><input type="tel" id="sales-form-phone" required class="w-full px-3 py-2 border rounded-xl"></div>
-        <div><label class="block font-semibold mb-1">Rute</label><input type="text" id="sales-form-route" class="w-full px-3 py-2 border rounded-xl"></div>
-        <div class="pt-2 flex justify-end gap-2">
+        <input type="hidden" id="sales-form-id" value="">
+        <div><label class="block font-semibold mb-1 text-slate-700">Nama Sales *</label><input type="text" id="sales-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
+        <div><label class="block font-semibold mb-1 text-slate-700">No WhatsApp *</label><input type="tel" id="sales-form-phone" required placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 border rounded-xl"></div>
+        <div><label class="block font-semibold mb-1 text-slate-700">Rute Pengantaran</label><input type="text" id="sales-form-route" placeholder="Contoh: Rute Klojen, Sukun" class="w-full px-3 py-2 border rounded-xl"></div>
+        <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
           <button type="button" onclick="closeSalesModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold">Simpan</button>
+          <button type="submit" id="sales-submit-btn" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold shadow-sm hover:bg-brand-600">Simpan Sales</button>
         </div>
       </form>
     </div>
@@ -1202,24 +1208,28 @@
 
   <div id="modal-product" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-4 space-y-3">
-      <h3 class="text-sm font-bold">Produk & 6 Level Harga</h3>
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+        <h3 id="product-modal-title" class="text-sm font-bold text-slate-900">Produk & 6 Level Harga</h3>
+        <button type="button" onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
       <form id="form-product" onsubmit="saveProduct(event)" class="space-y-3 text-xs max-h-[80vh] overflow-y-auto">
-        <div><label class="block font-semibold mb-1">Nama Roti</label><input type="text" id="product-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
-        <div class="p-2.5 bg-amber-50 rounded-xl border flex gap-2 items-center">
-          <input type="number" id="product-form-factory-price" placeholder="HPP Kulakan" required class="flex-1 px-3 py-1.5 border rounded-xl font-bold">
-          <button type="button" onclick="autoCalculatePriceLevels()" class="px-3 py-1.5 bg-amber-600 text-white rounded-xl font-semibold">Hitung 6 Level</button>
+        <input type="hidden" id="product-form-id" value="">
+        <div><label class="block font-semibold mb-1 text-slate-700">Nama Roti / Varian *</label><input type="text" id="product-form-name" required placeholder="Contoh: Roti Sisir Butter" class="w-full px-3 py-2 border rounded-xl font-medium"></div>
+        <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200 flex gap-2 items-center">
+          <input type="number" id="product-form-factory-price" placeholder="HPP Kulakan Pabrik (Rp)" required class="flex-1 px-3 py-1.5 border rounded-xl font-bold bg-white">
+          <button type="button" onclick="autoCalculatePriceLevels()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold shadow-sm text-xs">Hitung 6 Level</button>
         </div>
         <div class="grid grid-cols-2 gap-2">
-          <div><label class="block font-bold">(1) Sales Bsr</label><input type="number" id="price-level1" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold">(2) Sales Sdg</label><input type="number" id="price-level2" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold">(3) Sales Kcl</label><input type="number" id="price-level3" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold">(4) Toko Langsung</label><input type="number" id="price-level4" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold">(5) Agen</label><input type="number" id="price-level5" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold">(6) Grosir</label><input type="number" id="price-level6" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(1) Sales Bsr</label><input type="number" id="price-level1" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(2) Sales Sdg</label><input type="number" id="price-level2" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(3) Sales Kcl</label><input type="number" id="price-level3" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(4) Toko Langsung</label><input type="number" id="price-level4" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(5) Agen</label><input type="number" id="price-level5" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(6) Grosir</label><input type="number" id="price-level6" class="w-full px-2 py-1 border rounded-lg"></div>
         </div>
-        <div class="pt-2 flex justify-end gap-2">
+        <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
           <button type="button" onclick="closeProductModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
-          <button type="submit" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold">Simpan</button>
+          <button type="submit" id="product-submit-btn" class="px-4 py-1.5 rounded-lg bg-brand-500 text-white font-semibold shadow-sm hover:bg-brand-600">Simpan Produk</button>
         </div>
       </form>
     </div>
@@ -2436,15 +2446,48 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     // --- 6. PENGELUARAN OPERASIONAL & EXECUTIVE P&L ---
-    function openExpenseModal() {
-      document.getElementById('modal-expense').classList.remove('hidden');
-      document.getElementById('expense-form-date').value = getTodayYMD();
+    function openExpenseModal(expId = null) {
+      const modal = document.getElementById('modal-expense');
+      const title = document.getElementById('expense-modal-title');
+      const submitBtn = document.getElementById('expense-submit-btn');
+      const hiddenId = document.getElementById('expense-form-id');
+      const catSelect = document.getElementById('expense-form-category');
+      const amtInput = document.getElementById('expense-form-amount');
+      const descInput = document.getElementById('expense-form-desc');
+      const dateInput = document.getElementById('expense-form-date');
+
+      if (expId && typeof expId === 'string') {
+        const exp = getExpensesData().find(e => e.id === expId);
+        if (exp) {
+          if (title) title.innerText = 'Edit Pengeluaran Operasional';
+          if (submitBtn) submitBtn.innerText = 'Perbarui Pengeluaran';
+          if (hiddenId) hiddenId.value = exp.id;
+          if (catSelect) catSelect.value = exp.category || 'sewa_mobil';
+          if (amtInput) amtInput.value = exp.amount || '';
+          if (descInput) descInput.value = exp.desc || '';
+          if (dateInput) dateInput.value = exp.date || getTodayYMD();
+          modal.classList.remove('hidden');
+          lucide.createIcons();
+          return;
+        }
+      }
+
+      // Mode Tambah Baru
+      if (title) title.innerText = 'Catat Pengeluaran Operasional';
+      if (submitBtn) submitBtn.innerText = 'Simpan Pengeluaran';
+      if (hiddenId) hiddenId.value = '';
+      if (catSelect) catSelect.value = 'sewa_mobil';
+      if (amtInput) amtInput.value = '';
+      if (descInput) descInput.value = '';
+      if (dateInput) dateInput.value = getTodayYMD();
+      modal.classList.remove('hidden');
       lucide.createIcons();
     }
     function closeExpenseModal() { document.getElementById('modal-expense').classList.add('hidden'); }
 
     function saveExpense(e) {
       e.preventDefault();
+      const expId = document.getElementById('expense-form-id').value;
       const category = document.getElementById('expense-form-category').value;
       const amount = parseFloat(document.getElementById('expense-form-amount').value) || 0;
       const desc = document.getElementById('expense-form-desc').value.trim();
@@ -2453,11 +2496,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (amount <= 0 || !desc) return;
       const catLabels = { sewa_mobil: 'Sewa Mobil', solar: 'Solar BBM', gaji: 'Gaji 4 Karyawan', pajak: 'Pajak', nabung: 'Alokasi Nabung', lainnya: 'Operasional' };
 
-      const expenses = getExpensesData();
-      expenses.unshift({ id: 'EXP-' + String(Date.now()).slice(-5), date, category, categoryLabel: catLabels[category], amount, desc });
-      saveExpensesData(expenses);
+      let expenses = getExpensesData();
+      if (expId) {
+        expenses = expenses.map(item => item.id === expId ? { ...item, date, category, categoryLabel: catLabels[category], amount, desc } : item);
+        saveExpensesData(expenses);
+        showToast('Pengeluaran operasional berhasil diperbarui.');
+      } else {
+        expenses.unshift({ id: 'EXP-' + String(Date.now()).slice(-5), date, category, categoryLabel: catLabels[category], amount, desc });
+        saveExpensesData(expenses);
+        showToast('Pengeluaran operasional dicatat.');
+      }
       closeExpenseModal();
-      showToast('Pengeluaran operasional dicatat.');
     }
 
     function renderExpenseTable() {
@@ -2472,7 +2521,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           <td class="py-3 px-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100">${escapeHtml(item.categoryLabel)}</span></td>
           <td class="py-3 px-3.5 font-semibold text-slate-800">${escapeHtml(item.desc)}</td>
           <td class="py-3 px-3.5 text-right font-extrabold text-slate-900">${formatRupiah(item.amount)}</td>
-          <td class="py-3 px-3.5 text-center"><button onclick="deleteExpense('${item.id}')" class="p-1 text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+          <td class="py-3 px-3.5 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="openExpenseModal('${item.id}')" title="Edit Biaya" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+              <button onclick="deleteExpense('${item.id}')" title="Hapus Biaya" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </td>
         </tr>
       `).join('');
       lucide.createIcons();
@@ -2551,11 +2605,67 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     // --- 7. TRANSAKSI, RETUR, RUTE, SALES & PRODUK LOGIC ---
-    function openReturModal() {
-      document.getElementById('modal-retur').classList.remove('hidden');
-      document.getElementById('retur-form-toko').innerHTML = getTokoData().map(t => `<option value="${t.id}">${t.name} (${t.route})</option>`).join('');
-      document.getElementById('retur-form-product').innerHTML = getProductsData().map(p => `<option value="${p.id}" data-factory="${p.factoryPrice || 0}">${p.name} - HPP: ${formatRupiah(p.factoryPrice)}</option>`).join('');
+    function openReturModal(returId = null) {
+      const modal = document.getElementById('modal-retur');
+      const title = document.getElementById('retur-modal-title');
+      const submitBtn = document.getElementById('retur-submit-btn');
+      const hiddenId = document.getElementById('retur-form-id');
+      const selectToko = document.getElementById('retur-form-toko');
+      const selectProduct = document.getElementById('retur-form-product');
+      const qtyInput = document.getElementById('retur-form-qty');
+      const reasonSelect = document.getElementById('retur-form-reason');
+
+      if (selectToko) {
+        selectToko.innerHTML = getTokoData().map(t => `<option value="${t.id}">${t.name} (${t.route})</option>`).join('');
+      }
+      if (selectProduct) {
+        selectProduct.innerHTML = getProductsData().map(p => `<option value="${p.id}" data-factory="${p.factoryPrice || 0}">${p.name} - HPP: ${formatRupiah(p.factoryPrice)}</option>`).join('');
+      }
+
+      if (returId && typeof returId === 'string') {
+        const r = getReturData().find(x => x.id === returId);
+        if (r) {
+          if (title) title.innerText = 'Edit Data Retur Roti';
+          if (submitBtn) submitBtn.innerText = 'Perbarui Retur';
+          if (hiddenId) hiddenId.value = r.id;
+
+          if (selectToko) {
+            const matchedToko = getTokoData().find(t => t.name === r.tokoName);
+            if (matchedToko) selectToko.value = matchedToko.id;
+          }
+          if (selectProduct) {
+            const matchedProd = getProductsData().find(p => p.name === r.productName);
+            if (matchedProd) selectProduct.value = matchedProd.id;
+          }
+          if (qtyInput) qtyInput.value = r.qty || 1;
+          if (reasonSelect) reasonSelect.value = r.reason || 'Kadaluwarsa / Expired';
+
+          const radioPabrik = document.querySelector('input[name="retur_action_type"][value="pabrik"]');
+          const radioWaste = document.querySelector('input[name="retur_action_type"][value="waste"]');
+          if (r.actionType === 'waste') {
+            if (radioWaste) radioWaste.checked = true;
+          } else {
+            if (radioPabrik) radioPabrik.checked = true;
+          }
+
+          calculateReturFinancialImpact();
+          modal.classList.remove('hidden');
+          lucide.createIcons();
+          return;
+        }
+      }
+
+      // Mode Tambah Baru
+      if (title) title.innerText = 'Catat Retur Roti Toko Langsung';
+      if (submitBtn) submitBtn.innerText = 'Simpan Retur';
+      if (hiddenId) hiddenId.value = '';
+      if (qtyInput) qtyInput.value = 10;
+      if (reasonSelect) reasonSelect.value = 'Kadaluwarsa / Expired';
+      const radioPabrikDefault = document.querySelector('input[name="retur_action_type"][value="pabrik"]');
+      if (radioPabrikDefault) radioPabrikDefault.checked = true;
+
       calculateReturFinancialImpact();
+      modal.classList.remove('hidden');
       lucide.createIcons();
     }
     function closeReturModal() { document.getElementById('modal-retur').classList.add('hidden'); }
@@ -2573,18 +2683,27 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
     function saveRetur(e) {
       e.preventDefault();
+      const returId = document.getElementById('retur-form-id').value;
       const toko = getTokoData().find(t => t.id === document.getElementById('retur-form-toko').value);
       const product = getProductsData().find(p => p.id === document.getElementById('retur-form-product').value);
       const qty = parseInt(document.getElementById('retur-form-qty').value) || 0;
       const actionType = document.querySelector('input[name="retur_action_type"]:checked')?.value || 'pabrik';
+      const reason = document.getElementById('retur-form-reason').value;
       if (!toko || !product || qty <= 0) return;
 
       const waste = actionType === 'waste' ? ((product.factoryPrice || 0) * qty) : 0;
-      const list = getReturData();
-      list.unshift({ id: 'RTR-' + String(Date.now()).slice(-4), date: getTodayYMD(), tokoName: toko.name, productName: product.name, qty, reason: document.getElementById('retur-form-reason').value, actionType, wasteHppAmount: waste });
-      saveReturData(list);
+      let list = getReturData();
+
+      if (returId) {
+        list = list.map(r => r.id === returId ? { ...r, tokoName: toko.name, productName: product.name, qty, reason, actionType, wasteHppAmount: waste } : r);
+        saveReturData(list);
+        showToast('Data retur berhasil diperbarui.');
+      } else {
+        list.unshift({ id: 'RTR-' + String(Date.now()).slice(-4), date: getTodayYMD(), tokoName: toko.name, productName: product.name, qty, reason, actionType, wasteHppAmount: waste });
+        saveReturData(list);
+        showToast('Retur berhasil dicatat.');
+      }
       closeReturModal();
-      showToast('Retur berhasil dicatat.');
     }
     function renderReturTable() {
       const list = getReturData();
@@ -2597,7 +2716,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-[10px]">${escapeHtml(r.reason)}</span></td>
           <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.actionType === 'pabrik' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'}">${r.actionType === 'pabrik' ? 'Tukar Pabrik' : 'Waste HPP'}</span></td>
           <td class="py-2.5 px-3 text-right font-bold ${r.actionType === 'waste' ? 'text-rose-700' : 'text-slate-400'}">${r.actionType === 'waste' ? '-' + formatRupiah(r.wasteHppAmount) : 'Rp 0'}</td>
-          <td class="py-2.5 px-3 text-center"><button onclick="deleteRetur('${r.id}')" class="text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></td>
+          <td class="py-2.5 px-3 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="openReturModal('${r.id}')" title="Edit Retur" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+              <button onclick="deleteRetur('${r.id}')" title="Hapus Retur" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </td>
         </tr>
       `).join('');
       lucide.createIcons();
@@ -2626,10 +2750,21 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             <div class="font-bold text-slate-900">${escapeHtml(t.name)} <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.diffDays >= 7 ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">${t.diffDays} Hari Kosong</span></div>
             <div class="text-[11px] text-slate-500">Sales: ${escapeHtml(t.salesName)} &bull; ${escapeHtml(t.route)}</div>
           </div>
-          <button onclick="followUpTokoWA('${t.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs">WA Toko</button>
+          <div class="flex items-center gap-1.5">
+            <button onclick="markTokoVisited('${t.id}')" title="Tandai toko telah dikunjungi hari ini" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">Sudah Kunjung</button>
+            <button onclick="followUpTokoWA('${t.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition">WA Toko</button>
+          </div>
         </div>
       `).join('');
       lucide.createIcons();
+    }
+    function markTokoVisited(id) {
+      const t = getTokoData().find(i => i.id === id);
+      const tName = t ? t.name : id;
+      let list = getTokoData();
+      list = list.map(item => item.id === id ? { ...item, lastVisitDate: getTodayYMD() } : item);
+      saveTokoData(list);
+      showToast(`Kunjungan toko "${tName}" diperbarui ke hari ini.`);
     }
     function followUpTokoWA(id) {
       const t = getTokoData().find(i => i.id === id);
@@ -2772,17 +2907,37 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (search) filtered = filtered.filter(t => (t.id || '').toLowerCase().includes(search) || (t.salesName || '').toLowerCase().includes(search));
 
       container.innerHTML = filtered.map(t => `
-        <div class="p-3 flex justify-between items-center hover:bg-slate-50">
+        <div class="p-3 flex justify-between items-center hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
           <div>
-            <div class="font-bold">${t.id} <span class="px-2 py-0.5 rounded text-[10px] ${t.paymentStatus === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${t.paymentStatus === 'lunas' ? 'Lunas' : 'Kasbon'}</span></div>
-            <div class="text-xs text-slate-500">${escapeHtml(t.salesName)} &bull; ${formatIndoDate(t.date)}</div>
+            <div class="font-bold flex items-center gap-2">
+              <span>${t.id}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] ${t.paymentStatus === 'lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${t.paymentStatus === 'lunas' ? 'Lunas' : 'Kasbon'}</span>
+              <span class="text-[10px] text-slate-400 font-normal">(${t.items ? t.items.length : 0} item)</span>
+            </div>
+            <div class="text-xs text-slate-500">${escapeHtml(t.salesName)} &bull; ${formatIndoDate(t.date)} ${t.salesRoute ? '&bull; ' + escapeHtml(t.salesRoute) : ''}</div>
           </div>
-          <div class="font-extrabold text-sm ${t.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-rose-700'}">${formatRupiah(t.totalAmount)}</div>
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <div class="font-extrabold text-sm ${t.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-rose-700'}">${formatRupiah(t.totalAmount)}</div>
+              ${t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas' ? `<button onclick="settleKasbonTransaction('${t.id}')" class="text-[10px] text-emerald-600 hover:underline font-bold mt-0.5">Lunasi Kasbon</button>` : ''}
+            </div>
+            <button onclick="deleteTransaction('${t.id}')" title="Batalkan Transaksi" class="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
       `).join('');
       lucide.createIcons();
     }
     function setTrxFilter(f) { currentTrxFilter = f; renderTransactionList(); }
+    function deleteTransaction(id) {
+      if (confirm(`Batalkan / hapus transaksi ${id}? Saldo omset dan status kasbon terkait akan disesuaikan otomatis.`)) {
+        const list = getTransactionsData().filter(t => t.id !== id);
+        saveTransactionsData(list, true);
+        deleteItemFromSupabase('transactions', id);
+        showToast(`Transaksi ${id} berhasil dibatalkan & dihapus.`);
+      }
+    }
 
     function renderSalesList() {
       const list = getSalesData();
@@ -2793,29 +2948,86 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       document.getElementById('sidebar-sales-count').innerText = list.filter(s => s.status === 'aktif').length;
 
       document.getElementById('sales-container').innerHTML = list.filter(s => currentSalesFilter === 'all' || s.status === currentSalesFilter).map(s => `
-        <div class="bg-white p-3.5 rounded-2xl border flex justify-between items-center">
+        <div class="bg-white p-3.5 rounded-2xl border flex justify-between items-center shadow-sm">
           <div>
-            <div class="font-bold">${escapeHtml(s.name)} <span class="text-[10px] px-1.5 py-0.5 rounded ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200'}">${s.status.toUpperCase()}</span></div>
+            <div class="font-bold text-slate-900">${escapeHtml(s.name)} <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">${s.status.toUpperCase()}</span></div>
             <div class="text-xs text-slate-500">${escapeHtml(s.phone)} &bull; ${escapeHtml(s.route)}</div>
           </div>
-          <button onclick="toggleSalesStatus('${s.id}')" class="px-2.5 py-1 text-xs border rounded-lg">${s.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>
+          <div class="flex items-center gap-1.5">
+            <button onclick="openSalesModal('${s.id}')" title="Edit Sales" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-brand-600 hover:bg-slate-50 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+            <button onclick="toggleSalesStatus('${s.id}')" class="px-2.5 py-1 text-xs border border-slate-200 font-medium rounded-lg hover:bg-slate-50 transition">${s.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>
+            <button onclick="deleteSales('${s.id}')" title="Hapus Sales" class="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>
         </div>
       `).join('');
       lucide.createIcons();
     }
     function setSalesFilter(f) { currentSalesFilter = f; renderSalesList(); }
     function toggleSalesStatus(id) { saveSalesData(getSalesData().map(s => s.id === id ? { ...s, status: s.status === 'aktif' ? 'nonaktif' : 'aktif' } : s)); }
-    function openSalesModal() { document.getElementById('modal-sales').classList.remove('hidden'); }
+    function openSalesModal(salesId = null) {
+      const modal = document.getElementById('modal-sales');
+      const title = document.getElementById('sales-modal-title');
+      const submitBtn = document.getElementById('sales-submit-btn');
+      const hiddenId = document.getElementById('sales-form-id');
+      const nameInput = document.getElementById('sales-form-name');
+      const phoneInput = document.getElementById('sales-form-phone');
+      const routeInput = document.getElementById('sales-form-route');
+
+      if (salesId && typeof salesId === 'string') {
+        const s = getSalesData().find(x => x.id === salesId);
+        if (s) {
+          if (title) title.innerText = 'Edit Data Sales';
+          if (submitBtn) submitBtn.innerText = 'Perbarui Sales';
+          if (hiddenId) hiddenId.value = s.id;
+          if (nameInput) nameInput.value = s.name;
+          if (phoneInput) phoneInput.value = s.phone;
+          if (routeInput) routeInput.value = s.route || '';
+          modal.classList.remove('hidden');
+          lucide.createIcons();
+          return;
+        }
+      }
+
+      // Mode Tambah Baru
+      if (title) title.innerText = 'Tambah Sales Baru';
+      if (submitBtn) submitBtn.innerText = 'Simpan Sales';
+      if (hiddenId) hiddenId.value = '';
+      if (nameInput) nameInput.value = '';
+      if (phoneInput) phoneInput.value = '';
+      if (routeInput) routeInput.value = '';
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
     function closeSalesModal() { document.getElementById('modal-sales').classList.add('hidden'); }
     function saveSales(e) {
       e.preventDefault();
+      const salesId = document.getElementById('sales-form-id').value;
       const n = document.getElementById('sales-form-name').value.trim();
       const p = document.getElementById('sales-form-phone').value.trim();
+      const route = document.getElementById('sales-form-route').value.trim() || 'Rute Bebas';
       if (!n || !p) return;
-      const list = getSalesData();
-      list.unshift({ id: 'SLS-' + String(Date.now()).slice(-4), name: n, phone: p, route: document.getElementById('sales-form-route').value.trim() || 'Rute Bebas', status: 'aktif' });
-      saveSalesData(list);
+
+      let list = getSalesData();
+      if (salesId) {
+        list = list.map(s => s.id === salesId ? { ...s, name: n, phone: p, route } : s);
+        saveSalesData(list);
+        showToast(`Data sales "${n}" berhasil diperbarui.`);
+      } else {
+        list.unshift({ id: 'SLS-' + String(Date.now()).slice(-4), name: n, phone: p, route, status: 'aktif' });
+        saveSalesData(list);
+        showToast(`Sales baru "${n}" berhasil didaftarkan.`);
+      }
       closeSalesModal();
+    }
+    function deleteSales(id) {
+      const s = getSalesData().find(x => x.id === id);
+      const sName = s ? s.name : id;
+      if (confirm(`Hapus data sales "${sName}"? Sales ini tidak akan muncul lagi di daftar drop dan rekap PO.`)) {
+        const list = getSalesData().filter(x => x.id !== id);
+        saveSalesData(list, true);
+        deleteItemFromSupabase('sales', id);
+        showToast(`Sales "${sName}" berhasil dihapus.`);
+      }
     }
 
     function renderProductsTable() {
@@ -2845,7 +3057,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           } else {
             row += `<td class="py-2.5 px-3 text-right font-bold">${formatRupiah((p.prices && p.prices[tier]) || 0)}</td>`;
           }
-          row += `<td class="py-2.5 px-3 text-center"><button onclick="openProductModal('${p.id}')" class="text-slate-400 hover:text-brand-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button></td></tr>`;
+          row += `
+            <td class="py-2.5 px-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="openProductModal('${p.id}')" title="Edit Produk" class="p-1 text-slate-400 hover:text-brand-600 rounded hover:bg-slate-100 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                <button onclick="deleteProduct('${p.id}')" title="Hapus Produk" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </td>
+          </tr>`;
           return row;
         }).join('');
       }
@@ -2857,18 +3076,75 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (!f) return;
       PRICE_TIERS.forEach(t => document.getElementById('price-' + t.id).value = Math.round((f * (1 + (t.marginPct / 100))) / 50) * 50);
     }
-    function openProductModal() { document.getElementById('modal-product').classList.remove('hidden'); }
+    function openProductModal(prodId = null) {
+      const modal = document.getElementById('modal-product');
+      const title = document.getElementById('product-modal-title');
+      const submitBtn = document.getElementById('product-submit-btn');
+      const hiddenId = document.getElementById('product-form-id');
+      const nameInput = document.getElementById('product-form-name');
+      const hppInput = document.getElementById('product-form-factory-price');
+
+      if (prodId && typeof prodId === 'string') {
+        const prod = getProductsData().find(p => p.id === prodId);
+        if (prod) {
+          if (title) title.innerText = 'Edit Produk & 6 Level Harga';
+          if (submitBtn) submitBtn.innerText = 'Perbarui Produk';
+          if (hiddenId) hiddenId.value = prod.id;
+          if (nameInput) nameInput.value = prod.name;
+          if (hppInput) hppInput.value = prod.factoryPrice || '';
+          PRICE_TIERS.forEach(t => {
+            const el = document.getElementById('price-' + t.id);
+            if (el) el.value = (prod.prices && prod.prices[t.id]) !== undefined ? prod.prices[t.id] : '';
+          });
+          modal.classList.remove('hidden');
+          lucide.createIcons();
+          return;
+        }
+      }
+
+      // Mode Tambah Baru
+      if (title) title.innerText = 'Produk & 6 Level Harga';
+      if (submitBtn) submitBtn.innerText = 'Simpan Produk';
+      if (hiddenId) hiddenId.value = '';
+      if (nameInput) nameInput.value = '';
+      if (hppInput) hppInput.value = '';
+      PRICE_TIERS.forEach(t => {
+        const el = document.getElementById('price-' + t.id);
+        if (el) el.value = '';
+      });
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
     function closeProductModal() { document.getElementById('modal-product').classList.add('hidden'); }
     function saveProduct(e) {
       e.preventDefault();
+      const prodId = document.getElementById('product-form-id').value;
       const name = document.getElementById('product-form-name').value.trim();
       const factoryPrice = parseFloat(document.getElementById('product-form-factory-price').value) || 0;
       const prices = {};
       PRICE_TIERS.forEach(t => prices[t.id] = parseFloat(document.getElementById('price-' + t.id).value) || factoryPrice);
-      const list = getProductsData();
-      list.unshift({ id: 'PRD-' + String(Date.now()).slice(-4), code: 'ROTI-' + String(Date.now()).slice(-3), name, stock: 100, factoryPrice, prices });
-      saveProductsData(list);
+
+      let list = getProductsData();
+      if (prodId) {
+        list = list.map(p => p.id === prodId ? { ...p, name, factoryPrice, prices } : p);
+        saveProductsData(list);
+        showToast(`Produk "${name}" berhasil diperbarui.`);
+      } else {
+        list.unshift({ id: 'PRD-' + String(Date.now()).slice(-4), code: 'ROTI-' + String(Date.now()).slice(-3), name, stock: 100, factoryPrice, prices });
+        saveProductsData(list);
+        showToast(`Produk "${name}" berhasil ditambahkan.`);
+      }
       closeProductModal();
+    }
+    function deleteProduct(id) {
+      const prod = getProductsData().find(p => p.id === id);
+      const prodName = prod ? prod.name : id;
+      if (confirm(`Hapus produk "${prodName}"? Semua data konfigurasi 6 level harga untuk produk ini akan dihapus.`)) {
+        const list = getProductsData().filter(p => p.id !== id);
+        saveProductsData(list, true);
+        deleteItemFromSupabase('products', id);
+        showToast(`Produk "${prodName}" berhasil dihapus.`);
+      }
     }
 
     function populateSalesDropdown() {
