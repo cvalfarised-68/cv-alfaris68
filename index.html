@@ -1193,8 +1193,11 @@
             <i data-lucide="clipboard-list" class="w-4 h-4"></i>
           </div>
           <div>
-            <h3 class="text-sm font-bold">Input Pre-Order (PO) Sales</h3>
-            <p class="text-[11px] text-amber-100">Pesanan roti untuk pengambilan pabrik besok</p>
+            <h3 class="text-sm font-bold flex items-center gap-2">
+              <span>Input Pre-Order (PO) Sales</span>
+              <span class="px-2 py-0.2 rounded-full text-[9.5px] font-bold bg-white/20 text-white border border-white/30">Kasir & Owner</span>
+            </h3>
+            <p class="text-[11px] text-amber-100">Diserahkan langsung oleh sales &bull; Target muatan kiriman pabrik</p>
           </div>
         </div>
         <button onclick="closePOInputModal()" class="text-white/80 hover:text-white p-1 rounded-lg">
@@ -1212,17 +1215,47 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">Nama Sales (Aktif) *</label>
-            <select id="po-form-sales" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800"></select>
+            <select id="po-form-sales" required onchange="updatePOFormLiveTotals()" class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800"></select>
           </div>
         </div>
 
         <div>
-          <label class="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
-            <i data-lucide="package" class="w-3.5 h-3.5 text-brand-500"></i>
-            <span>Jumlah Pesanan per Varian Roti (Pcs):</span>
-          </label>
-          <div id="po-form-products-inputs" class="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+            <label class="font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="package" class="w-3.5 h-3.5 text-brand-500"></i>
+              <span>Jumlah Pesanan per Varian Roti:</span>
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="setAllPOInputsZero()" class="text-[10px] text-slate-500 hover:text-slate-800 px-2 py-0.5 rounded bg-slate-200/70 hover:bg-slate-200 font-semibold cursor-pointer">
+                Reset Semua (0)
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <input 
+              type="text" 
+              id="po-form-search-bread" 
+              oninput="filterPOFormBread()" 
+              placeholder="🔍 Cari varian roti (misal: Nana, MPS, Sisir)..." 
+              class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:border-brand-500"
+            >
+          </div>
+
+          <div id="po-form-products-inputs" class="space-y-1.5 max-h-[320px] overflow-y-auto p-2.5 bg-slate-50 rounded-xl border border-slate-200">
             <!-- Diisi dinamis per produk oleh JS -->
+          </div>
+        </div>
+
+        <!-- LIVE TOTAL SUMMARY BAR -->
+        <div class="p-2.5 bg-amber-500/10 border border-amber-300 rounded-xl flex items-center justify-between text-xs">
+          <div>
+            <span class="text-slate-500 text-[11px]">Total Pesanan Sales:</span>
+            <div id="po-form-live-total-pcs" class="text-slate-900 font-black text-sm">0 Unit</div>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-500 text-[11px]">Estimasi Tagihan:</span>
+            <div id="po-form-live-total-amt" class="text-amber-800 font-black text-sm">Rp 0</div>
           </div>
         </div>
 
@@ -1232,8 +1265,8 @@
         </div>
 
         <div class="pt-3 border-t flex justify-end gap-2">
-          <button type="button" onclick="closePOInputModal()" class="px-3.5 py-2 rounded-xl text-slate-600">Batal</button>
-          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-sm">Simpan PO Sales</button>
+          <button type="button" onclick="closePOInputModal()" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-slate-800 cursor-pointer">Batal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-sm cursor-pointer">Simpan PO Sales</button>
         </div>
       </form>
     </div>
@@ -3683,22 +3716,24 @@
       lucide.createIcons();
     }
 
-    // Modal Input / Edit PO Sales
+    // Modal Input / Edit PO Sales (Diserahkan oleh Sales, dapat diinput oleh Kasir atau Owner)
     function openPOInputModal(poId = null) {
       const modal = document.getElementById('modal-po-input');
       const form = document.getElementById('form-po-input');
       const salesSelect = document.getElementById('po-form-sales');
       const productsContainer = document.getElementById('po-form-products-inputs');
+      const searchBreadInput = document.getElementById('po-form-search-bread');
       const activeSales = getSalesData().filter(s => s.status === 'aktif');
       const products = getProductsData();
 
       form.reset();
+      if (searchBreadInput) searchBreadInput.value = '';
       document.getElementById('po-form-id').value = '';
       document.getElementById('po-form-date').value = currentPODate;
 
       // Populate Sales
       salesSelect.innerHTML = activeSales.map(s => `
-        <option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.route)}</option>
+        <option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.route || 'Rute Bebas')}</option>
       `).join('');
 
       let existingItems = {};
@@ -3713,29 +3748,105 @@
         }
       }
 
-      // Generate input field untuk tiap produk
-      productsContainer.innerHTML = products.map(p => {
-        const val = existingItems[p.id] !== undefined ? existingItems[p.id] : 50;
+      // Generate input field untuk 25 produk sesuai urutan standar
+      productsContainer.innerHTML = products.map((p, idx) => {
+        const val = (existingItems[p.id] !== undefined ? existingItems[p.id] : 0);
+        const stdCode = getProductStandardCode(p.name);
+        const conv = FACTORY_BREAD_CONVERSIONS[stdCode] || { unit: 'pcs', type: 'KB' };
+        const unit = conv.unit || 'pcs';
+        const isQtyActive = val > 0;
+
         return `
-          <div class="flex items-center justify-between gap-3 p-1.5 bg-white rounded-lg border border-slate-200">
-            <span class="font-semibold text-slate-800 text-xs">${escapeHtml(p.name)}</span>
+          <div class="po-bread-item-row flex items-center justify-between gap-2.5 p-2 rounded-lg border transition ${isQtyActive ? 'bg-amber-50/70 border-amber-300 font-bold' : 'bg-white border-slate-200'}" data-bread-name="${escapeHtml(p.name).toLowerCase()}" data-bread-code="${escapeHtml(p.code || '').toLowerCase()}">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] text-slate-400 w-4 font-mono">${idx + 1}.</span>
+              <div>
+                <span class="font-bold text-slate-900 text-xs">${escapeHtml(p.name)}</span>
+                <span class="text-[9.5px] px-1 py-0.2 rounded font-semibold ${conv.type === 'KB' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'} ml-1">${conv.type}</span>
+              </div>
+            </div>
             <div class="flex items-center gap-1.5 flex-shrink-0">
               <input 
                 type="number" 
                 min="0" 
-                step="5" 
+                step="1" 
                 data-prod-id="${p.id}" 
                 value="${val}" 
-                class="po-input-qty w-20 px-2 py-1 text-xs font-bold text-center border border-slate-300 rounded-lg focus:outline-none focus:border-brand-500"
+                oninput="updatePOFormLiveTotals()"
+                placeholder="0"
+                class="po-input-qty w-20 px-2 py-1 text-xs font-black text-center border rounded-lg focus:outline-none focus:border-brand-500 ${isQtyActive ? 'bg-white text-slate-900 border-amber-400' : 'bg-slate-50 text-slate-500 border-slate-300'}"
               >
-              <span class="text-slate-400 text-[10px]">pcs</span>
+              <span class="text-slate-500 text-[10px] font-bold w-6 text-left">${unit}</span>
             </div>
           </div>
         `;
       }).join('');
 
+      updatePOFormLiveTotals();
+
       modal.classList.remove('hidden');
       lucide.createIcons();
+    }
+
+    function updatePOFormLiveTotals() {
+      const salesId = document.getElementById('po-form-sales')?.value;
+      const salesList = getSalesData();
+      const sales = salesList.find(s => s.id === salesId);
+      const tierId = (sales && sales.priceLevel) ? sales.priceLevel : 'level1';
+      const products = getProductsData();
+
+      let totalPcs = 0;
+      let totalAmount = 0;
+
+      document.querySelectorAll('.po-input-qty').forEach(input => {
+        const pId = input.getAttribute('data-prod-id');
+        const qty = parseInt(input.value, 10) || 0;
+        const row = input.closest('.po-bread-item-row');
+
+        if (row) {
+          if (qty > 0) {
+            row.className = 'po-bread-item-row flex items-center justify-between gap-2.5 p-2 rounded-lg border transition bg-amber-50/70 border-amber-300 font-bold';
+            input.className = 'po-input-qty w-20 px-2 py-1 text-xs font-black text-center border rounded-lg focus:outline-none focus:border-brand-500 bg-white text-slate-900 border-amber-400';
+          } else {
+            row.className = 'po-bread-item-row flex items-center justify-between gap-2.5 p-2 rounded-lg border transition bg-white border-slate-200';
+            input.className = 'po-input-qty w-20 px-2 py-1 text-xs font-black text-center border rounded-lg focus:outline-none focus:border-brand-500 bg-slate-50 text-slate-500 border-slate-300';
+          }
+        }
+
+        if (qty > 0) {
+          totalPcs += qty;
+          const p = products.find(prod => prod.id === pId);
+          if (p) {
+            const uPrice = (p.prices && p.prices[tierId]) ? p.prices[tierId] : (p.prices?.level1 || p.factoryPrice || 0);
+            totalAmount += (qty * uPrice);
+          }
+        }
+      });
+
+      const totalPcsEl = document.getElementById('po-form-live-total-pcs');
+      const totalAmtEl = document.getElementById('po-form-live-total-amt');
+      if (totalPcsEl) totalPcsEl.innerText = `${totalPcs.toLocaleString('id-ID')} Unit`;
+      if (totalAmtEl) totalAmtEl.innerText = formatRupiah(totalAmount);
+    }
+
+    function filterPOFormBread() {
+      const q = (document.getElementById('po-form-search-bread')?.value || '').toLowerCase().trim();
+      document.querySelectorAll('.po-bread-item-row').forEach(row => {
+        const name = row.getAttribute('data-bread-name') || '';
+        const code = row.getAttribute('data-bread-code') || '';
+        if (!q || name.includes(q) || code.includes(q)) {
+          row.classList.remove('hidden');
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+    }
+
+    function setAllPOInputsZero() {
+      document.querySelectorAll('.po-input-qty').forEach(input => {
+        input.value = 0;
+      });
+      updatePOFormLiveTotals();
     }
 
     function closePOInputModal() {
