@@ -2822,29 +2822,33 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const list = getProductsData();
       const thead = document.getElementById('product-table-head');
       const tbody = document.getElementById('product-table-body');
-      const tier = document.getElementById('select-active-tier').value;
-      document.getElementById('product-total-badge').innerText = `${list.length} Varian`;
+      const tierEl = document.getElementById('select-active-tier');
+      const tier = (tierEl && tierEl.value) || 'all';
+      const to = PRICE_TIERS.find(t => t.id === tier);
+      const totalBadge = document.getElementById('product-total-badge');
+      if (totalBadge) totalBadge.innerText = `${list.length} Varian`;
 
       let head = `<th class="py-2.5 px-3">Kode & Nama</th><th class="py-2.5 px-3 text-center">Stok</th><th class="owner-only py-2.5 px-3 bg-amber-50 text-amber-900 border-x text-right">Kulakan</th>`;
-      if (tier === 'all') {
+      if (!to || tier === 'all') {
         PRICE_TIERS.forEach(t => head += `<th class="py-2.5 px-2 text-right font-bold text-slate-700">${t.name}</th>`);
       } else {
-        const to = PRICE_TIERS.find(t => t.id === tier);
         head += `<th class="py-2.5 px-3 text-right font-bold text-${to.color}-900 bg-${to.color}-50">${to.name}</th>`;
       }
       head += `<th class="py-2.5 px-3 text-center">Aksi</th>`;
-      thead.innerHTML = head;
+      if (thead) thead.innerHTML = head;
 
-      tbody.innerHTML = list.map(p => {
-        let row = `<tr><td class="py-2.5 px-3 font-bold">${escapeHtml(p.name)}</td><td class="py-2.5 px-3 text-center">${p.stock}</td><td class="owner-only py-2.5 px-3 bg-amber-50/40 text-right font-bold text-amber-900 border-x">${formatRupiah(p.factoryPrice)}</td>`;
-        if (tier === 'all') {
-          PRICE_TIERS.forEach(t => row += `<td class="py-2.5 px-2 text-right font-semibold">${formatRupiah((p.prices && p.prices[t.id]) || 0)}</td>`);
-        } else {
-          row += `<td class="py-2.5 px-3 text-right font-bold">${formatRupiah((p.prices && p.prices[tier]) || 0)}</td>`;
-        }
-        row += `<td class="py-2.5 px-3 text-center"><button onclick="openProductModal('${p.id}')" class="text-slate-400 hover:text-brand-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button></td></tr>`;
-        return row;
-      }).join('');
+      if (tbody) {
+        tbody.innerHTML = list.map(p => {
+          let row = `<tr><td class="py-2.5 px-3 font-bold">${escapeHtml(p.name)}</td><td class="py-2.5 px-3 text-center">${p.stock}</td><td class="owner-only py-2.5 px-3 bg-amber-50/40 text-right font-bold text-amber-900 border-x">${formatRupiah(p.factoryPrice)}</td>`;
+          if (!to || tier === 'all') {
+            PRICE_TIERS.forEach(t => row += `<td class="py-2.5 px-2 text-right font-semibold">${formatRupiah((p.prices && p.prices[t.id]) || 0)}</td>`);
+          } else {
+            row += `<td class="py-2.5 px-3 text-right font-bold">${formatRupiah((p.prices && p.prices[tier]) || 0)}</td>`;
+          }
+          row += `<td class="py-2.5 px-3 text-center"><button onclick="openProductModal('${p.id}')" class="text-slate-400 hover:text-brand-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button></td></tr>`;
+          return row;
+        }).join('');
+      }
       applyRoleVisibility();
       lucide.createIcons();
     }
