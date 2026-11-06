@@ -160,6 +160,36 @@
         color: #0f172a !important;
       }
 
+      /* Mode Cetak Matriks Bongkar Muatan Sales (Landscape A4 - Petugas Bongkar Muatan) */
+      body.printing-bongkar #print-area-bongkar, 
+      body.printing-bongkar #print-area-bongkar * {
+        visibility: visible !important;
+      }
+      body.printing-bongkar #print-area-bongkar {
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+
+      /* Mode Cetak TOTAL AMBIL PABRIK (A4 Portrait - Untuk Diberikan ke Pabrik) */
+      body.printing-ambil-pabrik #print-area-ambil-pabrik, 
+      body.printing-ambil-pabrik #print-area-ambil-pabrik * {
+        visibility: visible !important;
+      }
+      body.printing-ambil-pabrik #print-area-ambil-pabrik {
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+
       /* Hindari pemotongan baris di tengah tabel atau tanda tangan */
       tr, .avoid-break {
         page-break-inside: avoid !important;
@@ -171,11 +201,11 @@
       }
 
       /* Fallback jika tanpa flag */
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota) #print-area-po,
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota) #print-area-po * {
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik) #print-area-po,
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik) #print-area-po * {
         visibility: visible !important;
       }
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota) #print-area-po {
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik) #print-area-po {
         position: static !important;
         display: block !important;
         width: 100% !important;
@@ -196,6 +226,12 @@
 
   <!-- ROOT PRINT CONTAINER UNTUK KARTU REKAP PRE-ORDER SALES (FORMAT FISIK) -->
   <div id="print-area-po-card" class="hidden"></div>
+
+  <!-- ROOT PRINT CONTAINER UNTUK MATRIKS BONGKAR MUATAN (PETUGAS BONGKAR - A4 LANDSCAPE) -->
+  <div id="print-area-bongkar" class="hidden"></div>
+
+  <!-- ROOT PRINT CONTAINER UNTUK TOTAL AMBIL PABRIK (UNTUK PABRIK - A4 PORTRAIT) -->
+  <div id="print-area-ambil-pabrik" class="hidden"></div>
 
   <!-- ============================================== -->
   <!-- SCREEN: LOGIN ACCESS CV. ALFARIS ENAM DELAPAN -->
@@ -709,11 +745,19 @@
             </button>
 
             <button 
-              onclick="printPORecap()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-white hover:bg-slate-700 shadow-sm transition"
-              title="Cetak Tabel Matriks PO Seluruh Sales untuk Pabrik">
-              <i data-lucide="table" class="w-4 h-4"></i>
-              <span>Cetak Matriks</span>
+              onclick="openPreviewMatriksBongkar()" 
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition cursor-pointer"
+              title="Cetak Matriks Akumulasi Pesanan Roti per Sales (A4 Landscape - Terlihat 25 Produk Lengkap untuk Petugas Bongkar Muatan)">
+              <i data-lucide="table" class="w-4 h-4 text-emerald-400"></i>
+              <span>Cetak Matriks Bongkar (Petugas)</span>
+            </button>
+
+            <button 
+              onclick="openPreviewAmbilPabrik()" 
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 shadow-sm transition cursor-pointer"
+              title="Cetak Form Surat Pengambilan TOTAL AMBIL PABRIK (A4 Portrait - Diberikan ke Pabrik)">
+              <i data-lucide="factory" class="w-4 h-4 text-amber-200"></i>
+              <span>Cetak TOTAL AMBIL PABRIK</span>
             </button>
 
             <button 
@@ -846,9 +890,25 @@
               </h3>
               <p class="text-[11px] text-slate-500">Baris = Nama Sales, Kolom = Varian Roti, Baris Bawah = Total Pabrik.</p>
             </div>
-            <span id="po-active-date-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
-              Tanggal: -
-            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="po-active-date-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                Tanggal: -
+              </span>
+              <button 
+                onclick="openPreviewMatriksBongkar()" 
+                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                title="Cetak Matriks Akumulasi Lengkap A4 Landscape untuk Petugas Bongkar Muatan">
+                <i data-lucide="printer" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Cetak Bongkar</span>
+              </button>
+              <button 
+                onclick="openPreviewAmbilPabrik()" 
+                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                title="Cetak Surat Order TOTAL AMBIL PABRIK (A4 Portrait)">
+                <i data-lucide="factory" class="w-3.5 h-3.5 text-amber-200"></i>
+                <span>Cetak Pabrik</span>
+              </button>
+            </div>
           </div>
 
           <!-- Matrix Table with Horizontal Scrolling -->
@@ -1952,6 +2012,94 @@
           <button onclick="printActivePOCard()" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
             <span>Cetak Kartu PO (Printer / PDF)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PREVIEW MATRIKS BONGKAR MUATAN (PETUGAS BONGKAR - A4 LANDSCAPE) -->
+  <div id="modal-preview-matriks-bongkar" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[96vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <!-- Header -->
+      <div class="p-3.5 sm:p-4 border-b flex justify-between items-center bg-slate-900 text-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+            <i data-lucide="table" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>Matriks Akumulasi Pesanan Roti per Sales (Petugas Bongkar Muatan)</span>
+              <span id="preview-bongkar-title-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">A4 Landscape</span>
+            </h3>
+            <p class="text-[11px] text-slate-300">Format A4 Landscape Utuh &bull; Terlihat Seluruh 25 Varian Roti Lengkap Tanpa Terpotong</p>
+          </div>
+        </div>
+        <button onclick="closePreviewMatriksBongkar()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Preview Sheet Area -->
+      <div class="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-5 bg-slate-100 flex justify-center items-start">
+        <div id="matriks-bongkar-preview-sheet" class="shadow-lg bg-white rounded w-full min-w-[960px] p-2">
+          <!-- Rendered by buildMatriksBongkarHTML -->
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+        <button onclick="closePreviewMatriksBongkar()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition">
+          Tutup
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="printMatriksBongkarMuatan()" class="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
+            <span>Cetak Matriks Bongkar (A4 Landscape)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PREVIEW TOTAL AMBIL PABRIK (UNTUK PABRIK - A4 PORTRAIT) -->
+  <div id="modal-preview-ambil-pabrik" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[96vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <!-- Header -->
+      <div class="p-3.5 sm:p-4 border-b flex justify-between items-center bg-slate-900 text-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs">
+            <i data-lucide="factory" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>Surat Order Pengambilan Roti (TOTAL AMBIL PABRIK)</span>
+              <span id="preview-ambil-pabrik-title-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">A4 Portrait</span>
+            </h3>
+            <p class="text-[11px] text-slate-300">Format Resmi Distributor untuk Pihak Pabrik Friend's Bakery dengan Fisik Keranjang KB & KMK</p>
+          </div>
+        </div>
+        <button onclick="closePreviewAmbilPabrik()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Preview Sheet Area -->
+      <div class="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-5 bg-slate-100 flex justify-center items-start">
+        <div id="ambil-pabrik-preview-sheet" class="shadow-lg bg-white rounded max-w-3xl w-full p-2">
+          <!-- Rendered by buildTotalAmbilPabrikHTML -->
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+        <button onclick="closePreviewAmbilPabrik()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition">
+          Tutup
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="printTotalAmbilPabrik()" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="printer" class="w-4 h-4 text-amber-200"></i>
+            <span>Cetak TOTAL AMBIL PABRIK (A4 Portrait)</span>
           </button>
         </div>
       </div>
@@ -3816,7 +3964,12 @@
           <td class="py-3.5 px-3.5 text-center font-black text-base text-brand-900 bg-amber-300/80">
             ${grandTotalPcs} Pcs
           </td>
-          <td class="py-3.5 px-3.5 text-center text-[10px] text-slate-500">Rekap Final</td>
+          <td class="py-3.5 px-3.5 text-center whitespace-nowrap">
+            <button onclick="openPreviewAmbilPabrik()" class="px-2 py-1 rounded-lg bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-700 inline-flex items-center gap-1 shadow-xs cursor-pointer" title="Cetak TOTAL AMBIL PABRIK (A4 Portrait)">
+              <i data-lucide="printer" class="w-3 h-3"></i>
+              <span>Cetak Pabrik</span>
+            </button>
+          </td>
         </tr>
       `;
 
@@ -5057,13 +5210,415 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }, 150);
     }
 
-    function printPORecap() {
-      document.body.classList.remove('printing-financial');
-      document.body.classList.add('printing-po');
-      window.print();
+    // --- FITUR CETAK MATRIKS BONGKAR MUATAN & TOTAL AMBIL PABRIK ---
+    function buildMatriksBongkarHTML(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const products = getProductsData();
+      const allPO = getPOSalesData().filter(p => p.date === date);
+      const armada = getFactoryArmadaForDate(date);
+      
+      let formattedDate = date;
+      try {
+        const d = new Date(date + 'T00:00:00');
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        if (!isNaN(d.getTime())) {
+          formattedDate = `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      } catch (e) {}
+
+      const printTimeStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                           new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+      const productTotals = {};
+      products.forEach(p => productTotals[p.id] = 0);
+      let grandTotalUnits = 0;
+
+      const rowsHtml = allPO.length === 0 
+        ? `<tr><td colspan="${products.length + 4}" style="text-align: center; padding: 20px; color: #64748b; font-style: italic;">Belum ada data Pre-Order (PO) Sales untuk tanggal ${formattedDate}.</td></tr>`
+        : allPO.map((po, sIdx) => {
+            let salesSum = 0;
+            const cellsHtml = products.map(p => {
+              const qty = (po.items && (
+                po.items[p.id] !== undefined ? po.items[p.id] :
+                (po.items[p.code] !== undefined ? po.items[p.code] :
+                (po.items[p.name] !== undefined ? po.items[p.name] : 0))
+              )) || 0;
+              salesSum += qty;
+              productTotals[p.id] = (productTotals[p.id] || 0) + qty;
+              grandTotalUnits += qty;
+
+              const cellText = qty > 0 ? qty : '-';
+              const cellStyle = qty > 0 
+                ? 'background: #f1f5f9; font-weight: 800; color: #0f172a;' 
+                : 'color: #94a3b8; font-weight: 400;';
+
+              return `<td style="border: 1px solid #64748b; text-align: center; padding: 2.5px 1px; ${cellStyle}">${cellText}</td>`;
+            }).join('');
+
+            const zebraBg = sIdx % 2 === 1 ? 'background-color: #f8fafc;' : 'background-color: #ffffff;';
+
+            return `
+              <tr style="${zebraBg}">
+                <td style="border: 1px solid #64748b; text-align: center; font-weight: 700; padding: 3px 2px; color: #334155;">${sIdx + 1}</td>
+                <td style="border: 1px solid #64748b; padding: 3px 5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${escapeHtml(po.salesName || 'Sales')}
+                  <span style="display: block; font-size: 6pt; font-weight: 500; color: #64748b; line-height: 1;">${escapeHtml(po.salesRoute || '-')}</span>
+                </td>
+                ${cellsHtml}
+                <td style="border: 1px solid #64748b; text-align: center; font-weight: 900; background: #e2e8f0; color: #0f172a; padding: 3px 2px;">
+                  ${salesSum.toLocaleString('id-ID')}
+                </td>
+                <td style="border: 1px solid #64748b; text-align: center; padding: 2px;">
+                  <span style="display: inline-block; width: 14px; height: 14px; border: 1.5px solid #475569; border-radius: 2px;"></span>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+      const footColsHtml = products.map(p => {
+        const totalProd = productTotals[p.id] || 0;
+        return `
+          <td style="border: 1.5px solid #0f172a; text-align: center; font-weight: 900; padding: 4px 1px; background: #fef08a; color: #0f172a;">
+            ${totalProd > 0 ? totalProd : '0'}
+          </td>
+        `;
+      }).join('');
+
+      const headProductCols = products.map(p => {
+        return `
+          <th style="border: 1px solid #475569; background: #1e293b; color: #ffffff; font-size: 6.5pt; font-weight: 800; text-align: center; padding: 4px 1px; white-space: nowrap; line-height: 1.1;" title="${escapeHtml(p.name)}">
+            ${escapeHtml(p.name)}
+          </th>
+        `;
+      }).join('');
+
+      return `
+        <div class="matriks-bongkar-sheet bg-white text-slate-950 font-sans mx-auto" style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 7pt; line-height: 1.2;">
+          <!-- KOP PERUSAHAAN DISTRIBUTOR CV. ALFARIS ENAM DELAPAN -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 6px;">
+            <div>
+              <div style="font-size: 13pt; font-weight: 900; letter-spacing: 0.5px; color: #0f172a; line-height: 1.1;">CV. ALFARIS ENAM DELAPAN</div>
+              <div style="font-size: 8pt; font-weight: 800; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px;">DISTRIBUTOR RESMI FRIEND'S BAKERY</div>
+              <div style="font-size: 6.5pt; color: #475569; margin-top: 1px;">
+                Alamat : Dusun Telbuk, Desa Kawisrejo, Kecamatan, Rejoso, Kabupaten Pasuruan 67181 &bull; Telp/WA: 087776653321
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="display: inline-block; background: #0f172a; color: #ffffff; font-weight: 800; font-size: 8.5pt; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.3px;">
+                MATRIKS BONGKAR MUATAN PER SALES
+              </div>
+              <div style="font-size: 7.5pt; font-weight: 700; color: #0f172a; margin-top: 3px;">
+                Tanggal Ambil Pabrik: <span style="font-size: 8pt; color: #b45309; font-weight: 900;">${formattedDate}</span>
+              </div>
+              <div style="font-size: 6.5pt; color: #64748b;">
+                Armada: <strong>${armada.nopol}</strong> &bull; Cetak: ${printTimeStr}
+              </div>
+            </div>
+          </div>
+
+          <!-- TABEL MATRIKS 25 KOLOM ROTI (LANDSCAPE - PAS 100% LEBAR KERTAS A4) -->
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 6.8pt;">
+            <thead>
+              <tr>
+                <th style="border: 1px solid #475569; background: #0f172a; color: #ffffff; text-align: center; width: 18px; padding: 4px 1px; font-weight: 800;">No</th>
+                <th style="border: 1px solid #475569; background: #0f172a; color: #ffffff; text-align: left; width: 95px; padding: 4px 5px; font-weight: 800;">Nama Sales</th>
+                ${headProductCols}
+                <th style="border: 1px solid #475569; background: #0f172a; color: #fde047; text-align: center; width: 42px; padding: 4px 1px; font-weight: 900;">Total</th>
+                <th style="border: 1px solid #475569; background: #0f172a; color: #ffffff; text-align: center; width: 26px; padding: 4px 1px; font-weight: 800;">Cek</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+            <tfoot>
+              <tr style="border-top: 2px solid #0f172a;">
+                <td colspan="2" style="border: 1.5px solid #0f172a; text-align: right; font-weight: 900; padding: 4px 6px; background: #fef08a; color: #0f172a; text-transform: uppercase;">
+                  TOTAL BONGKAR (PABRIK):
+                </td>
+                ${footColsHtml}
+                <td style="border: 1.5px solid #0f172a; text-align: center; font-weight: 900; background: #fde047; color: #0f172a; font-size: 7.5pt; padding: 4px 1px;">
+                  ${grandTotalUnits.toLocaleString('id-ID')}
+                </td>
+                <td style="border: 1.5px solid #0f172a; background: #fef08a; text-align: center; font-size: 6pt; font-weight: 700;">OK</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- CATATAN PETUGAS GUDANG & LEMBAR TANDA TANGAN 3 PIHAK -->
+          <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; page-break-inside: avoid;">
+            <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; background: #f8fafc; font-size: 6.5pt; color: #334155; line-height: 1.3;">
+              <strong style="color: #0f172a;">PETUNJUK PETUGAS BONGKAR MUATAN:</strong>
+              <div style="margin-top: 2px;">
+                1. Cocokkan fisik roti turun dari mobil armada dengan baris tebal <strong>TOTAL BONGKAR (PABRIK)</strong> di atas.<br>
+                2. Distribusikan dan pisahkan roti ke keranjang masing-masing sales sesuai kolom angka.<br>
+                3. Berikan tanda centang (&check;) pada kolom 'Cek' setelah roti sales siap diambil dan diverifikasi.
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 16px; text-align: center; font-size: 6.8pt; flex-shrink: 0;">
+              <div style="width: 120px;">
+                <div style="color: #64748b; font-size: 6.5pt;">Driver Armada Pabrik,</div>
+                <div style="height: 32px;"></div>
+                <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( ___________________ )</div>
+              </div>
+              <div style="width: 130px;">
+                <div style="color: #64748b; font-size: 6.5pt;">Petugas Bongkar Muatan,</div>
+                <div style="height: 32px;"></div>
+                <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( ___________________ )</div>
+              </div>
+              <div style="width: 125px;">
+                <div style="color: #64748b; font-size: 6.5pt;">Koordinator Gudang / Kasir,</div>
+                <div style="height: 32px;"></div>
+                <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( ___________________ )</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openPreviewMatriksBongkar(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const badge = document.getElementById('preview-bongkar-title-badge');
+      if (badge) badge.innerText = `Tanggal: ${formatIndoDate(date)}`;
+
+      const sheet = document.getElementById('matriks-bongkar-preview-sheet');
+      if (sheet) sheet.innerHTML = buildMatriksBongkarHTML(date);
+
+      const modal = document.getElementById('modal-preview-matriks-bongkar');
+      if (modal) modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closePreviewMatriksBongkar() {
+      const modal = document.getElementById('modal-preview-matriks-bongkar');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function printMatriksBongkarMuatan(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const printArea = document.getElementById('print-area-bongkar');
+      if (!printArea) return;
+
+      setPrintPageSize('A4 landscape', '4mm 6mm');
+      printArea.innerHTML = buildMatriksBongkarHTML(date);
+
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-nota', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik');
+      document.body.classList.add('printing-bongkar');
+
       setTimeout(() => {
-        document.body.classList.remove('printing-po');
-      }, 1200);
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-bongkar');
+        }, 1000);
+      }, 150);
+    }
+
+    function buildTotalAmbilPabrikHTML(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const allPO = getPOSalesData().filter(p => p.date === date);
+      const armada = getFactoryArmadaForDate(date);
+      
+      const aggregatedItems = {};
+      allPO.forEach(po => {
+        Object.entries(po.items || {}).forEach(([k, q]) => {
+          aggregatedItems[k] = (aggregatedItems[k] || 0) + Number(q || 0);
+        });
+      });
+
+      const calc = calculateFactoryLoad(aggregatedItems, armada.kb, armada.kmk);
+
+      let formattedDate = date;
+      try {
+        const d = new Date(date + 'T00:00:00');
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        if (!isNaN(d.getTime())) {
+          formattedDate = `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      } catch (e) {}
+
+      const printTimeStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                           new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+      const orderDocNumber = `PO-PABRIK/${date.replace(/-/g, '')}/01`;
+
+      const rowsHtml = calc.itemsBreakdown.map((item, idx) => {
+        const isOrdered = item.orderQty > 0;
+        const rowBg = isOrdered ? (idx % 2 === 1 ? 'background-color: #f1f5f9;' : 'background-color: #ffffff;') : 'background-color: #fafafa;';
+        const textStyle = isOrdered ? 'font-weight: 800; color: #0f172a;' : 'color: #94a3b8; font-weight: 400;';
+        const basketStyle = isOrdered ? 'font-weight: 800; color: #1e3a8a;' : 'color: #94a3b8;';
+
+        return `
+          <tr style="${rowBg}">
+            <td style="border: 1px solid #cbd5e1; text-align: center; padding: 3px 2px; font-size: 8pt; color: #475569;">${item.no}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; padding: 3px 4px; font-weight: 700; font-size: 8pt; color: #334155;">${escapeHtml(item.code)}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 3px 6px; font-size: 8.5pt; ${textStyle}">${escapeHtml(item.name)}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; padding: 3px 4px; font-size: 8pt; font-weight: 700; color: #475569;">${item.basketType}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; padding: 3px 4px; font-size: 8pt; color: #64748b;">${item.unitsPerBasket} ${item.unit}/${item.basketType}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: right; padding: 3px 8px; font-size: 9pt; ${textStyle}">
+              ${isOrdered ? `${item.orderQty.toLocaleString('id-ID')} ${item.unit}` : '-'}
+            </td>
+            <td style="border: 1px solid #cbd5e1; text-align: right; padding: 3px 8px; font-size: 8.5pt; ${basketStyle}">
+              ${isOrdered ? `${item.baskets} ${item.basketType}` : '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="ambil-pabrik-sheet bg-white text-slate-950 font-sans mx-auto" style="width: 100%; max-width: 720px; box-sizing: border-box; padding: 8px 12px; font-size: 8.5pt; line-height: 1.25;">
+          <!-- KOP RESMI DISTRIBUTOR -->
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px double #0f172a; padding-bottom: 6px; margin-bottom: 8px;">
+            <div>
+              <div style="font-size: 14pt; font-weight: 900; letter-spacing: 0.5px; color: #0f172a; line-height: 1.1;">CV. ALFARIS ENAM DELAPAN</div>
+              <div style="font-size: 8.5pt; font-weight: 800; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px;">DISTRIBUTOR RESMI FRIEND'S BAKERY</div>
+              <div style="font-size: 7pt; color: #475569; margin-top: 1px;">
+                Alamat : Dusun Telbuk, Desa Kawisrejo, Kecamatan, Rejoso, Kabupaten Pasuruan 67181 &bull; Telp/WA: 087776653321
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="border: 2px solid #0f172a; padding: 3px 8px; border-radius: 5px; background: #f8fafc;">
+                <div style="font-size: 6.5pt; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">SURAT ORDER PENGAMBILAN</div>
+                <div style="font-size: 10pt; font-weight: 900; color: #0f172a; letter-spacing: 0.3px;">TOTAL AMBIL PABRIK</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TUJUAN SURAT & INFORMASI PENGAMBILAN -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 7.5pt; border: 1px solid #cbd5e1; border-radius: 5px; padding: 6px 10px; background: #f8fafc;">
+            <div>
+              <div style="color: #64748b;">Kepada Yth:</div>
+              <div style="font-weight: 800; font-size: 8.5pt; color: #0f172a;">Pimpinan / Bagian Pengiriman Pabrik Friend's Bakery</div>
+              <div style="color: #475569;">Di Tempat</div>
+            </div>
+            <div style="text-align: right;">
+              <div>No. Referensi: <strong style="color: #0f172a;">${orderDocNumber}</strong></div>
+              <div>Tanggal Ambil: <strong style="color: #b45309; font-size: 8pt;">${formattedDate}</strong></div>
+              <div>Armada Angkut: <strong>${armada.nopol}</strong> (${armada.desc})</div>
+              <div>Waktu Cetak: <span style="color: #64748b;">${printTimeStr}</span></div>
+            </div>
+          </div>
+
+          <!-- TABEL REKAPITULASI 25 VARIAN ROTI DENGAN FISIK KERANJANG PABRIK -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 7.8pt;">
+            <thead>
+              <tr style="background: #1e293b; color: #ffffff;">
+                <th style="border: 1px solid #475569; text-align: center; width: 24px; padding: 4px 2px;">No</th>
+                <th style="border: 1px solid #475569; text-align: center; width: 68px; padding: 4px 3px;">Kode</th>
+                <th style="border: 1px solid #475569; text-align: left; padding: 4px 6px;">Nama Varian Roti</th>
+                <th style="border: 1px solid #475569; text-align: center; width: 50px; padding: 4px 2px;">Wadah</th>
+                <th style="border: 1px solid #475569; text-align: center; width: 90px; padding: 4px 2px;">Standar Isi</th>
+                <th style="border: 1px solid #475569; text-align: right; width: 95px; padding: 4px 6px;">Total Pesanan</th>
+                <th style="border: 1px solid #475569; text-align: right; width: 100px; padding: 4px 6px;">Fisik Keranjang</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+            <tfoot>
+              <tr style="background: #fef08a; border-top: 2px solid #0f172a; font-weight: 900; color: #0f172a;">
+                <td colspan="5" style="border: 1.5px solid #0f172a; text-align: right; padding: 5px 8px; text-transform: uppercase;">
+                  TOTAL HARUS DIAMBIL DARI PABRIK:
+                </td>
+                <td style="border: 1.5px solid #0f172a; text-align: right; padding: 5px 8px; font-size: 9.5pt; color: #0f172a;">
+                  ${calc.totalUnits.toLocaleString('id-ID')} unit
+                </td>
+                <td style="border: 1.5px solid #0f172a; text-align: right; padding: 5px 8px; font-size: 8.5pt; color: #1e3a8a;">
+                  ${calc.totalOrderKB.toFixed(1)} KB &bull; ${calc.totalOrderKMK.toFixed(1)} KMK
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- RINGKASAN MUATAN ARMADA & CATATAN -->
+          <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: stretch; gap: 8px;">
+            <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px 8px; background: #f8fafc; font-size: 7pt; color: #334155; line-height: 1.3;">
+              <strong style="color: #0f172a;">CATATAN SERAH TERIMA PABRIK:</strong>
+              <div style="margin-top: 1px;">
+                1. Harap periksa kondisi fisik, tanggal expired, dan kerapian kemasan roti sebelum diserahkan ke driver.<br>
+                2. Kelebihan / kekurangan muatan fisik wajib dicatat dan disepakati kedua belah pihak.
+              </div>
+            </div>
+            <div style="width: 250px; border: 1px solid #f59e0b; border-radius: 4px; padding: 5px 8px; background: #fffbeb; font-size: 7pt; color: #78350f;">
+              <div style="font-weight: 800; display: flex; justify-content: space-between;">
+                <span>Estimasi Muatan Mobil:</span>
+                <span>${calc.percentFilled}% Terisi</span>
+              </div>
+              <div style="margin-top: 1px; font-size: 6.8pt;">
+                Kapasitas Armada: ${armada.kb} KB + ${armada.kmk} KMK<br>
+                Sisa Ruang Kosong Mobil: <strong>${calc.d13 >= 0 ? calc.d13 + ' KB' : 'OVERLOAD ' + Math.abs(calc.d13) + ' KB'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- LEMBAR PENGESAHAN TANDA TANGAN 3 PIHAK -->
+          <div style="margin-top: 10px; display: flex; justify-content: space-between; text-align: center; font-size: 7.2pt; page-break-inside: avoid;">
+            <div style="width: 170px;">
+              <div style="color: #64748b; font-size: 7pt;">Pihak Pemesan (Distributor),</div>
+              <div style="font-weight: 800; color: #0f172a; margin-top: 1px;">CV. Alfaris Enam Delapan</div>
+              <div style="height: 38px;"></div>
+              <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( Owner / Koordinator )</div>
+            </div>
+
+            <div style="width: 170px;">
+              <div style="color: #64748b; font-size: 7pt;">Driver Armada Pengambil,</div>
+              <div style="font-weight: 800; color: #0f172a; margin-top: 1px;">Pengemudi Kendaraan</div>
+              <div style="height: 38px;"></div>
+              <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( Driver Pengambil )</div>
+            </div>
+
+            <div style="width: 180px;">
+              <div style="color: #64748b; font-size: 7pt;">Pihak Pengirim (Pabrik),</div>
+              <div style="font-weight: 800; color: #0f172a; margin-top: 1px;">Friend's Bakery</div>
+              <div style="height: 38px;"></div>
+              <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( Bagian Pengiriman Pabrik )</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openPreviewAmbilPabrik(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const badge = document.getElementById('preview-ambil-pabrik-title-badge');
+      if (badge) badge.innerText = `Tanggal: ${formatIndoDate(date)}`;
+
+      const sheet = document.getElementById('ambil-pabrik-preview-sheet');
+      if (sheet) sheet.innerHTML = buildTotalAmbilPabrikHTML(date);
+
+      const modal = document.getElementById('modal-preview-ambil-pabrik');
+      if (modal) modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closePreviewAmbilPabrik() {
+      const modal = document.getElementById('modal-preview-ambil-pabrik');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function printTotalAmbilPabrik(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const printArea = document.getElementById('print-area-ambil-pabrik');
+      if (!printArea) return;
+
+      setPrintPageSize('A4 portrait', '6mm 8mm');
+      printArea.innerHTML = buildTotalAmbilPabrikHTML(date);
+
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-nota', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik');
+      document.body.classList.add('printing-ambil-pabrik');
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-ambil-pabrik');
+        }, 1000);
+      }, 150);
+    }
+
+    function printPORecap() {
+      // Alihkan cetak matriks ke format landscape lengkap petugas bongkar muatan
+      openPreviewMatriksBongkar();
     }
 
     // --- 5. BACKUP BULANAN (JSON) DILENGKAPI PO SALES ---
@@ -6352,14 +6907,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     // --- TEMPLATE & FITUR NOTA PENJUALAN SALES (UKURAN KERTAS A5) ---
-    function setPrintPageSize(sizeCSS) {
+    function setPrintPageSize(sizeCSS, marginCSS = '6mm 8mm') {
       let styleEl = document.getElementById('dynamic-page-print-style');
       if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = 'dynamic-page-print-style';
         document.head.appendChild(styleEl);
       }
-      styleEl.innerHTML = `@media print { @page { size: ${sizeCSS}; margin: 6mm 8mm; } }`;
+      styleEl.innerHTML = `@media print { @page { size: ${sizeCSS}; margin: ${marginCSS}; } }`;
     }
 
     function buildNotaHTML(trx) {
