@@ -7056,44 +7056,19 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               <div class="inline-block bg-slate-900 text-white font-black text-[10.5px] px-2.5 py-0.5 rounded tracking-wide">
                 NOTA PENJUALAN SALES
               </div>
-              <div class="text-[10px] font-bold text-slate-800 mt-1">NO: <span class="font-black text-amber-700">${trx.id}</span></div>
-              <div class="text-[8.5px] text-slate-500">Tanggal: ${dropDate} (${dropTime})</div>
+              <div class="text-[10.5px] font-bold text-slate-800 mt-1">NO: <span class="font-black text-amber-700">${trx.id}</span></div>
             </div>
           </div>
 
-          <!-- INFORMASI SALES PENERIMA & TRANSAKSI (DITUJUKAN KEPADA SALES BUKAN TOKO) -->
-          <div class="grid grid-cols-2 gap-2 mb-2 p-2 bg-slate-50 border border-slate-300 rounded text-[9.5px]">
+          <!-- INFORMASI DI BAWAH KOP: HANYA TANGGAL DAN NAMA SALES -->
+          <div class="flex items-center justify-between px-3 py-2 mb-2 bg-slate-50 border border-slate-300 rounded text-xs">
             <div>
-              <table class="w-full">
-                <tr>
-                  <td class="font-bold text-slate-600 w-24">Sales (Penerima)</td>
-                  <td class="font-black text-slate-900">: ${escapeHtml(trx.salesName || '-')}</td>
-                </tr>
-                <tr>
-                  <td class="font-bold text-slate-600">Rute Sales</td>
-                  <td class="text-slate-800">: ${escapeHtml(trx.salesRoute || '-')}</td>
-                </tr>
-                <tr>
-                  <td class="font-bold text-slate-600">No. Kontak HP</td>
-                  <td class="text-slate-800">: ${escapeHtml(trx.salesPhone || '-')}</td>
-                </tr>
-              </table>
+              <span class="font-bold text-slate-600">Nama Sales :</span>
+              <span class="font-black text-slate-950 text-sm ml-1 uppercase">${escapeHtml(trx.salesName || '-')}</span>
             </div>
-            <div>
-              <table class="w-full">
-                <tr>
-                  <td class="font-bold text-slate-600 w-24">Petugas Kasir</td>
-                  <td class="font-semibold text-slate-800">: ${activeUser}</td>
-                </tr>
-                <tr>
-                  <td class="font-bold text-slate-600">Level Harga</td>
-                  <td class="text-slate-800">: ${escapeHtml(trx.tierName || '-')}</td>
-                </tr>
-                <tr>
-                  <td class="font-bold text-slate-600">Status Pembayaran</td>
-                  <td class="font-bold">: <span class="${trx.paymentStatus === 'lunas' ? 'text-emerald-700' : 'text-amber-700'}">${statusBadgeText}</span></td>
-                </tr>
-              </table>
+            <div class="text-right">
+              <span class="font-bold text-slate-600">Tanggal :</span>
+              <span class="font-black text-slate-900 text-xs ml-1">${dropDate}</span>
             </div>
           </div>
 
