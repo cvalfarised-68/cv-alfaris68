@@ -2062,6 +2062,14 @@
             </div>
           </div>
 
+          <div class="p-2.5 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950 flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+            <div>
+              <strong>Keranjang Fisik Bulat Utuh:</strong> Keranjang dialokasikan dalam wadah utuh (tanpa koma/desimal) untuk kemudahan hitungan fisik bongkar lapangan. 
+              <span class="text-emerald-800 font-normal"><em>*Catatan Tagihan: Pembayaran modal pabrik tetap dihitung murni per pcs/bdl roti yang dipesan (bukan per keranjang), sehingga total pembayaran tidak akan bengkak.</em></span>
+            </div>
+          </div>
+
           <div class="flex items-center justify-between text-[11px] text-slate-500">
             <span>Daftar varian roti yang <strong>resmi dimuat</strong> ke dalam kendaraan armada untuk dikirim ke sales:</span>
             <span class="text-emerald-700 font-bold">*Zero Stock: Semua muatan langsung habis didrop ke sales</span>
@@ -3719,7 +3727,10 @@
         const p = products.find(prod => getProductStandardCode(prod.name) === code);
         const fPrice = p ? (p.factoryPrice || 0) : 0;
         const orderQty = aggregatedByStdCode[code] || 0;
-        const baskets = conv.unitsPerBasket > 0 ? (orderQty / conv.unitsPerBasket) : 0;
+        const unitsPerBasket = conv.unitsPerBasket || 60;
+        const fullBaskets = unitsPerBasket > 0 ? Math.floor(orderQty / unitsPerBasket) : 0;
+        const remUnits = unitsPerBasket > 0 ? (orderQty % unitsPerBasket) : 0;
+        const baskets = fullBaskets + (remUnits > 0 ? 1 : 0);
         const subtotalHPP = orderQty * fPrice;
 
         if (conv.type === 'KB') {
@@ -3739,7 +3750,11 @@
           unit: conv.unit,
           basketType: conv.type,
           unitsPerBasket: conv.unitsPerBasket,
-          baskets: Number(baskets.toFixed(2)),
+          baskets, // BILANGAN BULAT / INTEGER UTUH (TIDAK KOMA)
+          fullBaskets,
+          remUnits,
+          hasPartial: remUnits > 0,
+          partialUnits: remUnits,
           fPrice,
           subtotalHPP
         });
@@ -3751,7 +3766,10 @@
           const conv = FACTORY_BREAD_CONVERSIONS[code] || { type: 'KB', unitsPerBasket: 60, unit: 'pcs', fullName: code };
           const p = products.find(prod => getProductStandardCode(prod.name) === code || prod.code === code || prod.name === code);
           const fPrice = p ? (p.factoryPrice || 0) : 0;
-          const baskets = conv.unitsPerBasket > 0 ? (orderQty / conv.unitsPerBasket) : 0;
+          const unitsPerBasket = conv.unitsPerBasket || 60;
+          const fullBaskets = unitsPerBasket > 0 ? Math.floor(orderQty / unitsPerBasket) : 0;
+          const remUnits = unitsPerBasket > 0 ? (orderQty % unitsPerBasket) : 0;
+          const baskets = fullBaskets + (remUnits > 0 ? 1 : 0);
           const subtotalHPP = orderQty * fPrice;
 
           if (conv.type === 'KB') {
@@ -3771,15 +3789,21 @@
             unit: conv.unit || 'pcs',
             basketType: conv.type || 'KB',
             unitsPerBasket: conv.unitsPerBasket || 60,
-            baskets: Number(baskets.toFixed(2)),
+            baskets, // BILANGAN BULAT / INTEGER UTUH (TIDAK KOMA)
+            fullBaskets,
+            remUnits,
+            hasPartial: remUnits > 0,
+            partialUnits: remUnits,
             fPrice,
             subtotalHPP
           });
         }
       });
 
+
+
       // Rumus Resmi Spreadsheet Friend's Bakery
-      const sisaKMK = Number((truckKMK - totalOrderKMK).toFixed(1));
+      const sisaKMK = Math.round(truckKMK - totalOrderKMK);
 
       function excelRoundUp(x) {
         if (x === 0) return 0;
@@ -3820,13 +3844,13 @@
         truckKMK: Number(truckKMK),
         totalUnits,
         totalCost,
-        totalOrderKB: Number(totalOrderKB.toFixed(2)),
-        totalOrderKMK: Number(totalOrderKMK.toFixed(2)),
+        totalOrderKB: Math.round(totalOrderKB),
+        totalOrderKMK: Math.round(totalOrderKMK),
         d13: Number(d13), // Pastikan d13 selalu numerik (mencegah NaN)
         sisaKB: Number(d13),
         sisaKMK: Number(sisaKMK),
         totalEquivKB,
-        usedEquivKB: Number(usedEquivKB.toFixed(1)),
+        usedEquivKB: Math.round(usedEquivKB),
         percentFilled,
         status,
         statusText,
@@ -5184,10 +5208,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (percentText) {
         let divisionText = '';
         if (truckCount > 1) {
-          const perTruckKB = (calc.totalOrderKB / truckCount).toFixed(1);
-          const perTruckKMK = (calc.totalOrderKMK / truckCount).toFixed(1);
+          const perTruckKB = Math.round(calc.totalOrderKB / truckCount);
+          const perTruckKMK = Math.round(calc.totalOrderKMK / truckCount);
           const perTruckUnits = Math.round(calc.totalUnits / truckCount);
-          divisionText = ` • Bagi Rata ${truckCount} Truk: ~${perTruckKB} KB + ~${perTruckKMK} KMK (${perTruckUnits.toLocaleString('id-ID')} pcs/truk)`;
+          divisionText = ` • Bagi Rata ${truckCount} Truk: ~${perTruckKB} KB + ${perTruckKMK} KMK (${perTruckUnits.toLocaleString('id-ID')} pcs/truk)`;
         }
         percentText.innerText = `${calc.percentFilled}% Kapasitas Terisi${divisionText}`;
       }
@@ -5412,7 +5436,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 </td>
                 <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${item.unitsPerBasket} ${item.unit}</td>
                 <td class="py-2 px-2.5 text-right font-black text-slate-900">${qty.toLocaleString('id-ID')} ${item.unit}</td>
-                <td class="py-2 px-2.5 text-right font-black text-brand-900 bg-brand-50/40">${item.baskets} ${item.basketType}</td>
+                <td class="py-2 px-2.5 text-right font-black text-brand-900 bg-brand-50/40">
+                  <span>${item.baskets} ${item.basketType}</span>
+                  ${(item.hasPartial && item.partialUnits > 0) ? `<span class="block text-[9px] font-medium text-amber-700">(${item.fullBaskets > 0 ? `${item.fullBaskets} full + ` : ''}${item.partialUnits} ${item.unit} ecer)</span>` : ''}
+                </td>
                 <td class="py-2 px-2.5 text-center font-bold text-slate-600">${pctShare}%</td>
                 <td class="py-2 px-2.5 text-center">${checkCol}</td>
                 <td class="py-2 px-2.5 text-right font-black text-amber-900">${formatRupiah(subHPP)}</td>
@@ -5520,7 +5547,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 ${isOrdered ? `${item.orderQty} ${item.unit}` : '-'}
               </td>
               <td class="py-2 px-2.5 text-right font-black ${isOrdered ? 'text-brand-900 bg-brand-50/40' : 'text-slate-300'}">
-                ${isOrdered ? `${item.baskets} ${item.basketType}` : '-'}
+                ${isOrdered ? `<span>${item.baskets} ${item.basketType}</span>${(item.hasPartial && item.partialUnits > 0) ? `<span class="block text-[9px] font-medium text-amber-700">(${item.fullBaskets > 0 ? `${item.fullBaskets} full + ` : ''}${item.partialUnits} ${item.unit} ecer)</span>` : ''}` : '-'}
               </td>
               <td class="py-2 px-2.5 text-right text-slate-500">${formatRupiah(item.fPrice)}</td>
               <td class="py-2 px-2.5 text-right font-bold ${isOrdered ? 'text-amber-900' : 'text-slate-300'}">
@@ -6122,7 +6149,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               ${isOrdered ? `${item.orderQty.toLocaleString('id-ID')} ${item.unit}` : '-'}
             </td>
             <td style="border: 1px solid #cbd5e1; text-align: right; padding: 3px 8px; font-size: 8.5pt; ${basketStyle}">
-              ${isOrdered ? `${item.baskets} ${item.basketType}` : '-'}
+              ${isOrdered ? `${item.baskets} ${item.basketType}${(item.hasPartial && item.partialUnits > 0) ? `<div style="font-size: 7pt; font-weight: normal; color: #b45309;">(${item.fullBaskets > 0 ? `${item.fullBaskets} full + ` : ''}${item.partialUnits} ${item.unit} ecer)</div>` : ''}` : '-'}
             </td>
           </tr>
         `;
@@ -6187,7 +6214,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                   ${calc.totalUnits.toLocaleString('id-ID')} unit
                 </td>
                 <td style="border: 1.5px solid #0f172a; text-align: right; padding: 5px 8px; font-size: 8.5pt; color: #1e3a8a;">
-                  ${calc.totalOrderKB.toFixed(1)} KB &bull; ${calc.totalOrderKMK.toFixed(1)} KMK
+                  ${calc.totalOrderKB} KB &bull; ${calc.totalOrderKMK} KMK
                 </td>
               </tr>
             </tfoot>
@@ -6215,7 +6242,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               </div>
               ${(armada.trucksCount && armada.trucksCount > 1) ? `
                 <div style="margin-top: 3px; padding-top: 2px; border-top: 1px dashed #f59e0b; font-size: 6.5pt; color: #1e3a8a;">
-                  <strong>Bagi Rata ${armada.trucksCount} Mobil Truk:</strong> ~ ${(calc.totalOrderKB / armada.trucksCount).toFixed(1)} KB + ${(calc.totalOrderKMK / armada.trucksCount).toFixed(1)} KMK per mobil (${Math.round(calc.totalUnits / armada.trucksCount).toLocaleString('id-ID')} pcs/mobil).
+                  <strong>Bagi Rata ${armada.trucksCount} Mobil Truk:</strong> ~ ${Math.round(calc.totalOrderKB / armada.trucksCount)} KB + ${Math.round(calc.totalOrderKMK / armada.trucksCount)} KMK per mobil (${Math.round(calc.totalUnits / armada.trucksCount).toLocaleString('id-ID')} pcs/mobil).
                 </div>
               ` : ''}
             </div>
@@ -6316,17 +6343,53 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         });
       }
 
+      let partialTurn = 0;
+
       (loadedItems || []).forEach(item => {
         const total = Number(item.orderQty) || 0;
         if (total <= 0) return;
-        const base = Math.floor(total / count);
-        const rem = total % count;
+        const unitsPerBasket = Number(item.unitsPerBasket) || 60;
+        const fullBaskets = Math.floor(total / unitsPerBasket);
+        const remUnits = total % unitsPerBasket;
+
+        const baseFull = Math.floor(fullBaskets / count);
+        const extraFull = fullBaskets % count;
+
+        const alloc = [];
+        for (let i = 0; i < count; i++) {
+          alloc.push({
+            fullBaskets: baseFull + (i < extraFull ? 1 : 0),
+            partialUnits: 0,
+            hasPartial: false
+          });
+        }
+
+        if (remUnits > 0) {
+          let targetTruck = -1;
+          if (extraFull > 0 && extraFull < count) {
+            const nonExtraTrucks = [];
+            for (let i = extraFull; i < count; i++) nonExtraTrucks.push(i);
+            targetTruck = nonExtraTrucks[partialTurn % nonExtraTrucks.length];
+          } else {
+            let minBasketTruck = 0;
+            for (let i = 1; i < count; i++) {
+              const b1 = (item.basketType === 'KB' ? trucks[i].totalKB : trucks[i].totalKMK);
+              const b0 = (item.basketType === 'KB' ? trucks[minBasketTruck].totalKB : trucks[minBasketTruck].totalKMK);
+              if (b1 < b0) minBasketTruck = i;
+            }
+            targetTruck = minBasketTruck;
+          }
+          alloc[targetTruck].partialUnits = remUnits;
+          alloc[targetTruck].hasPartial = true;
+          partialTurn++;
+        }
 
         for (let i = 0; i < count; i++) {
-          const qty = base + (i < rem ? 1 : 0);
+          const a = alloc[i];
+          const baskets = a.fullBaskets + (a.hasPartial ? 1 : 0);
+          const qty = (a.fullBaskets * unitsPerBasket) + a.partialUnits;
+
           if (qty > 0) {
-            const unitsPerBasket = Number(item.unitsPerBasket) || 60;
-            const baskets = unitsPerBasket > 0 ? Number((qty / unitsPerBasket).toFixed(2)) : 0;
             const fPrice = Number(item.fPrice) || 0;
             trucks[i].items.push({
               code: item.code,
@@ -6335,7 +6398,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               unitsPerBasket,
               unit: item.unit || 'pcs',
               qty,
-              baskets,
+              baskets, // BILANGAN BULAT / INTEGER UTUH (TIDAK KOMA)
+              fullBaskets: a.fullBaskets,
+              hasPartial: a.hasPartial,
+              partialUnits: a.partialUnits,
               fPrice,
               subtotalHPP: qty * fPrice
             });
@@ -6347,8 +6413,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       });
 
       trucks.forEach(t => {
-        t.totalKB = Number(t.totalKB.toFixed(2));
-        t.totalKMK = Number(t.totalKMK.toFixed(2));
+        t.totalKB = Math.round(t.totalKB);
+        t.totalKMK = Math.round(t.totalKMK);
       });
 
       return trucks;
@@ -6410,7 +6476,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             <td style="border: 1px solid #64748b; text-align: center; padding: 4px; font-weight: bold; font-size: 10px; background-color: ${item.basketType === 'KB' ? '#eff6ff' : '#faf5ff'};">${item.basketType}</td>
             <td style="border: 1px solid #64748b; text-align: center; padding: 4px; font-size: 10px;">${item.unitsPerBasket} ${item.unit}</td>
             <td style="border: 1px solid #64748b; text-align: right; padding: 4px 8px; font-weight: 800; font-size: 11px;">${item.qty.toLocaleString('id-ID')} ${item.unit}</td>
-            <td style="border: 1px solid #64748b; text-align: right; padding: 4px 8px; font-weight: 800; font-size: 11px; background-color: #f0fdf4;">${item.baskets} ${item.basketType}</td>
+            <td style="border: 1px solid #64748b; text-align: right; padding: 4px 8px; font-weight: 800; font-size: 11px; background-color: #f0fdf4;">
+                ${item.baskets} ${item.basketType}
+                ${(item.hasPartial && item.partialUnits > 0) ? `<div style="font-size: 7.5pt; font-weight: 500; color: #b45309;">(${item.fullBaskets > 0 ? `${item.fullBaskets} full + ` : ''}${item.partialUnits} ${item.unit} ecer)</div>` : ''}
+              </td>
             <td style="border: 1px solid #64748b; text-align: center; padding: 4px; width: 60px;">
               <div style="display: inline-block; width: 14px; height: 14px; border: 1.5px solid #0f172a; border-radius: 3px;"></div>
             </td>
