@@ -190,6 +190,21 @@
         color: #0f172a !important;
       }
 
+      /* Mode Cetak Tracer Bongkar Muatan per Armada Truk */
+      body.printing-tracer #print-area-tracer-truk, 
+      body.printing-tracer #print-area-tracer-truk * {
+        visibility: visible !important;
+      }
+      body.printing-tracer #print-area-tracer-truk {
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+
       /* Hindari pemotongan baris di tengah tabel atau tanda tangan */
       tr, .avoid-break {
         page-break-inside: avoid !important;
@@ -201,11 +216,11 @@
       }
 
       /* Fallback jika tanpa flag */
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik) #print-area-po,
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik) #print-area-po * {
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer) #print-area-po,
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer) #print-area-po * {
         visibility: visible !important;
       }
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik) #print-area-po {
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer) #print-area-po {
         position: static !important;
         display: block !important;
         width: 100% !important;
@@ -232,6 +247,9 @@
 
   <!-- ROOT PRINT CONTAINER UNTUK TOTAL AMBIL PABRIK (UNTUK PABRIK - A4 PORTRAIT) -->
   <div id="print-area-ambil-pabrik" class="hidden"></div>
+
+  <!-- ROOT PRINT CONTAINER UNTUK LEMBAR TRACER BONGKAR MUATAN PER TRUK ARMADA (A4 PORTRAIT) -->
+  <div id="print-area-tracer-truk" class="hidden"></div>
 
   <!-- ============================================== -->
   <!-- SCREEN: LOGIN ACCESS CV. ALFARIS ENAM DELAPAN -->
@@ -949,6 +967,14 @@
                 title="Cetak Surat Order TOTAL AMBIL PABRIK (A4 Portrait)">
                 <i data-lucide="factory" class="w-3.5 h-3.5 text-amber-200"></i>
                 <span>Cetak Pabrik</span>
+              </button>
+              <button 
+                type="button" 
+                onclick="printTracerBongkarTruk('all')" 
+                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-700 text-white hover:bg-blue-800 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                title="Cetak Lembar Tracer & Checklist Bongkar Muatan per Armada Truk">
+                <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-blue-200"></i>
+                <span>Cetak Tracer Truk</span>
               </button>
             </div>
           </div>
@@ -2033,7 +2059,7 @@
 
         <!-- TAB CONTENT 1: DAFTAR PRODUK YANG DIMUAT DI DALAM ARMADA (ACTIVE DEFAULT) -->
         <div id="recon-tab-content-loaded" class="space-y-3">
-          <!-- MULTI-TRUCK DIVISION PANEL (Jika multi-armada / 3 truk) -->
+          <!-- MULTI-TRUCK DIVISION PANEL (Jika multi-armada / 2-3 truk) -->
           <div id="recon-multitruck-allocation" class="hidden p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-xs space-y-2">
             <div class="flex items-center justify-between">
               <span class="font-extrabold text-blue-950 flex items-center gap-1.5">
@@ -2044,6 +2070,48 @@
             </div>
             <div id="recon-multitruck-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
               <!-- Diisi otomatis oleh JS -->
+            </div>
+          </div>
+
+          <!-- BARIS KONTROL TRACER BONGKAR PER TRUK (UNTUK PETUGAS BONGKAR) -->
+          <div id="recon-tracer-control-bar" class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between flex-wrap gap-2.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                <i data-lucide="filter" class="w-3.5 h-3.5 text-brand-600"></i>
+                <span>Tampilan Truk:</span>
+              </span>
+              <button 
+                type="button" 
+                id="btn-truck-filter-all" 
+                onclick="setTruckFilter('all')" 
+                class="px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-brand-600 text-white shadow-2xs transition cursor-pointer">
+                🚚 Semua Truk (Total)
+              </button>
+              <div id="recon-truck-filter-buttons" class="inline-flex items-center gap-1 flex-wrap">
+                <!-- Diisi otomatis oleh JS sesuai jumlah truk aktif (Truk 1, Truk 2, Truk 3) -->
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                onclick="printTracerBongkarTruk(selectedTruckFilter)" 
+                class="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer"
+                title="Cetak Lembar Checklist Fisik Bongkar Muatan untuk Petugas Lapangan">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                <span id="btn-print-tracer-label">Cetak Lembar Tracer Bongkar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- BANNER NOTICE JIKA SEDANG MEMILIH TRUK TERTENTU -->
+          <div id="recon-truck-notice" class="hidden p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-950 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <i data-lucide="truck" class="w-4 h-4 text-blue-700 flex-shrink-0"></i>
+              <span id="recon-truck-notice-text" class="font-extrabold text-blue-950"></span>
+            </div>
+            <div class="text-[10px] text-blue-800 font-semibold bg-white px-2 py-0.5 rounded border border-blue-200">
+              *Petugas bongkar dapat centang kolom "Cek Fisik" saat roti diturunkan
             </div>
           </div>
 
@@ -2061,10 +2129,10 @@
                   <th class="py-2.5 px-2.5">Nama Produk Roti</th>
                   <th class="py-2.5 px-2.5 text-center">Tipe Krjg</th>
                   <th class="py-2.5 px-2.5 text-center">Isi/Krjg</th>
-                  <th class="py-2.5 px-2.5 text-right font-bold text-slate-900">Qty Dimuat</th>
-                  <th class="py-2.5 px-2.5 text-right font-black text-brand-900 bg-brand-50/40">Hasil Keranjang</th>
+                  <th id="th-loaded-qty" class="py-2.5 px-2.5 text-right font-bold text-slate-900">Qty Dimuat</th>
+                  <th id="th-loaded-baskets" class="py-2.5 px-2.5 text-right font-black text-brand-900 bg-brand-50/40">Hasil Keranjang</th>
                   <th class="py-2.5 px-2.5 text-center">% Muatan</th>
-                  <th class="py-2.5 px-2.5 text-right">HPP Pabrik</th>
+                  <th class="py-2.5 px-2.5 text-center w-20">Cek Fisik</th>
                   <th class="py-2.5 px-2.5 text-right font-bold text-amber-900">Subtotal Modal</th>
                 </tr>
               </thead>
@@ -2123,7 +2191,11 @@
         <button onclick="closePabrikReconciliationModal()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl hover:bg-slate-200 transition cursor-pointer">
           Tutup
         </button>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="printTracerBongkarTruk(selectedTruckFilter)" class="px-3.5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer" title="Cetak Lembar Checklist Fisik Bongkar Muatan untuk Petugas Lapangan">
+            <i data-lucide="clipboard-check" class="w-4 h-4 text-blue-600"></i>
+            <span>Cetak Tracer Bongkar Truk</span>
+          </button>
           <button onclick="printTotalAmbilPabrik()" class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i>
             <span>Cetak Rekap Muatan Pabrik</span>
@@ -5264,63 +5336,143 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       // -------------------------------------------------------------
       // TAB 1: RENDER PRODUK YANG DIMUAT DI DALAM ARMADA
       // -------------------------------------------------------------
+      const rawPlates = truckCount === 3 
+        ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
+        : (truckCount === 2 ? ['S 9631 NF', 'N 8124 TA'] : [armada.nopol || 'S 9631 NF']);
+      const dividedTrucks = divideLoadAcrossTrucks(loadedItems, truckCount, rawPlates, truckKB, truckKMK);
+
       const multiTruckPanel = document.getElementById('recon-multitruck-allocation');
       const multiTruckCards = document.getElementById('recon-multitruck-cards');
+      const multiTruckBadge = document.getElementById('recon-multitruck-badge');
+      if (multiTruckBadge) multiTruckBadge.innerText = `${truckCount} Truk Armada`;
+
       if (multiTruckPanel && multiTruckCards) {
         if (truckCount > 1) {
           multiTruckPanel.classList.remove('hidden');
-          const perTruckKB = (calc.totalOrderKB / truckCount).toFixed(1);
-          const perTruckKMK = (calc.totalOrderKMK / truckCount).toFixed(1);
-          const perTruckUnits = Math.round(calc.totalUnits / truckCount);
-
-          const truckPlates = truckCount === 3 
-            ? ['Truk 1 • Plat S 9631 NF', 'Truk 2 • Plat N 8124 TA', 'Truk 3 • Plat W 9012 UZ']
-            : ['Truk 1 • Plat S 9631 NF', 'Truk 2 • Plat N 8124 TA'];
-
-          multiTruckCards.innerHTML = truckPlates.map((plate, idx) => `
-            <div class="p-3 bg-white rounded-xl border border-blue-200 shadow-2xs space-y-1.5">
-              <div class="flex items-center justify-between">
-                <span class="font-black text-blue-900 text-xs">🚚 ${plate}</span>
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">Muatan ~${(100/truckCount).toFixed(0)}%</span>
+          multiTruckCards.innerHTML = dividedTrucks.map(truck => {
+            const isSelected = selectedTruckFilter === String(truck.index);
+            return `
+              <div class="p-3 bg-white rounded-xl border ${isSelected ? 'border-brand-500 ring-2 ring-brand-200' : 'border-blue-200'} shadow-2xs space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-blue-900 text-xs">🚚 ${truck.name} (${truck.plate})</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">Muatan ~${(100/truckCount).toFixed(0)}%</span>
+                </div>
+                <div class="text-[11px] text-slate-700 font-semibold">
+                  Kapasitas: ${truck.capacityKB} KB + ${truck.capacityKMK} KMK
+                </div>
+                <div class="pt-1 border-t border-slate-100 grid grid-cols-2 gap-1 text-[10.5px]">
+                  <div><span class="text-slate-400 block text-[9.5px]">Beban Muatan:</span><span class="font-bold text-slate-800">${truck.totalKB} KB + ${truck.totalKMK} KMK</span></div>
+                  <div><span class="text-slate-400 block text-[9.5px]">Estimasi Roti:</span><span class="font-bold text-emerald-700">${truck.totalUnits.toLocaleString('id-ID')} pcs</span></div>
+                </div>
+                <div class="pt-1 flex items-center justify-between">
+                  <span class="text-[9.5px] text-slate-500">${truck.items.length} varian roti</span>
+                  <button type="button" onclick="setTruckFilter('${truck.index}')" class="px-2 py-0.5 rounded text-[10px] font-bold ${isSelected ? 'bg-brand-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'} transition cursor-pointer">
+                    ${isSelected ? '✓ Aktif Ditampilkan' : '🔍 Lihat Rincian Truk ⬇️'}
+                  </button>
+                </div>
               </div>
-              <div class="text-[11px] text-slate-700 font-semibold">
-                Kapasitas: 204 KB + 33 KMK
-              </div>
-              <div class="pt-1 border-t border-slate-100 grid grid-cols-2 gap-1 text-[10.5px]">
-                <div><span class="text-slate-400 block text-[9.5px]">Beban Muatan:</span><span class="font-bold text-slate-800">~${perTruckKB} KB + ~${perTruckKMK} KMK</span></div>
-                <div><span class="text-slate-400 block text-[9.5px]">Estimasi Roti:</span><span class="font-bold text-emerald-700">~${perTruckUnits.toLocaleString('id-ID')} pcs</span></div>
-              </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         } else {
           multiTruckPanel.classList.add('hidden');
         }
       }
 
+      // Handle Tracer Control Bar & Truck Filter Buttons
+      const filterBtnsContainer = document.getElementById('recon-truck-filter-buttons');
+      const allFilterBtn = document.getElementById('btn-truck-filter-all');
+      if (allFilterBtn) {
+        if (selectedTruckFilter === 'all') {
+          allFilterBtn.className = 'px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-brand-600 text-white shadow-2xs transition cursor-pointer';
+        } else {
+          allFilterBtn.className = 'px-2.5 py-1 rounded-lg text-[10.5px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer';
+        }
+      }
+
+      if (filterBtnsContainer) {
+        if (truckCount > 1) {
+          filterBtnsContainer.innerHTML = dividedTrucks.map(truck => {
+            const isAct = selectedTruckFilter === String(truck.index);
+            const btnCls = isAct 
+              ? 'px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-brand-600 text-white shadow-2xs transition cursor-pointer'
+              : 'px-2.5 py-1 rounded-lg text-[10.5px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer';
+            return `
+              <button type="button" onclick="setTruckFilter('${truck.index}')" class="${btnCls}">
+                🚚 ${truck.name} (${truck.plate})
+              </button>
+            `;
+          }).join('');
+        } else {
+          filterBtnsContainer.innerHTML = '';
+        }
+      }
+
+      // Handle specific truck notice & print button label
+      const truckNotice = document.getElementById('recon-truck-notice');
+      const truckNoticeText = document.getElementById('recon-truck-notice-text');
+      const printTracerLabel = document.getElementById('btn-print-tracer-label');
+      const thLoadedQty = document.getElementById('th-loaded-qty');
+      const thLoadedBaskets = document.getElementById('th-loaded-baskets');
+
+      let currentDisplayItems = [];
+      let activeTruck = null;
+
+      if (selectedTruckFilter !== 'all' && truckCount > 1) {
+        activeTruck = dividedTrucks.find(t => t.index === Number(selectedTruckFilter)) || dividedTrucks[0];
+        currentDisplayItems = activeTruck.items;
+        if (truckNotice && truckNoticeText) {
+          truckNotice.classList.remove('hidden');
+          truckNoticeText.innerText = `Menampilkan Rincian Khusus: ${activeTruck.name} (${activeTruck.plate}) • Total: ${activeTruck.totalUnits.toLocaleString('id-ID')} Pcs (${activeTruck.totalKB} KB + ${activeTruck.totalKMK} KMK)`;
+        }
+        if (printTracerLabel) {
+          printTracerLabel.innerText = `Cetak Tracer ${activeTruck.name} (${activeTruck.plate})`;
+        }
+        if (thLoadedQty) thLoadedQty.innerText = `Qty di ${activeTruck.name}`;
+        if (thLoadedBaskets) thLoadedBaskets.innerText = `Krjg di ${activeTruck.name}`;
+      } else {
+        selectedTruckFilter = 'all';
+        currentDisplayItems = loadedItems;
+        if (truckNotice) truckNotice.classList.add('hidden');
+        if (printTracerLabel) {
+          printTracerLabel.innerText = truckCount > 1 
+            ? `Cetak Semua Lembar Tracer (${truckCount} Truk)`
+            : 'Cetak Lembar Tracer Bongkar Truk';
+        }
+        if (thLoadedQty) thLoadedQty.innerText = 'Qty Dimuat';
+        if (thLoadedBaskets) thLoadedBaskets.innerText = 'Hasil Keranjang';
+      }
+
       const loadedTbody = document.getElementById('recon-loaded-tbody');
       const loadedTfoot = document.getElementById('recon-loaded-tfoot');
       if (loadedTbody) {
-        if (loadedItems.length === 0) {
+        if (currentDisplayItems.length === 0) {
           loadedTbody.innerHTML = '<tr><td colspan="10" class="py-6 text-center text-slate-400 font-medium">Belum ada varian produk yang dipesan untuk tanggal ini.</td></tr>';
         } else {
-          loadedTbody.innerHTML = loadedItems.map((item, idx) => {
-            const pctShare = calc.totalUnits > 0 ? ((item.orderQty / calc.totalUnits) * 100).toFixed(1) : 0;
+          const totalUnitsForPct = activeTruck ? activeTruck.totalUnits : calc.totalUnits;
+          loadedTbody.innerHTML = currentDisplayItems.map((item, idx) => {
+            const qty = item.qty || item.orderQty || 0;
+            const pctShare = totalUnitsForPct > 0 ? ((qty / totalUnitsForPct) * 100).toFixed(1) : 0;
+            const subHPP = item.subtotalHPP || (qty * (item.fPrice || 0));
+            const checkCol = activeTruck 
+              ? `<input type="checkbox" class="w-4 h-4 text-emerald-600 rounded cursor-pointer border-slate-300 focus:ring-emerald-500" title="Centang saat produk dibongkar">`
+              : `<span class="text-slate-400 text-[10px]">-</span>`;
+
             return `
               <tr class="hover:bg-slate-50 transition">
-                <td class="py-2.5 px-2.5 text-center text-slate-400 font-mono">${idx + 1}</td>
-                <td class="py-2.5 px-2.5 font-bold text-slate-900">${escapeHtml(item.code)}</td>
-                <td class="py-2.5 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
-                <td class="py-2.5 px-2.5 text-center">
+                <td class="py-2 px-2.5 text-center text-slate-400 font-mono">${idx + 1}</td>
+                <td class="py-2 px-2.5 font-bold text-slate-900">${escapeHtml(item.code)}</td>
+                <td class="py-2 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
+                <td class="py-2 px-2.5 text-center">
                   <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.basketType === 'KB' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
                     ${item.basketType}
                   </span>
                 </td>
-                <td class="py-2.5 px-2.5 text-center text-slate-600 font-mono">${item.unitsPerBasket} ${item.unit}</td>
-                <td class="py-2.5 px-2.5 text-right font-black text-slate-900">${item.orderQty.toLocaleString('id-ID')} ${item.unit}</td>
-                <td class="py-2.5 px-2.5 text-right font-black text-brand-900 bg-brand-50/40">${item.baskets} ${item.basketType}</td>
-                <td class="py-2.5 px-2.5 text-center font-bold text-slate-600">${pctShare}%</td>
-                <td class="py-2.5 px-2.5 text-right text-slate-600 font-mono">${formatRupiah(item.fPrice)}</td>
-                <td class="py-2.5 px-2.5 text-right font-black text-amber-900">${formatRupiah(item.subtotalHPP)}</td>
+                <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${item.unitsPerBasket} ${item.unit}</td>
+                <td class="py-2 px-2.5 text-right font-black text-slate-900">${qty.toLocaleString('id-ID')} ${item.unit}</td>
+                <td class="py-2 px-2.5 text-right font-black text-brand-900 bg-brand-50/40">${item.baskets} ${item.basketType}</td>
+                <td class="py-2 px-2.5 text-center font-bold text-slate-600">${pctShare}%</td>
+                <td class="py-2 px-2.5 text-center">${checkCol}</td>
+                <td class="py-2 px-2.5 text-right font-black text-amber-900">${formatRupiah(subHPP)}</td>
               </tr>
             `;
           }).join('');
@@ -5328,20 +5480,35 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
 
       if (loadedTfoot) {
-        loadedTfoot.innerHTML = `
-          <tr>
-            <td colspan="5" class="py-3 px-3 text-right font-black text-slate-900 uppercase">TOTAL PRODUK DIMUAT KE ARMADA:</td>
-            <td class="py-3 px-2.5 text-right font-black text-slate-900 text-xs sm:text-sm">${calc.totalUnits.toLocaleString('id-ID')} unit</td>
-            <td class="py-3 px-2.5 text-right font-black text-brand-900 text-xs sm:text-sm bg-brand-50/70">
-              ${calc.totalOrderKB} KB • ${calc.totalOrderKMK} KMK
-            </td>
-            <td class="py-3 px-2.5 text-center font-black text-slate-700">100%</td>
-            <td class="py-3 px-2.5 text-right text-slate-500 font-bold">Total HPP:</td>
-            <td class="py-3 px-2.5 text-right font-black text-amber-800 text-xs sm:text-sm">${formatRupiah(calc.totalCost)}</td>
-          </tr>
-        `;
+        if (activeTruck) {
+          const truckCost = activeTruck.items.reduce((sum, it) => sum + (it.subtotalHPP || 0), 0);
+          loadedTfoot.innerHTML = `
+            <tr>
+              <td colspan="5" class="py-3 px-3 text-right font-black text-blue-900 uppercase">TOTAL MUATAN ${escapeHtml(activeTruck.name.toUpperCase())}:</td>
+              <td class="py-3 px-2.5 text-right font-black text-blue-900 text-xs sm:text-sm">${activeTruck.totalUnits.toLocaleString('id-ID')} unit</td>
+              <td class="py-3 px-2.5 text-right font-black text-blue-900 text-xs sm:text-sm bg-blue-50/70">
+                ${activeTruck.totalKB} KB • ${activeTruck.totalKMK} KMK
+              </td>
+              <td class="py-3 px-2.5 text-center font-black text-blue-700">100%</td>
+              <td class="py-3 px-2.5 text-center font-bold text-emerald-700 text-[10px]">Siap Cek Fisik</td>
+              <td class="py-3 px-2.5 text-right font-black text-amber-800 text-xs sm:text-sm">${formatRupiah(truckCost)}</td>
+            </tr>
+          `;
+        } else {
+          loadedTfoot.innerHTML = `
+            <tr>
+              <td colspan="5" class="py-3 px-3 text-right font-black text-slate-900 uppercase">TOTAL PRODUK DIMUAT KE ARMADA:</td>
+              <td class="py-3 px-2.5 text-right font-black text-slate-900 text-xs sm:text-sm">${calc.totalUnits.toLocaleString('id-ID')} unit</td>
+              <td class="py-3 px-2.5 text-right font-black text-brand-900 text-xs sm:text-sm bg-brand-50/70">
+                ${calc.totalOrderKB} KB • ${calc.totalOrderKMK} KMK
+              </td>
+              <td class="py-3 px-2.5 text-center font-black text-slate-700">100%</td>
+              <td class="py-3 px-2.5 text-center text-slate-400 font-mono text-[10px]">-</td>
+              <td class="py-3 px-2.5 text-right font-black text-amber-800 text-xs sm:text-sm">${formatRupiah(calc.totalCost)}</td>
+            </tr>
+          `;
+        }
       }
-
       // -------------------------------------------------------------
       // TAB 2: RENDER DAFTAR TIM SALES & TOMBOL EDIT PO
       // -------------------------------------------------------------
@@ -6171,6 +6338,271 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         window.print();
         setTimeout(() => {
           document.body.classList.remove('printing-ambil-pabrik');
+        }, 1000);
+      }, 150);
+    }
+
+    // -------------------------------------------------------------
+    // FITUR TRACER & CHECKLIST BONGKAR MUATAN PABRIK PER TRUK ARMADA
+    // -------------------------------------------------------------
+    let selectedTruckFilter = 'all';
+
+    function setTruckFilter(filter) {
+      selectedTruckFilter = filter || 'all';
+      renderReconModalContent();
+    }
+
+    function divideLoadAcrossTrucks(loadedItems, truckCount, truckPlates, truckKB, truckKMK) {
+      const count = Math.max(1, truckCount || 1);
+      const defaultPlates = count === 3 
+        ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
+        : (count === 2 ? ['S 9631 NF', 'N 8124 TA'] : ['S 9631 NF']);
+
+      const trucks = [];
+      for (let i = 0; i < count; i++) {
+        trucks.push({
+          index: i + 1,
+          name: `Truk ${i + 1}`,
+          plate: (truckPlates && truckPlates[i]) ? truckPlates[i] : (defaultPlates[i] || `Truk ${i + 1}`),
+          items: [],
+          totalUnits: 0,
+          totalKB: 0,
+          totalKMK: 0,
+          capacityKB: Math.round((truckKB || 204) / count),
+          capacityKMK: Math.round((truckKMK || 33) / count)
+        });
+      }
+
+      (loadedItems || []).forEach(item => {
+        const total = Number(item.orderQty) || 0;
+        if (total <= 0) return;
+        const base = Math.floor(total / count);
+        const rem = total % count;
+
+        for (let i = 0; i < count; i++) {
+          const qty = base + (i < rem ? 1 : 0);
+          if (qty > 0) {
+            const unitsPerBasket = Number(item.unitsPerBasket) || 60;
+            const baskets = unitsPerBasket > 0 ? Number((qty / unitsPerBasket).toFixed(2)) : 0;
+            const fPrice = Number(item.fPrice) || 0;
+            trucks[i].items.push({
+              code: item.code,
+              name: item.name,
+              basketType: item.basketType || 'KB',
+              unitsPerBasket,
+              unit: item.unit || 'pcs',
+              qty,
+              baskets,
+              fPrice,
+              subtotalHPP: qty * fPrice
+            });
+            trucks[i].totalUnits += qty;
+            if (item.basketType === 'KB') trucks[i].totalKB += baskets;
+            else trucks[i].totalKMK += baskets;
+          }
+        }
+      });
+
+      trucks.forEach(t => {
+        t.totalKB = Number(t.totalKB.toFixed(2));
+        t.totalKMK = Number(t.totalKMK.toFixed(2));
+      });
+
+      return trucks;
+    }
+
+    function buildTracerBongkarHTML(targetDate, truckFilter = 'all') {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const allPO = getPOSalesData().filter(p => p.date === date);
+      const armada = getFactoryArmadaForDate(date);
+
+      const inputKb = document.getElementById('recon-armada-kb');
+      const inputKmk = document.getElementById('recon-armada-kmk');
+      const truckKB = Math.max(1, parseInt(inputKb?.value || armada.kb || 204, 10));
+      const truckKMK = Math.max(0, parseInt(inputKmk?.value || armada.kmk || 33, 10));
+
+      const aggregatedItems = {};
+      allPO.forEach(po => {
+        Object.entries(po.items || {}).forEach(([k, q]) => {
+          aggregatedItems[k] = (aggregatedItems[k] || 0) + Number(q || 0);
+        });
+      });
+
+      const calc = calculateFactoryLoad(aggregatedItems, truckKB, truckKMK);
+      const loadedItems = calc.itemsBreakdown.filter(item => item.orderQty > 0);
+
+      const truckCount = armada.trucksCount || (truckKB >= 600 ? 3 : (truckKB >= 400 ? 2 : 1));
+      const rawPlates = truckCount === 3 
+        ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
+        : (truckCount === 2 ? ['S 9631 NF', 'N 8124 TA'] : [armada.nopol || 'S 9631 NF']);
+
+      const dividedTrucks = divideLoadAcrossTrucks(loadedItems, truckCount, rawPlates, truckKB, truckKMK);
+
+      let formattedDate = date;
+      try {
+        const d = new Date(date + 'T00:00:00');
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        if (!isNaN(d.getTime())) {
+          formattedDate = `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      } catch (e) {}
+
+      const printTimeStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                           new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+      const trucksToPrint = (truckFilter === 'all' || !truckFilter) 
+        ? dividedTrucks 
+        : dividedTrucks.filter(t => t.index === Number(truckFilter));
+
+      return trucksToPrint.map((truck, tIdx) => {
+        const isLast = tIdx === trucksToPrint.length - 1;
+        const pageBreakStyle = isLast ? '' : 'page-break-after: always;';
+
+        const rowsHtml = truck.items.map((item, idx) => `
+          <tr style="background-color: ${idx % 2 === 1 ? '#f8fafc' : '#ffffff'};">
+            <td style="border: 1px solid #64748b; text-align: center; padding: 4px; font-mono; font-size: 10px;">${idx + 1}</td>
+            <td style="border: 1px solid #64748b; padding: 4px 6px; font-weight: bold; font-size: 10.5px;">${escapeHtml(item.code)}</td>
+            <td style="border: 1px solid #64748b; padding: 4px 6px; font-size: 10.5px;">${escapeHtml(item.name)}</td>
+            <td style="border: 1px solid #64748b; text-align: center; padding: 4px; font-weight: bold; font-size: 10px; background-color: ${item.basketType === 'KB' ? '#eff6ff' : '#faf5ff'};">${item.basketType}</td>
+            <td style="border: 1px solid #64748b; text-align: center; padding: 4px; font-size: 10px;">${item.unitsPerBasket} ${item.unit}</td>
+            <td style="border: 1px solid #64748b; text-align: right; padding: 4px 8px; font-weight: 800; font-size: 11px;">${item.qty.toLocaleString('id-ID')} ${item.unit}</td>
+            <td style="border: 1px solid #64748b; text-align: right; padding: 4px 8px; font-weight: 800; font-size: 11px; background-color: #f0fdf4;">${item.baskets} ${item.basketType}</td>
+            <td style="border: 1px solid #64748b; text-align: center; padding: 4px; width: 60px;">
+              <div style="display: inline-block; width: 14px; height: 14px; border: 1.5px solid #0f172a; border-radius: 3px;"></div>
+            </td>
+            <td style="border: 1px solid #64748b; padding: 4px 6px; font-size: 9.5px; color: #475569;">
+              [ ] Baik &nbsp;&nbsp; [ ] Selisih: .....
+            </td>
+          </tr>
+        `).join('');
+
+        return `
+          <div style="font-family: Arial, sans-serif; color: #0f172a; padding: 8mm 10mm; background: #ffffff; ${pageBreakStyle}">
+            <!-- KOP SURAT FORMAL -->
+            <div style="border-bottom: 2.5px solid #0f172a; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="width: 44px; height: 44px; background: #d97706; color: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; border: 2px solid #b45309;">
+                  68
+                </div>
+                <div>
+                  <h1 style="font-size: 15px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">CV. ALFARIS ENAM DELAPAN</h1>
+                  <p style="font-size: 10px; font-weight: 800; color: #b45309; margin: 1px 0 0 0; text-transform: uppercase;">DISTRIBUTOR RESMI ROTI FRIEND'S BAKERY</p>
+                  <p style="font-size: 8.5px; color: #64748b; margin: 2px 0 0 0;">
+                    Alamat : Dusun Telbuk, Desa Kawisrejo, Kec. Rejoso, Kab. Pasuruan 67181 • Telp/WA: 087776653321
+                  </p>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="display: inline-block; background: #0f172a; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                  LEMBAR TRACER PETUGAS
+                </div>
+                <div style="font-size: 9.5px; font-weight: bold; color: #334155; margin-top: 3px;">ARMADA: ${truck.name.toUpperCase()}</div>
+                <div style="font-size: 8px; color: #64748b;">Dicetak: ${printTimeStr}</div>
+              </div>
+            </div>
+
+            <!-- JUDUL & INFORMASI ARMADA -->
+            <div style="text-align: center; margin-bottom: 8px;">
+              <h2 style="font-size: 12.5px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
+                LEMBAR TRACER & CHECKLIST BONGKAR MUATAN PABRIK
+              </h2>
+              <p style="font-size: 9.5px; color: #475569; margin: 2px 0 0 0; font-weight: 600;">
+                Dokumen Kontrol Fisik Muatan per Kendaraan Armada • Zero Stock CV. Alfaris Enam Delapan
+              </p>
+            </div>
+
+            <!-- INFO BOX TRUK -->
+            <div style="border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; background: #f8fafc; margin-bottom: 8px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 9.5px;">
+              <div>
+                <span style="color: #64748b; display: block; font-size: 8.5px;">Kendaraan / Nopol:</span>
+                <span style="font-weight: 900; color: #0f172a; font-size: 11px;">🚚 ${truck.name} (${truck.plate})</span>
+              </div>
+              <div>
+                <span style="color: #64748b; display: block; font-size: 8.5px;">Tanggal Bongkar:</span>
+                <span style="font-weight: 800; color: #0f172a;">${formattedDate}</span>
+              </div>
+              <div>
+                <span style="color: #64748b; display: block; font-size: 8.5px;">Kapasitas Mobil:</span>
+                <span style="font-weight: 800; color: #0f172a;">${truck.capacityKB} KB + ${truck.capacityKMK} KMK</span>
+              </div>
+              <div>
+                <span style="color: #64748b; display: block; font-size: 8.5px;">Total Muatan Truk Ini:</span>
+                <span style="font-weight: 900; color: #15803d; font-size: 11px;">${truck.totalUnits.toLocaleString('id-ID')} Pcs (${truck.totalKB} KB + ${truck.totalKMK} KMK)</span>
+              </div>
+            </div>
+
+            <!-- PETUNJUK PETUGAS BONGKAR -->
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 9px; color: #92400e;">
+              <strong>Petunjuk Petugas Bongkar:</strong> Cocokkan jumlah keranjang dan pcs saat menurunkan barang dari pintu truk. Beri tanda centang [✓] pada kolom "Cek Fisik" dan laporkan segera jika ada kemasan roti penyok/rusak dari pabrik.
+            </div>
+
+            <!-- TABEL RINCIAN PRODUK TRUK -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 10px;">
+              <thead>
+                <tr style="background: #e2e8f0; color: #0f172a; font-weight: bold;">
+                  <th style="border: 1px solid #64748b; padding: 4px; width: 25px; text-align: center;">No</th>
+                  <th style="border: 1px solid #64748b; padding: 4px 6px; width: 60px; text-align: left;">Kode</th>
+                  <th style="border: 1px solid #64748b; padding: 4px 6px; width: 140px; text-align: left;">Nama Produk Roti</th>
+                  <th style="border: 1px solid #64748b; padding: 4px; width: 45px; text-align: center;">Krjg</th>
+                  <th style="border: 1px solid #64748b; padding: 4px; width: 65px; text-align: center;">Isi/Krjg</th>
+                  <th style="border: 1px solid #64748b; padding: 4px 8px; width: 85px; text-align: right;">Qty di Truk</th>
+                  <th style="border: 1px solid #64748b; padding: 4px 8px; width: 90px; text-align: right; background: #e0f2fe;">Hasil Krjg</th>
+                  <th style="border: 1px solid #64748b; padding: 4px; width: 55px; text-align: center;">Cek Fisik</th>
+                  <th style="border: 1px solid #64748b; padding: 4px 6px; width: 110px; text-align: left;">Kondisi / Catatan</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+              <tfoot>
+                <tr style="background: #f1f5f9; font-weight: 900; color: #0f172a;">
+                  <td colspan="5" style="border: 1px solid #64748b; padding: 5px 8px; text-align: right; text-transform: uppercase;">TOTAL MUATAN ${truck.name.toUpperCase()}:</td>
+                  <td style="border: 1px solid #64748b; padding: 5px 8px; text-align: right; font-size: 11px;">${truck.totalUnits.toLocaleString('id-ID')} unit</td>
+                  <td style="border: 1px solid #64748b; padding: 5px 8px; text-align: right; font-size: 11px; background: #dbeafe;">${truck.totalKB} KB • ${truck.totalKMK} KMK</td>
+                  <td colspan="2" style="border: 1px solid #64748b; padding: 5px 8px; text-align: center; color: #166534; font-size: 9.5px;">✓ LENGKAP</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- TANDA TANGAN SERAH TERIMA -->
+            <div style="border-top: 1px solid #cbd5e1; padding-top: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; font-size: 9px;">
+              <div>
+                <div style="color: #64748b; margin-bottom: 2px;">Diserahkan Oleh:</div>
+                <div style="font-weight: bold; color: #0f172a; margin-bottom: 30px;">Sopir Armada Truk</div>
+                <div style="border-top: 1px dashed #64748b; display: inline-block; padding-top: 2px; min-width: 120px; font-weight: bold;">( ${truck.plate} )</div>
+              </div>
+              <div>
+                <div style="color: #64748b; margin-bottom: 2px;">Dihitung & Dibongkar Oleh:</div>
+                <div style="font-weight: bold; color: #0f172a; margin-bottom: 30px;">Mandor / Petugas Bongkar</div>
+                <div style="border-top: 1px dashed #64748b; display: inline-block; padding-top: 2px; min-width: 120px; font-weight: bold;">( ..................................... )</div>
+              </div>
+              <div>
+                <div style="color: #64748b; margin-bottom: 2px;">Diterima & Dicocokkan:</div>
+                <div style="font-weight: bold; color: #0f172a; margin-bottom: 30px;">Kasir / Kepala Gudang CV</div>
+                <div style="border-top: 1px dashed #64748b; display: inline-block; padding-top: 2px; min-width: 120px; font-weight: bold;">( CV. Alfaris Enam Delapan )</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function printTracerBongkarTruk(truckFilter = 'all') {
+      const date = currentPODate || getTodayYMD();
+      const printArea = document.getElementById('print-area-tracer-truk');
+      if (!printArea) return;
+
+      setPrintPageSize('A4 portrait', '6mm 8mm');
+      printArea.innerHTML = buildTracerBongkarHTML(date, truckFilter);
+
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-nota', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik', 'printing-tracer');
+      document.body.classList.add('printing-tracer');
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-tracer');
         }, 1000);
       }, 150);
     }
