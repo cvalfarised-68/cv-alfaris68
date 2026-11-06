@@ -1383,10 +1383,7 @@
           </div>
         </div>
 
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Catatan Khusus Sales</label>
-          <input type="text" id="po-form-notes" placeholder="Contoh: Titipan rute Dinoyo minta lebih awal" class="w-full px-3 py-2 border rounded-xl">
-        </div>
+<input type="hidden" id="po-form-notes" value="">
 
         <div class="pt-3 border-t flex justify-end gap-2">
           <button type="button" onclick="closePOInputModal()" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-slate-800 cursor-pointer">Batal</button>
@@ -1578,10 +1575,7 @@
               <option value="level6">6. Grosir Partai (+20%)</option>
             </select>
           </div>
-          <div>
-            <label class="block font-bold mb-1 text-slate-700">Catatan Khusus / Rute Tujuan</label>
-            <input type="text" id="trx-form-notes" placeholder="Contoh: Titip 50 pcs di Toko Bu Joko" class="w-full px-2.5 py-1.5 border rounded-lg bg-white">
-          </div>
+<input type="hidden" id="trx-form-notes" value="">
         </div>
 
         <div class="space-y-2">
@@ -6036,14 +6030,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
           <!-- CATATAN PETUGAS GUDANG & LEMBAR TANDA TANGAN 3 PIHAK -->
           <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; page-break-inside: avoid;">
-            <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; background: #f8fafc; font-size: 6.5pt; color: #334155; line-height: 1.3;">
-              <strong style="color: #0f172a;">PETUNJUK PETUGAS BONGKAR MUATAN:</strong>
-              <div style="margin-top: 2px;">
-                1. Cocokkan fisik roti turun dari mobil armada dengan baris tebal <strong>TOTAL BONGKAR (PABRIK)</strong> di atas.<br>
-                2. Distribusikan dan pisahkan roti ke keranjang masing-masing sales sesuai kolom angka.<br>
-                3. Berikan tanda centang (&check;) pada kolom 'Cek' setelah roti sales siap diambil dan diverifikasi.
-              </div>
-            </div>
+
 
             <div style="display: flex; gap: 16px; text-align: center; font-size: 6.8pt; flex-shrink: 0;">
               <div style="width: 120px;">
@@ -6220,32 +6207,19 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             </tfoot>
           </table>
 
-          <!-- RINGKASAN MUATAN ARMADA & CATATAN -->
-          <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: stretch; gap: 8px;">
-            <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px 8px; background: #f8fafc; font-size: 7pt; color: #334155; line-height: 1.3;">
-              <strong style="color: #0f172a;">CATATAN SERAH TERIMA PABRIK:</strong>
-              <div style="margin-top: 1px;">
-                1. Harap periksa kondisi fisik, tanggal expired, dan kerapian kemasan roti sebelum diserahkan ke driver.<br>
-                2. Kelebihan / kekurangan muatan fisik wajib dicatat dan disepakati kedua belah pihak.
-              </div>
+          <!-- RINGKASAN MUATAN ARMADA (BERSIH TANPA CATATAN) -->
+          <div style="margin-top: 6px; border: 1px solid #f59e0b; border-radius: 4px; padding: 6px 10px; background: #fffbeb; font-size: 7.2pt; color: #78350f;">
+            <div style="font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
+              <span>Armada Angkut: ${escapeHtml(armada.desc || (armada.kb + ' KB + ' + armada.kmk + ' KMK'))}</span>
+              <span style="color: ${calc.d13 >= 0 ? '#15803d' : '#b91c1c'}; font-size: 8pt; font-weight: 800;">
+                ${calc.percentFilled}% Kapasitas Terisi &bull; ${calc.d13 >= 0 ? `Sisa ${calc.d13} KB (Aman)` : `OVERLOAD ${Math.abs(calc.d13)} KB`}
+              </span>
             </div>
-            <div style="width: 270px; border: 1px solid #f59e0b; border-radius: 4px; padding: 5px 8px; background: #fffbeb; font-size: 7pt; color: #78350f;">
-              <div style="font-weight: 800; display: flex; justify-content: space-between;">
-                <span>Estimasi Muatan Mobil:</span>
-                <span style="color: ${calc.d13 >= 0 ? '#15803d' : '#b91c1c'}; font-weight: 800;">${calc.percentFilled}% Terisi</span>
+            ${(armada.trucksCount && armada.trucksCount > 1) ? `
+              <div style="margin-top: 3px; padding-top: 2px; border-top: 1px dashed #f59e0b; font-size: 6.8pt; color: #1e3a8a;">
+                <strong>Bagi Rata ${armada.trucksCount} Mobil Truk:</strong> ~ ${Math.round(calc.totalOrderKB / armada.trucksCount)} KB + ${Math.round(calc.totalOrderKMK / armada.trucksCount)} KMK per mobil (${Math.round(calc.totalUnits / armada.trucksCount).toLocaleString('id-ID')} pcs/mobil).
               </div>
-              <div style="margin-top: 1px; font-size: 6.8pt;">
-                Kapasitas: ${escapeHtml(armada.desc || (armada.kb + ' KB + ' + armada.kmk + ' KMK'))}<br>
-                ${calc.d13 >= 0 
-                  ? `Sisa Ruang Kosong: <strong style="color: #15803d;">${calc.d13} KB</strong> (Muatan Aman)` 
-                  : `Status Muatan: <strong style="color: #b91c1c;">OVERLOAD ${Math.abs(calc.d13)} KB</strong> (Disarankan Tambah Armada)`}
-              </div>
-              ${(armada.trucksCount && armada.trucksCount > 1) ? `
-                <div style="margin-top: 3px; padding-top: 2px; border-top: 1px dashed #f59e0b; font-size: 6.5pt; color: #1e3a8a;">
-                  <strong>Bagi Rata ${armada.trucksCount} Mobil Truk:</strong> ~ ${Math.round(calc.totalOrderKB / armada.trucksCount)} KB + ${Math.round(calc.totalOrderKMK / armada.trucksCount)} KMK per mobil (${Math.round(calc.totalUnits / armada.trucksCount).toLocaleString('id-ID')} pcs/mobil).
-                </div>
-              ` : ''}
-            </div>
+            ` : ''}
           </div>
 
           <!-- LEMBAR PENGESAHAN TANDA TANGAN 3 PIHAK -->
@@ -6544,10 +6518,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               </div>
             </div>
 
-            <!-- PETUNJUK PETUGAS BONGKAR -->
-            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 9px; color: #92400e;">
-              <strong>Petunjuk Petugas Bongkar:</strong> Cocokkan jumlah keranjang dan pcs saat menurunkan barang dari pintu truk. Beri tanda centang [✓] pada kolom "Cek Fisik" dan laporkan segera jika ada kemasan roti penyok/rusak dari pabrik.
-            </div>
+
 
             <!-- TABEL RINCIAN PRODUK TRUK -->
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 10px;">
@@ -6561,7 +6532,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                   <th style="border: 1px solid #64748b; padding: 4px 8px; width: 85px; text-align: right;">Qty di Truk</th>
                   <th style="border: 1px solid #64748b; padding: 4px 8px; width: 90px; text-align: right; background: #e0f2fe;">Hasil Krjg</th>
                   <th style="border: 1px solid #64748b; padding: 4px; width: 55px; text-align: center;">Cek Fisik</th>
-                  <th style="border: 1px solid #64748b; padding: 4px 6px; width: 110px; text-align: left;">Kondisi / Catatan</th>
+                  <th style="border: 1px solid #64748b; padding: 4px 6px; width: 110px; text-align: left;">Kondisi Fisik</th>
                 </tr>
               </thead>
               <tbody>
@@ -8279,13 +8250,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
           ${kasbonBox}
 
-          <!-- CATATAN NOTA KHUSUS SALES -->
-          <div class="mb-2.5 text-[8.5px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-200 leading-snug">
-            <span class="font-bold text-slate-700">Catatan Nota:</span><br>
-            1. Nota ini adalah bukti penyerahan barang dan tagihan resmi kepada Sales CV. Alfaris Enam Delapan.<br>
-            2. Sales bertanggung jawab penuh atas fisik roti yang dibawa dan setoran hasil penjualan (Tunai, Transfer, atau Kasbon Toko).<br>
-            3. Pelunasan kasbon tempo wajib disetorkan paling lambat sesuai dengan batas waktu jatuh tempo.
-          </div>
+
 
           <!-- KOLOM TANDA TANGAN (KASIR & SALES - TIDAK ADA PIHAK TOKO) -->
           <div class="grid grid-cols-2 gap-4 text-center text-[9.5px] avoid-break">
