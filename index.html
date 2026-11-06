@@ -670,15 +670,34 @@
             </button>
           </div>
 
-          <div class="relative flex-1 min-w-[200px]">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input 
-              id="search-trx" 
-              type="text" 
-              oninput="renderTransactionList()" 
-              placeholder="Cari nota TRX, nama sales, atau rute..." 
-              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:bg-white"
-            >
+          <div class="flex items-center gap-2 flex-1 min-w-[280px]">
+            <div class="relative flex-1 min-w-[170px]">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input 
+                id="search-trx" 
+                type="text" 
+                oninput="renderTransactionList()" 
+                placeholder="Cari nota TRX, nama sales, atau rute..." 
+                class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:bg-white"
+              >
+            </div>
+            
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <input 
+                id="filter-trx-date" 
+                type="date" 
+                onchange="renderTransactionList()" 
+                title="Filter berdasarkan tanggal transaksi drop roti"
+                class="px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:border-brand-500"
+              >
+              <button 
+                type="button" 
+                onclick="resetTrxDateFilter()" 
+                title="Tampilkan Semua Tanggal"
+                class="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+                Semua
+              </button>
+            </div>
           </div>
         </div>
 
@@ -3566,26 +3585,7 @@
     }
 
     // Inisialisasi State Awal Default Aplikasi
-    const DEFAULT_PO_SALES = [
-      {
-        id: 'PO-6064',
-        date: '2026-11-05',
-        salesId: 'SLS-6064',
-        salesName: 'Pak Clifften',
-        salesRoute: 'Rute Bebas',
-        items: {
-          'PRD-1607': 200, // MPS
-          'PRD-9068': 800, // NC (NANA C)
-          'PRD-9030': 400, // NCK (NANA CK)
-          'PRD-2002': 400, // NCP (Nana CP)
-          'PRD-4489': 200, // NCB (NANA CB)
-          'PRD-4776': 200, // NCS (NANA CS)
-          'PRD-9544': 420, // SISIR (S Sisir)
-          'PRD-1254': 200  // TM (T MANIS)
-        },
-        notes: 'Rekap PO Sales Harian P Clifften'
-      }
-    ];
+    const DEFAULT_PO_SALES = [];
     const DEFAULT_EXPENSES = [];
     const DEFAULT_TOKO = [
       { id: 'TKO-003', name: 'Toko Rejeki Singosari', pic: 'Pak Bambang', phone: '082199887766', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: '2026-11-03' }
@@ -3623,8 +3623,32 @@
 
     // Fungsi pembersihan data dummy lawas dari browser kasir/owner jika ada sisa cache
     function cleanupLegacyDummyData() {
-      const CLEANUP_KEY = 'alfaris_clean_sync_v5';
+      const CLEANUP_KEY = 'alfaris_clean_sync_v6';
       if (localStorage.getItem(CLEANUP_KEY) === 'true') return;
+
+      try {
+        // Bersihkan PO dan transaksi dummy lawas jika tersisa di cache browser kasir/owner
+        const poStr = localStorage.getItem(STORAGE_KEY_PO);
+        if (poStr && (poStr.includes('PO-6064') || poStr.includes('PO-26200') || poStr.includes('Pak Clifften'))) {
+          try {
+            const parsed = JSON.parse(poStr);
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter(p => p.id !== 'PO-6064' && p.id !== 'PO-26200' && p.salesName !== 'Pak Clifften');
+              localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(cleaned));
+            }
+          } catch(e) {}
+        }
+        const trxStr = localStorage.getItem(STORAGE_KEY_TRX);
+        if (trxStr && (trxStr.includes('TRX-261105-6064') || trxStr.includes('TRX-261108-0854') || trxStr.includes('Pak Clifften'))) {
+          try {
+            const parsed = JSON.parse(trxStr);
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter(t => t.id !== 'TRX-261105-6064' && t.id !== 'TRX-261108-0854' && t.salesName !== 'Pak Clifften');
+              localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(cleaned));
+            }
+          } catch(e) {}
+        }
+      } catch(e) {}
 
       try {
         // Bersihkan cache produk lama agar 25 varian roti standar ter-update otomatis
@@ -4282,21 +4306,27 @@
     }
 
     function deletePOSales(poId) {
-      if (confirm('Hapus data PO sales ini?')) {
-        let allPO = getPOSalesData().filter(p => p.id !== poId);
-        savePOSalesData(allPO, true);
+      if (confirm('Hapus data PO sales ini? Transaksi drop roti terkait di kasir juga akan otomatis dibatalkan.')) {
+        const allPO = getPOSalesData();
+        const poToDelete = allPO.find(p => p.id === poId);
+        const updatedPO = allPO.filter(p => p.id !== poId);
+        savePOSalesData(updatedPO, true);
         deleteItemFromSupabase('po_sales', poId);
 
-        // Hapus juga transaksi drop roti terkait jika masih berstatus menunggu_setoran
+        // Hapus juga transaksi drop roti terkait di Transaksi Sales
         let allTrx = getTransactionsData();
-        const linkedTrx = allTrx.find(t => t.poId === poId || (t.source === 'auto_po' && t.poId === poId));
-        if (linkedTrx && (linkedTrx.paymentMethod === 'menunggu_setoran' || linkedTrx.deliveryStatus === 'menunggu_setoran')) {
+        const linkedTrx = allTrx.find(t => 
+          t.poId === poId || 
+          (t.items && t.items[0] && t.items[0].poId === poId) ||
+          (poToDelete && t.date === poToDelete.date && (t.salesId === poToDelete.salesId || t.salesName === poToDelete.salesName))
+        );
+        if (linkedTrx) {
           allTrx = allTrx.filter(t => t.id !== linkedTrx.id);
           saveTransactionsData(allTrx, true);
           deleteItemFromSupabase('transactions', linkedTrx.id);
         }
 
-        showToast('Data PO sales & transaksi terkait dihapus.');
+        showToast('Data PO sales & transaksi terkait berhasil dihapus.');
       }
     }
 
@@ -4976,14 +5006,44 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       isSyncingPOToTrx = true;
       try {
         const allPO = getPOSalesData();
-        if (!allPO || allPO.length === 0) return;
-        const allTrx = getTransactionsData();
-        const dates = [...new Set(allPO.map(p => p.date).filter(Boolean))];
+        let allTrx = getTransactionsData();
+        let trxChanged = false;
 
+        // 1. Bersihkan transaksi auto_po yatim (orphan) jika data PO-nya sudah dihapus dari Rekap PO
+        const validPOIds = new Set(allPO.map(p => p.id));
+        const validPODateSales = new Set(allPO.map(p => `${p.date}_${p.salesId || p.salesName}`));
+
+        const cleanTrx = allTrx.filter(t => {
+          const isFromPO = t.source === 'auto_po' || t.poId || (t.items && t.items[0] && t.items[0].poId);
+          if (isFromPO) {
+            const tPoId = t.poId || (t.items && t.items[0] && t.items[0].poId);
+            const dateSalesKey = `${t.date}_${t.salesId || t.salesName}`;
+            const isAlive = (tPoId && validPOIds.has(tPoId)) || validPODateSales.has(dateSalesKey);
+            if (!isAlive) {
+              trxChanged = true;
+              deleteItemFromSupabase('transactions', t.id);
+              return false; // Hapus transaksi yatim
+            }
+          }
+          return true;
+        });
+
+        if (trxChanged) {
+          allTrx = cleanTrx;
+          saveTransactionsData(allTrx, true);
+        }
+
+        if (!allPO || allPO.length === 0) return;
+
+        // 2. Terbitkan atau sinkronkan PO aktif yang belum memiliki transaksi
+        const dates = [...new Set(allPO.map(p => p.date).filter(Boolean))];
         dates.forEach(d => {
           const posOnDate = allPO.filter(p => p.date === d);
-          // Jika ada PO pada tanggal d yang belum memiliki transaksi di tabel Transaksi Sales
-          const missingTrx = posOnDate.some(po => !allTrx.some(t => t.poId === po.id || (t.date === po.date && t.salesId === po.salesId)));
+          const missingTrx = posOnDate.some(po => !allTrx.some(t => 
+            t.poId === po.id || 
+            (t.items && t.items[0] && t.items[0].poId === po.id) || 
+            (t.date === po.date && (t.salesId === po.salesId || t.salesName === po.salesName))
+          ));
           if (missingTrx) {
             publishPOToTransactions(d, false);
           }
@@ -7308,6 +7368,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     });
 
+    function resetTrxDateFilter() {
+      const el = document.getElementById('filter-trx-date');
+      if (el) el.value = '';
+      renderTransactionList();
+    }
+
     function renderTransactionList() {
       autoSyncAllPOsToTransactions();
       const list = getTransactionsData();
@@ -7330,7 +7396,13 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (elKasbon) elKasbon.innerText = countKasbon;
       if (elLunas) elLunas.innerText = countLunas;
 
+      const dateFilterEl = document.getElementById('filter-trx-date');
+      const dateFilterVal = dateFilterEl ? dateFilterEl.value : '';
+
       let filtered = list.filter(t => {
+        if (dateFilterVal && t.date !== dateFilterVal) {
+          return false;
+        }
         if (currentTrxFilter === 'menunggu') {
           return t.paymentMethod === 'menunggu_setoran' || t.deliveryStatus === 'menunggu_setoran';
         } else if (currentTrxFilter === 'kasbon') {
@@ -7475,11 +7547,32 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function deleteTransaction(id) {
-      if (confirm(`Batalkan / hapus transaksi ${id}? Saldo omset dan status kasbon terkait akan disesuaikan otomatis.`)) {
-        const list = getTransactionsData().filter(t => t.id !== id);
+      const allTrx = getTransactionsData();
+      const trxToDelete = allTrx.find(t => t.id === id);
+      if (!trxToDelete) return;
+
+      if (confirm(`Batalkan / hapus transaksi ${id}? Saldo omset dan data PO terkait akan disesuaikan otomatis.`)) {
+        // 1. Hapus data PO terkait TERLEBIH DAHULU agar tidak diregenerasi ulang oleh autoSync
+        const linkedPOId = trxToDelete.poId || (trxToDelete.items && trxToDelete.items[0] && trxToDelete.items[0].poId);
+        let allPO = getPOSalesData();
+        const targetPO = allPO.find(p => 
+          (linkedPOId && p.id === linkedPOId) || 
+          (p.date === trxToDelete.date && (p.salesId === trxToDelete.salesId || p.salesName === trxToDelete.salesName))
+        );
+
+        if (targetPO) {
+          allPO = allPO.filter(p => p.id !== targetPO.id);
+          savePOSalesData(allPO, true);
+          deleteItemFromSupabase('po_sales', targetPO.id);
+        }
+
+        // 2. Hapus transaksi dari transactions (autoSync sekarang aman karena PO sudah tidak ada)
+        const list = allTrx.filter(t => t.id !== id);
         saveTransactionsData(list, true);
         deleteItemFromSupabase('transactions', id);
-        showToast(`Transaksi ${id} berhasil dibatalkan & dihapus.`);
+
+        renderPOSalesMatrix();
+        showToast(`Transaksi ${id} & PO terkait berhasil dibatalkan & dihapus.`);
       }
     }
 
