@@ -609,13 +609,7 @@
               </p>
             </div>
             
-            <button 
-              onclick="switchTab('po')" 
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-2xs self-start sm:self-auto transition cursor-pointer"
-              title="Kelola pesanan dan muatan sales di menu Rekap PO Sales">
-              <i data-lucide="clipboard-list" class="w-4 h-4 text-brand-600"></i>
-              <span>Rekap PO Sales</span>
-            </button>
+
           </div>
 
           <div class="overflow-x-auto">
@@ -660,15 +654,7 @@
             </p>
           </div>
           
-          <div class="flex items-center gap-2 flex-wrap">
-            <button 
-              onclick="switchTab('po')" 
-              class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm transition self-start sm:self-auto cursor-pointer"
-              title="Kelola pesanan sales & muatan kiriman pabrik di menu Rekap PO Sales">
-              <i data-lucide="clipboard-list" class="w-4 h-4"></i>
-              <span>Rekap PO Sales (Zero Stock)</span>
-            </button>
-          </div>
+          <div></div>
         </div>
 
         <!-- Filter Tanggal & Quick Pills Transaksi (Sinkron Otomatis dengan Rekap PO) -->
@@ -766,54 +752,21 @@
           <div class="flex items-center gap-2 flex-wrap">
             <button 
               onclick="openPOInputModal()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm transition">
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 shadow-sm transition cursor-pointer">
               <i data-lucide="plus-circle" class="w-4 h-4"></i>
               <span>Input PO Sales</span>
             </button>
 
             <button 
               onclick="sendPOWhatsAppToFactory()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition">
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition cursor-pointer">
               <i data-lucide="message-circle" class="w-4 h-4"></i>
               <span>Kirim PO ke Pabrik (WA)</span>
             </button>
 
             <button 
-              onclick="openPabrikReconciliationModal()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-sm transition cursor-pointer"
-              title="Cek Realisasi Kiriman Pabrik vs Slot Muatan Armada Kendaraan">
-              <i data-lucide="truck" class="w-4 h-4"></i>
-              <span>Muatan Pabrik</span>
-            </button>
-
-            <button 
-              id="btn-toolbar-fix-po" 
-              onclick="publishPOToTransactionsConfirm()" 
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition cursor-pointer"
-              title="Kunci & Terbitkan Transaksi Sales Otomatis ke Kasir (Zero Stock)">
-              <i data-lucide="zap" class="w-4 h-4"></i>
-              <span id="btn-toolbar-fix-text">Fix ke Transaksi</span>
-            </button>
-
-            <button 
-              onclick="openPreviewMatriksBongkar()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition cursor-pointer"
-              title="Cetak Matriks Akumulasi Pesanan Roti per Sales (A4 Landscape - Terlihat 25 Produk Lengkap untuk Petugas Bongkar Muatan)">
-              <i data-lucide="table" class="w-4 h-4 text-emerald-400"></i>
-              <span>Cetak Matriks Bongkar (Petugas)</span>
-            </button>
-
-            <button 
-              onclick="openPreviewAmbilPabrik()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 shadow-sm transition cursor-pointer"
-              title="Cetak Form Surat Pengambilan TOTAL AMBIL PABRIK (A4 Portrait - Diberikan ke Pabrik)">
-              <i data-lucide="factory" class="w-4 h-4 text-amber-200"></i>
-              <span>Cetak TOTAL AMBIL PABRIK</span>
-            </button>
-
-            <button 
               onclick="printAllPOSalesCardsOnDate()" 
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition cursor-pointer"
               title="Cetak Semua Kartu Rekap PO Sales Sesuai Format Fisik Pabrik">
               <i data-lucide="printer" class="w-4 h-4"></i>
               <span>Cetak Kartu PO Sales</span>
@@ -1125,14 +1078,8 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="openFinancialReportModal()" class="owner-only inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 shadow-sm transition">
-              <i data-lucide="printer" class="w-4 h-4"></i> Cetak Laporan Keuangan
-            </button>
-            <button onclick="openExpenseModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition">
-              <i data-lucide="plus" class="w-4 h-4"></i> Catat Pengeluaran
-            </button>
-            <button onclick="openReturModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-sm transition">
-              <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Catat Retur Toko
+            <button onclick="openExpenseModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-sm transition cursor-pointer">
+              <i data-lucide="plus" class="w-4 h-4 text-emerald-400"></i> Catat Pengeluaran Operasional
             </button>
           </div>
         </div>
@@ -2192,10 +2139,6 @@
           Tutup
         </button>
         <div class="flex items-center gap-2 flex-wrap">
-          <button onclick="printTracerBongkarTruk(selectedTruckFilter)" class="px-3.5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer" title="Cetak Lembar Checklist Fisik Bongkar Muatan untuk Petugas Lapangan">
-            <i data-lucide="clipboard-check" class="w-4 h-4 text-blue-600"></i>
-            <span>Cetak Tracer Bongkar Truk</span>
-          </button>
           <button onclick="printTotalAmbilPabrik()" class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i>
             <span>Cetak Rekap Muatan Pabrik</span>
