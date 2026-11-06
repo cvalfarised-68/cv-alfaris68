@@ -3316,6 +3316,7 @@
     }
 
     function getTodayYMD() { return new Date().toISOString().split('T')[0]; }
+    function getTomorrowYMD() { return addDaysYMD(getTodayYMD(), 1); }
     function addDaysYMD(baseStr, days) {
       const d = new Date(baseStr);
       d.setDate(d.getDate() + days);
@@ -3841,14 +3842,20 @@
       const tomorrow = addDaysYMD(today, 1);
       const lusa = addDaysYMD(today, 2);
 
+      const allPO = getPOSalesData();
+      const countToday = allPO.filter(p => p.date === today).length;
+      const countTomorrow = allPO.filter(p => p.date === tomorrow).length;
+      const countLusa = allPO.filter(p => p.date === lusa).length;
+
       const btns = [
-        { id: 'po-btn-today', active: activeDate === today },
-        { id: 'po-btn-tomorrow', active: activeDate === tomorrow },
-        { id: 'po-btn-lusa', active: activeDate === lusa }
+        { id: 'po-btn-today', label: `Hari Ini (${countToday})`, active: activeDate === today },
+        { id: 'po-btn-tomorrow', label: `Besok (${countTomorrow} PO)`, active: activeDate === tomorrow },
+        { id: 'po-btn-lusa', label: `Lusa (${countLusa} PO)`, active: activeDate === lusa }
       ];
       btns.forEach(b => {
         const el = document.getElementById(b.id);
         if (el) {
+          el.innerText = b.label;
           el.className = b.active 
             ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
             : 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer';
@@ -3861,24 +3868,33 @@
       const tomorrow = addDaysYMD(today, 1);
       const lusa = addDaysYMD(today, 2);
 
+      const allTrx = getTransactionsData();
+      const countAll = allTrx.length;
+      const countToday = allTrx.filter(t => t.date === today).length;
+      const countTomorrow = allTrx.filter(t => t.date === tomorrow).length;
+      const countLusa = allTrx.filter(t => t.date === lusa).length;
+
       const isAll = !activeDate;
       const isToday = activeDate === today;
       const isTomorrow = activeDate === tomorrow;
       const isLusa = activeDate === lusa;
 
-      const setStyle = (id, active) => {
-        const el = document.getElementById(id);
+      const btns = [
+        { id: 'trx-btn-all', label: `Semua Tanggal (${countAll})`, active: isAll },
+        { id: 'trx-btn-today', label: `Hari Ini (${countToday})`, active: isToday },
+        { id: 'trx-btn-tomorrow', label: `Besok (${countTomorrow})`, active: isTomorrow },
+        { id: 'trx-btn-lusa', label: `Lusa (${countLusa})`, active: isLusa }
+      ];
+
+      btns.forEach(b => {
+        const el = document.getElementById(b.id);
         if (el) {
-          el.className = active
+          el.innerText = b.label;
+          el.className = b.active
             ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
             : 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer';
         }
-      };
-
-      setStyle('trx-btn-all', isAll);
-      setStyle('trx-btn-today', isToday);
-      setStyle('trx-btn-tomorrow', isTomorrow);
-      setStyle('trx-btn-lusa', isLusa);
+      });
     }
 
     function setPODateQuick(offset) {
@@ -8181,10 +8197,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         renderPOSalesMatrix();
       } else if (tabId === 'transaksi') {
         const trxDateEl = document.getElementById('filter-trx-date');
-        if (trxDateEl && !trxDateEl.dataset.customMode && (!trxDateEl.value || trxDateEl.value !== currentPODate)) {
+        if (trxDateEl) {
+          // Selalu sinkronkan ke tanggal PO yang sedang aktif saat berpindah tab
           trxDateEl.value = currentPODate;
+          delete trxDateEl.dataset.customMode;
         }
-        updateTrxDatePillsHighlight(trxDateEl ? trxDateEl.value : '');
+        updateTrxDatePillsHighlight(currentPODate);
         renderTransactionList();
       }
 
