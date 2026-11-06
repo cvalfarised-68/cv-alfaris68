@@ -3638,27 +3638,28 @@
 
     // Fungsi pembersihan data dummy lawas dari browser kasir/owner jika ada sisa cache
     function cleanupLegacyDummyData() {
-      const CLEANUP_KEY = 'alfaris_clean_sync_v6';
+      const CLEANUP_KEY = 'alfaris_clean_sync_v8';
       if (localStorage.getItem(CLEANUP_KEY) === 'true') return;
 
       try {
-        // Bersihkan PO dan transaksi dummy lawas jika tersisa di cache browser kasir/owner
+        // Bersihkan PO uji coba tgl 07 jika tersisa di cache browser
         const poStr = localStorage.getItem(STORAGE_KEY_PO);
-        if (poStr && (poStr.includes('PO-6064') || poStr.includes('PO-26200') || poStr.includes('Pak Clifften'))) {
+        if (poStr && (poStr.includes('PO-91800') || poStr.includes('2026-11-07') || poStr.includes('PO-6064') || poStr.includes('PO-26200'))) {
           try {
             const parsed = JSON.parse(poStr);
             if (Array.isArray(parsed)) {
-              const cleaned = parsed.filter(p => p.id !== 'PO-6064' && p.id !== 'PO-26200' && p.salesName !== 'Pak Clifften');
+              const cleaned = parsed.filter(p => p.id !== 'PO-91800' && p.date !== '2026-11-07' && p.id !== 'PO-6064' && p.id !== 'PO-26200');
               localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(cleaned));
             }
           } catch(e) {}
         }
+        // Bersihkan transaksi uji coba tgl 07 jika tersisa di cache browser
         const trxStr = localStorage.getItem(STORAGE_KEY_TRX);
-        if (trxStr && (trxStr.includes('TRX-261105-6064') || trxStr.includes('TRX-261108-0854') || trxStr.includes('Pak Clifften'))) {
+        if (trxStr && (trxStr.includes('TRX-261107-0854') || trxStr.includes('2026-11-07') || trxStr.includes('TRX-261105-6064'))) {
           try {
             const parsed = JSON.parse(trxStr);
             if (Array.isArray(parsed)) {
-              const cleaned = parsed.filter(t => t.id !== 'TRX-261105-6064' && t.id !== 'TRX-261108-0854' && t.salesName !== 'Pak Clifften');
+              const cleaned = parsed.filter(t => t.id !== 'TRX-261107-0854' && t.date !== '2026-11-07' && t.id !== 'TRX-261105-6064');
               localStorage.setItem(STORAGE_KEY_TRX, JSON.stringify(cleaned));
             }
           } catch(e) {}
@@ -8224,8 +8225,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       // 0. Bersihkan cache dummy lama jika ada
       cleanupLegacyDummyData();
 
-      // 0.5 Inisialisasi tanggal aktif PO dan Transaksi Drop Roti
-      const initialDate = currentPODate || getTomorrowYMD();
+      // 0.5 Inisialisasi tanggal aktif PO dan Transaksi Drop Roti (prioritas tanggal aktif berpesanan)
+      let initialDate = currentPODate || getTomorrowYMD();
+      const allPO = getPOSalesData();
+      const tomorrowYMD = addDaysYMD(getTodayYMD(), 1);
+      const lusaYMD = addDaysYMD(getTodayYMD(), 2);
+      const countTomorrow = allPO.filter(p => p.date === tomorrowYMD).length;
+      const countLusa = allPO.filter(p => p.date === lusaYMD).length;
+      if (countTomorrow === 0 && countLusa > 0) {
+        initialDate = lusaYMD; // Otomatis fokus ke tanggal aktif berpesanan (08/11/2026)
+      }
       currentPODate = initialDate;
       const initPODateEl = document.getElementById('po-date-filter');
       if (initPODateEl) initPODateEl.value = initialDate;
