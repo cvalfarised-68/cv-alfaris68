@@ -1822,17 +1822,32 @@
       <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs bg-slate-50">
         <!-- Control Bar: Pilih Armada & Kapasitas Real -->
         <div class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
-              <i data-lucide="car" class="w-4 h-4 text-brand-600"></i>
-              <span>Kendaraan Armada:</span>
-            </label>
-            <select 
-              id="recon-armada-select" 
-              onchange="onReconArmadaChanged()" 
-              class="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
-              <!-- Diisi otomatis oleh JS -->
-            </select>
+          <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="car" class="w-4 h-4 text-brand-600"></i>
+                <span>Kendaraan Armada:</span>
+              </label>
+              <select 
+                id="recon-armada-select" 
+                onchange="onReconArmadaChanged()" 
+                class="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
+                <!-- Diisi otomatis oleh JS -->
+              </select>
+            </div>
+            <!-- Tombol Cepat Jadwal Rutin Pabrik -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[10px] font-bold text-slate-400">Jadwal Rutin:</span>
+              <button type="button" onclick="setReconArmadaPreset('rabu_kamis_1mobil')" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition cursor-pointer">
+                🚚 1 Mobil (Rabu/Kamis)
+              </button>
+              <button type="button" onclick="setReconArmadaPreset('2_truk')" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition cursor-pointer">
+                🚚🚚 2 Truk
+              </button>
+              <button type="button" onclick="setReconArmadaPreset('sabtu_3truk')" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition cursor-pointer">
+                🚚🚚🚚 3 Truk (Sabtu)
+              </button>
+            </div>
           </div>
 
           <div class="flex items-center gap-2 text-[11px]">
@@ -3465,25 +3480,55 @@
       'TF': { type: 'KB', unitsPerBasket: 15, unit: 'pcs', fullName: 'TAWAR KUNCIR' }
     };
 
+    // Jadwal Rutin Pengiriman / Pengambilan Pabrik CV. Alfaris Enam Delapan:
+    // - Rabu: 1 Mobil (Grand Max Box)
+    // - Kamis: 1 Mobil (Grand Max Box)
+    // - Sabtu: 3 Mobil Truk (Beban muatan dibagi rata sesuai kapasitas mobil)
     const FACTORY_ARMADA_LIST = [
-      { nopol: 'S 9631 NF', kb: 204, kmk: 33, desc: 'Grand Max Box (204 KB + 33 KMK)' },
-      { nopol: 'W 8050 NW', kb: 186, kmk: 31, desc: 'Grand Max Box (186 KB + 31 KMK)' },
-      { nopol: 'W 8683 PA', kb: 204, kmk: 32, desc: 'Grand Max Box (204 KB + 32 KMK)' },
-      { nopol: 'W 8351 QG', kb: 210, kmk: 0,  desc: 'Armada Box L300 (210 KB)' },
-      { nopol: 'W 9469 PE', kb: 204, kmk: 33, desc: 'Grand Max Box (204 KB + 33 KMK)' },
-      { nopol: 'S 8846 NI', kb: 222, kmk: 37, desc: 'Grand Max Jumbo (222 KB + 37 KMK)' },
-      { nopol: 'S 9147 JF', kb: 216, kmk: 35, desc: 'Grand Max Box (216 KB + 35 KMK)' },
-      { nopol: 'W 9280 UT', kb: 258, kmk: 43, desc: 'Truk Sedang (258 KB + 43 KMK)' },
-      { nopol: 'N 9857 TM', kb: 144, kmk: 23, desc: 'Armada Kecil (144 KB + 23 KMK)' },
-      { nopol: 'CUSTOM',    kb: 204, kmk: 33, desc: 'Kapasitas Kustom...' }
+      { id: 'sabtu_3truk', nopol: '3 TRUK (RUTIN SABTU)', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (Rutin Hari Sabtu - 612 KB + 99 KMK)' },
+      { id: '2_truk', nopol: '2 MOBIL TRUK', kb: 408, kmk: 66, trucksCount: 2, desc: '2 Mobil Truk (408 KB + 66 KMK)' },
+      { id: 'rabu_kamis_1mobil', nopol: 'S 9631 NF (RUTIN RABU/KAMIS)', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (Rutin Rabu/Kamis - 204 KB + 33 KMK)' },
+      { id: 'gm_8050', nopol: 'W 8050 NW', kb: 186, kmk: 31, trucksCount: 1, desc: '1 Mobil Box W 8050 NW (186 KB + 31 KMK)' },
+      { id: 'gm_8683', nopol: 'W 8683 PA', kb: 204, kmk: 32, trucksCount: 1, desc: '1 Mobil Box W 8683 PA (204 KB + 32 KMK)' },
+      { id: 'l300_8351', nopol: 'W 8351 QG', kb: 210, kmk: 0,  trucksCount: 1, desc: '1 Mobil Box L300 W 8351 QG (210 KB)' },
+      { id: 'gm_9469', nopol: 'W 9469 PE', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box W 9469 PE (204 KB + 33 KMK)' },
+      { id: 'gm_8846', nopol: 'S 8846 NI', kb: 222, kmk: 37, trucksCount: 1, desc: '1 Mobil Jumbo S 8846 NI (222 KB + 37 KMK)' },
+      { id: 'gm_9147', nopol: 'S 9147 JF', kb: 216, kmk: 35, trucksCount: 1, desc: '1 Mobil Box S 9147 JF (216 KB + 35 KMK)' },
+      { id: 'truk_9280', nopol: 'W 9280 UT', kb: 258, kmk: 43, trucksCount: 1, desc: '1 Truk Sedang W 9280 UT (258 KB + 43 KMK)' },
+      { id: 'custom', nopol: 'CUSTOM', kb: 204, kmk: 33, trucksCount: 1, desc: 'Kapasitas Kustom...' }
     ];
 
     function getFactoryArmadaForDate(dateStr) {
       try {
         const saved = localStorage.getItem(`alfaris_armada_${dateStr}`);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && Number(parsed.kb) > 0) return parsed;
+        }
       } catch (e) {}
-      return { nopol: 'S 9631 NF', kb: 204, kmk: 33, desc: 'Grand Max Box (204 KB + 33 KMK)' };
+
+      // Deteksi hari rutin operasional pabrik jika belum ada kustomisasi manual
+      if (dateStr) {
+        try {
+          const d = new Date(dateStr + 'T00:00:00');
+          const day = d.getDay(); // 0: Min, 3: Rab, 4: Kam, 6: Sab
+          if (day === 6) { // Hari Sabtu: Rutin 3 Mobil Truk
+            return { nopol: '3 TRUK (RUTIN SABTU)', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (Rutin Hari Sabtu - 612 KB + 99 KMK)' };
+          } else if (day === 3 || day === 4) { // Hari Rabu & Kamis: Rutin 1 Mobil
+            return { nopol: 'S 9631 NF (RUTIN RABU/KAMIS)', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (Rutin Rabu/Kamis - 204 KB + 33 KMK)' };
+          }
+        } catch (e) {}
+      }
+
+      // Jika ada pesanan besar (> 240 KB / > 8.000 pcs), otomatis tawarkan preset 3 truk
+      const allPO = getPOSalesData().filter(p => p.date === dateStr);
+      let totalItemsCount = 0;
+      allPO.forEach(p => Object.values(p.items || {}).forEach(q => totalItemsCount += Number(q || 0)));
+      if (totalItemsCount > 8000) {
+        return { nopol: '3 TRUK (RUTIN SABTU)', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (612 KB + 99 KMK)' };
+      }
+
+      return { nopol: 'S 9631 NF (RUTIN RABU/KAMIS)', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (204 KB + 33 KMK)' };
     }
 
     function saveFactoryArmadaForDate(dateStr, armadaObj) {
@@ -3586,8 +3631,9 @@
         totalCost,
         totalOrderKB: Number(totalOrderKB.toFixed(2)),
         totalOrderKMK: Number(totalOrderKMK.toFixed(2)),
-        sisaKMK,
-        sisaKB: d13,
+        d13: Number(d13), // Pastikan d13 selalu numerik (mencegah NaN)
+        sisaKB: Number(d13),
+        sisaKMK: Number(sisaKMK),
         totalEquivKB,
         usedEquivKB: Number(usedEquivKB.toFixed(1)),
         percentFilled,
@@ -4218,10 +4264,31 @@
           submitBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i><span>Simpan PO Sales</span>`;
           submitBtn.className = 'px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold cursor-pointer inline-flex items-center gap-2 shadow-sm transition';
         }
-        const chosenSalesId = availableSales[0] ? availableSales[0].id : (activeSales[0] ? activeSales[0].id : '');
+        // Simpan pilihan sales sebelumnya jika user sudah memilih
+        const prevSelectedId = salesSelect?.value || hiddenSalesInput?.value || '';
+
+        // Pulihkan pilihan sales yang sedang aktif jika masih ada di daftar available
+        let chosenSalesId = '';
+        if (prevSelectedId && availableSales.some(s => s.id === prevSelectedId)) {
+          chosenSalesId = prevSelectedId;
+        } else if (availableSales.length > 0) {
+          chosenSalesId = availableSales[0].id;
+        } else if (activeSales.length > 0) {
+          chosenSalesId = activeSales[0].id;
+        }
+
         salesSelect.value = chosenSalesId;
         if (hiddenSalesInput) hiddenSalesInput.value = chosenSalesId;
-        renderPOModalProductRows(chosenSalesId, {});
+
+        // Ambil nilai qty yang mungkin sedang diketik user agar tidak hilang
+        const currentTypedItems = {};
+        document.querySelectorAll('.po-input-qty').forEach(input => {
+          const pId = input.getAttribute('data-prod-id');
+          const q = parseInt(input.value, 10) || 0;
+          if (q > 0) currentTypedItems[pId] = q;
+        });
+
+        renderPOModalProductRows(chosenSalesId, currentTypedItems);
       }
 
       lucide.createIcons();
@@ -4695,6 +4762,28 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       `).join('');
     }
 
+    function setReconArmadaPreset(presetId) {
+      const arm = FACTORY_ARMADA_LIST.find(a => a.id === presetId || a.nopol === presetId) || FACTORY_ARMADA_LIST[0];
+      const select = document.getElementById('recon-armada-select');
+      if (select) select.value = arm.nopol;
+
+      const inputKb = document.getElementById('recon-armada-kb');
+      const inputKmk = document.getElementById('recon-armada-kmk');
+      if (inputKb) inputKb.value = arm.kb;
+      if (inputKmk) inputKmk.value = arm.kmk;
+
+      saveFactoryArmadaForDate(currentPODate, {
+        nopol: arm.nopol,
+        kb: arm.kb,
+        kmk: arm.kmk,
+        trucksCount: arm.trucksCount || 1,
+        desc: arm.desc
+      });
+
+      renderReconModalContent();
+      renderPOSalesMatrix();
+    }
+
     function onReconArmadaChanged() {
       const select = document.getElementById('recon-armada-select');
       if (!select) return;
@@ -4710,6 +4799,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         nopol: arm.nopol,
         kb: arm.kb,
         kmk: arm.kmk,
+        trucksCount: arm.trucksCount || 1,
         desc: arm.desc
       });
 
@@ -4853,7 +4943,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         statusBadge.innerText = calc.statusText;
       }
       if (percentText) {
-        percentText.innerText = `${calc.percentFilled}% Kapasitas Terisi`;
+        const truckCount = armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1));
+        const perTruckKB = (calc.totalOrderKB / truckCount).toFixed(1);
+        const perTruckKMK = (calc.totalOrderKMK / truckCount).toFixed(1);
+        const perTruckUnits = Math.round(calc.totalUnits / truckCount);
+
+        let divisionText = '';
+        if (truckCount > 1) {
+          divisionText = ` • Bagi Rata ${truckCount} Truk: ~${perTruckKB} KB + ~${perTruckKMK} KMK (${perTruckUnits.toLocaleString('id-ID')} pcs/truk)`;
+        }
+        percentText.innerText = `${calc.percentFilled}% Kapasitas Terisi${divisionText}`;
       }
       if (statusMsg) {
         statusMsg.innerText = calc.message;
@@ -5707,15 +5806,22 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 2. Kelebihan / kekurangan muatan fisik wajib dicatat dan disepakati kedua belah pihak.
               </div>
             </div>
-            <div style="width: 250px; border: 1px solid #f59e0b; border-radius: 4px; padding: 5px 8px; background: #fffbeb; font-size: 7pt; color: #78350f;">
+            <div style="width: 270px; border: 1px solid #f59e0b; border-radius: 4px; padding: 5px 8px; background: #fffbeb; font-size: 7pt; color: #78350f;">
               <div style="font-weight: 800; display: flex; justify-content: space-between;">
                 <span>Estimasi Muatan Mobil:</span>
-                <span>${calc.percentFilled}% Terisi</span>
+                <span style="color: ${calc.d13 >= 0 ? '#15803d' : '#b91c1c'}; font-weight: 800;">${calc.percentFilled}% Terisi</span>
               </div>
               <div style="margin-top: 1px; font-size: 6.8pt;">
-                Kapasitas Armada: ${armada.kb} KB + ${armada.kmk} KMK<br>
-                Sisa Ruang Kosong Mobil: <strong>${calc.d13 >= 0 ? calc.d13 + ' KB' : 'OVERLOAD ' + Math.abs(calc.d13) + ' KB'}</strong>
+                Kapasitas: ${escapeHtml(armada.desc || (armada.kb + ' KB + ' + armada.kmk + ' KMK'))}<br>
+                ${calc.d13 >= 0 
+                  ? `Sisa Ruang Kosong: <strong style="color: #15803d;">${calc.d13} KB</strong> (Muatan Aman)` 
+                  : `Status Muatan: <strong style="color: #b91c1c;">OVERLOAD ${Math.abs(calc.d13)} KB</strong> (Disarankan Tambah Armada)`}
               </div>
+              ${(armada.trucksCount && armada.trucksCount > 1) ? `
+                <div style="margin-top: 3px; padding-top: 2px; border-top: 1px dashed #f59e0b; font-size: 6.5pt; color: #1e3a8a;">
+                  <strong>Bagi Rata ${armada.trucksCount} Mobil Truk:</strong> ~ ${(calc.totalOrderKB / armada.trucksCount).toFixed(1)} KB + ${(calc.totalOrderKMK / armada.trucksCount).toFixed(1)} KMK per mobil (${Math.round(calc.totalUnits / armada.trucksCount).toLocaleString('id-ID')} pcs/mobil).
+                </div>
+              ` : ''}
             </div>
           </div>
 
@@ -7964,14 +8070,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           s.innerHTML = activeSales.map(i => `<option value="${i.id}">${escapeHtml(i.name)} - ${escapeHtml(i.route)}</option>`).join('');
         }
       }
-      const poS = document.getElementById('po-form-sales');
-      if (poS) {
-        if (activeSales.length === 0) {
-          poS.innerHTML = '<option value="">-- Belum ada Sales Terdaftar --</option>';
-        } else {
-          poS.innerHTML = activeSales.map(i => `<option value="${i.id}">${escapeHtml(i.name)} - ${escapeHtml(i.route)}</option>`).join('');
-        }
-      }
+      // CATATAN PENTING: po-form-sales sengaja TIDAK disentuh di sini agar pilihan sales dan status kunci 🔒
+      // tidak ter-reset secara tiba-tiba saat sinkronisasi background berjalan ketika user sedang mengetik PO!
+      // po-form-sales dikelola secara aman dan terkunci oleh refreshSalesOptionsForDate().
     }
 
     // --- 0. SISTEM AUTENTIKASI & KEAMANAN PIN ---
