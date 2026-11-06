@@ -15,7 +15,9 @@ GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
 
--- 4. Pastikan Row Level Security (RLS) mengizinkan akses publik
+-- 4. Pastikan Row Level Security (RLS) mengizinkan akses publik & pastikan kolom price_level ada
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS price_level TEXT DEFAULT 'level1';
+
 DROP POLICY IF EXISTS "Public access for sales" ON sales;
 CREATE POLICY "Public access for sales" ON sales FOR ALL TO public USING (true) WITH CHECK (true);
 

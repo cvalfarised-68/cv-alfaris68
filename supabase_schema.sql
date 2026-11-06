@@ -14,9 +14,12 @@ CREATE TABLE IF NOT EXISTS sales (
     name TEXT NOT NULL,
     phone TEXT,
     route TEXT,
+    price_level TEXT DEFAULT 'level1',
     status TEXT DEFAULT 'aktif' CHECK (status IN ('aktif', 'nonaktif')),
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW())
 );
+
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS price_level TEXT DEFAULT 'level1';
 
 -- 2. TABEL PRODUCTS (Master Produk Roti & 6 Level Harga)
 CREATE TABLE IF NOT EXISTS products (

@@ -921,7 +921,7 @@
                 <option value="level1">1. Sales Besar</option>
                 <option value="level2">2. Sales Sedang</option>
                 <option value="level3">3. Sales Kecil</option>
-                <option value="level4">4. Toko Kirim Langsung</option>
+                <option value="level4">4. Toko Langsung</option>
                 <option value="level5">5. Agen Khusus</option>
                 <option value="level6">6. Grosir Partai</option>
               </select>
@@ -1207,15 +1207,42 @@
 
       <form id="form-po-input" onsubmit="savePOSales(event)" class="p-4 space-y-3.5 text-xs overflow-y-auto flex-1">
         <input type="hidden" id="po-form-id">
+        <input type="hidden" id="po-form-sales-hidden">
+
+        <!-- Banner Mode Edit PO (Khusus jika dibuka via aksi edit PO) -->
+        <div id="po-form-edit-banner" class="hidden p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <i data-lucide="edit-3" class="w-4 h-4 text-blue-600 flex-shrink-0"></i>
+            <div>
+              <span class="font-bold">Mode Edit PO Aktif:</span>
+              <span class="text-slate-600">Anda dapat mengubah atau menambah jumlah pesanan roti untuk sales ini.</span>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">Aksi Edit PO</span>
+        </div>
+
+        <!-- Banner Info Terkunci (Jika semua sales di tanggal ini sudah ada PO) -->
+        <div id="po-form-locked-alert" class="hidden p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-center gap-2">
+          <i data-lucide="lock" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+          <div>
+            <span class="font-bold">Perhatian:</span>
+            <span>Semua sales pada tanggal ini sudah memiliki PO dan terkunci. Untuk menambah atau mengubah pesanan, gunakan tombol <strong>Edit PO (✏️)</strong> pada tabel rekapitulasi.</span>
+          </div>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Target Tanggal Ambil Pabrik *</label>
-            <input type="date" id="po-form-date" required class="w-full px-3 py-2 border rounded-xl bg-slate-50 font-bold text-slate-800">
+            <input type="date" id="po-form-date" required onchange="handlePODateChangeInModal()" class="w-full px-3 py-2 border rounded-xl bg-slate-50 font-bold text-slate-800">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Nama Sales (Aktif) *</label>
-            <select id="po-form-sales" required onchange="updatePOFormLiveTotals()" class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800"></select>
+            <div class="flex items-center justify-between mb-1">
+              <label class="font-bold text-slate-700">Nama Sales (Aktif) *</label>
+              <span id="po-form-sales-status-badge" class="text-[10px] font-bold px-2 py-0.2 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                Sales Besar (+25%)
+              </span>
+            </div>
+            <select id="po-form-sales" required onchange="handlePOSalesSelectChange()" class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800"></select>
           </div>
         </div>
 
@@ -1266,7 +1293,10 @@
 
         <div class="pt-3 border-t flex justify-end gap-2">
           <button type="button" onclick="closePOInputModal()" class="px-3.5 py-2 rounded-xl text-slate-600 hover:text-slate-800 cursor-pointer">Batal</button>
-          <button type="submit" class="px-4 py-2 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-sm cursor-pointer">Simpan PO Sales</button>
+          <button type="submit" id="po-form-submit-btn" class="px-4 py-2 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 shadow-sm cursor-pointer inline-flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Simpan PO Sales</span>
+          </button>
         </div>
       </form>
     </div>
@@ -2055,6 +2085,19 @@
       <form id="form-sales" onsubmit="saveSales(event)" class="space-y-3 text-xs">
         <input type="hidden" id="sales-form-id" value="">
         <div><label class="block font-semibold mb-1 text-slate-700">Nama Sales *</label><input type="text" id="sales-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
+        <div>
+          <label class="block font-semibold mb-1 text-slate-700">
+            <span>Status Sales / Tingkat Harga (Tiering Mitra) *</span>
+          </label>
+          <select id="sales-form-price-level" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800 focus:outline-none focus:border-brand-500">
+            <option value="level1">Sales Besar (+25%)</option>
+            <option value="level2">Sales Sedang (+30%)</option>
+            <option value="level3">Sales Kecil (+35%)</option>
+            <option value="level4">Toko Langsung (+45%)</option>
+            <option value="level5">Agen Khusus (+28%)</option>
+            <option value="level6">Grosir Partai (+20%)</option>
+          </select>
+        </div>
         <div><label class="block font-semibold mb-1 text-slate-700">No WhatsApp *</label><input type="tel" id="sales-form-phone" required placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 border rounded-xl"></div>
         <div><label class="block font-semibold mb-1 text-slate-700">Rute Pengantaran</label><input type="text" id="sales-form-route" placeholder="Contoh: Rute Klojen, Sukun" class="w-full px-3 py-2 border rounded-xl"></div>
         <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
@@ -2079,12 +2122,12 @@
           <button type="button" onclick="autoCalculatePriceLevels()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold shadow-sm text-xs">Hitung 6 Level</button>
         </div>
         <div class="grid grid-cols-2 gap-2">
-          <div><label class="block font-bold text-slate-700">(1) Sales Bsr</label><input type="number" id="price-level1" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold text-slate-700">(2) Sales Sdg</label><input type="number" id="price-level2" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold text-slate-700">(3) Sales Kcl</label><input type="number" id="price-level3" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold text-slate-700">(4) Toko Langsung</label><input type="number" id="price-level4" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold text-slate-700">(5) Agen</label><input type="number" id="price-level5" class="w-full px-2 py-1 border rounded-lg"></div>
-          <div><label class="block font-bold text-slate-700">(6) Grosir</label><input type="number" id="price-level6" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(1) Sales Besar (+25%)</label><input type="number" id="price-level1" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(2) Sales Sedang (+30%)</label><input type="number" id="price-level2" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(3) Sales Kecil (+35%)</label><input type="number" id="price-level3" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(4) Toko Langsung (+45%)</label><input type="number" id="price-level4" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(5) Agen Khusus (+28%)</label><input type="number" id="price-level5" class="w-full px-2 py-1 border rounded-lg"></div>
+          <div><label class="block font-bold text-slate-700">(6) Grosir Partai (+20%)</label><input type="number" id="price-level6" class="w-full px-2 py-1 border rounded-lg"></div>
         </div>
         <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
           <button type="button" onclick="closeProductModal()" class="px-3 py-1.5 rounded-lg text-slate-600">Batal</button>
@@ -2751,6 +2794,18 @@
       try {
         let rows = list.map(item => objectToSnake(item));
 
+        // Khusus tabel sales: pastikan kolom price_level tersinkron dengan aman
+        if (tableName === 'sales') {
+          rows = list.map(item => ({
+            id: item.id,
+            name: item.name,
+            phone: item.phone,
+            route: item.route || '',
+            price_level: item.priceLevel || 'level1',
+            status: item.status || 'aktif'
+          }));
+        }
+
         // Khusus tabel po_sales: pastikan hanya 7 kolom valid yang dikirim agar tidak error schema
         if (tableName === 'po_sales') {
           rows = list.map(item => ({
@@ -2810,7 +2865,19 @@
           });
         }
 
-        const { error } = await supabaseClient.from(tableName).upsert(rows, { onConflict: 'id' });
+        let { error } = await supabaseClient.from(tableName).upsert(rows, { onConflict: 'id' });
+        if (error && tableName === 'sales' && error.message && error.message.includes('price_level')) {
+          // Fallback jika database Supabase belum memiliki kolom price_level: embed ke route
+          const fallbackRows = list.map(item => ({
+            id: item.id,
+            name: item.name,
+            phone: item.phone,
+            route: item.priceLevel ? `${item.route || ''} [TIER:${item.priceLevel}]`.trim() : (item.route || ''),
+            status: item.status || 'aktif'
+          }));
+          const fb = await supabaseClient.from('sales').upsert(fallbackRows, { onConflict: 'id' });
+          error = fb.error;
+        }
         if (error) {
           console.warn(`[Supabase Sync] Gagal sync tabel ${tableName}:`, error.message);
         } else {
@@ -2859,7 +2926,19 @@
         let tablesUpdated = 0;
         // Simpan data dari Supabase tanpa syarat length > 0 agar saat owner menghapus data di cloud, kasir ikut bersih
         if (sSettled.status === 'fulfilled' && !sSettled.value.error && Array.isArray(sSettled.value.data)) {
-          localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(sSettled.value.data.map(objectToCamel)));
+          const parsedSales = sSettled.value.data.map(row => {
+            const s = objectToCamel(row);
+            if (!s.priceLevel && s.route && s.route.includes('[TIER:')) {
+              const m = s.route.match(/\[TIER:(level[1-6])\]/);
+              if (m) {
+                s.priceLevel = m[1];
+                s.route = s.route.replace(/\[TIER:level[1-6]\]/, '').trim();
+              }
+            }
+            if (!s.priceLevel) s.priceLevel = 'level1';
+            return s;
+          });
+          localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(parsedSales));
           tablesUpdated++;
         }
         if (pSettled.status === 'fulfilled' && !pSettled.value.error && Array.isArray(pSettled.value.data)) {
@@ -3021,10 +3100,39 @@
       { id: 'level1', name: 'Sales Besar', marginPct: 25, color: 'blue' },
       { id: 'level2', name: 'Sales Sedang', marginPct: 30, color: 'indigo' },
       { id: 'level3', name: 'Sales Kecil', marginPct: 35, color: 'amber' },
-      { id: 'level4', name: 'Toko Kirim Langsung', marginPct: 45, color: 'emerald' },
+      { id: 'level4', name: 'Toko Langsung', marginPct: 45, color: 'emerald' },
       { id: 'level5', name: 'Agen Khusus', marginPct: 28, color: 'purple' },
       { id: 'level6', name: 'Grosir Partai', marginPct: 20, color: 'rose' }
     ];
+
+    // Fungsi penentu harga jual produk ke sales berdasarkan Status/Level Harga sales & margin persentase
+    function getProductPriceForSales(product, salesOrTierId) {
+      if (!product) return 0;
+      let tierId = 'level1';
+      if (typeof salesOrTierId === 'string') {
+        tierId = salesOrTierId;
+      } else if (salesOrTierId && salesOrTierId.priceLevel) {
+        tierId = salesOrTierId.priceLevel;
+      }
+
+      // 1. Cek apakah ada harga khusus di tabel produk (product.prices[tierId])
+      if (product.prices && product.prices[tierId] !== undefined && Number(product.prices[tierId]) > 0) {
+        return Number(product.prices[tierId]);
+      }
+
+      // 2. Jika belum ada atau 0, hitung otomatis berdasarkan persentase margin tier (HPP + marginPct)
+      const tier = PRICE_TIERS.find(t => t.id === tierId) || PRICE_TIERS[0];
+      const factoryPrice = Number(product.factoryPrice || 0);
+      if (factoryPrice > 0 && tier && tier.marginPct) {
+        return Math.round((factoryPrice * (1 + (tier.marginPct / 100))) / 50) * 50;
+      }
+
+      // 3. Fallback level1 atau factoryPrice
+      if (product.prices && product.prices.level1 && Number(product.prices.level1) > 0) {
+        return Number(product.prices.level1);
+      }
+      return factoryPrice;
+    }
 
     function getTodayYMD() { return new Date().toISOString().split('T')[0]; }
     function addDaysYMD(baseStr, days) {
@@ -3476,7 +3584,13 @@
     function getSalesData() {
       const s = localStorage.getItem(STORAGE_KEY_SALES);
       if (s === null) { localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(DEFAULT_SALES)); return DEFAULT_SALES; }
-      try { return JSON.parse(s) || []; } catch (e) { return []; }
+      try { 
+        const parsed = JSON.parse(s) || [];
+        return Array.isArray(parsed) ? parsed.map(item => ({
+          ...item,
+          priceLevel: item.priceLevel || 'level1'
+        })) : [];
+      } catch (e) { return []; }
     }
     function saveSalesData(list, skipCloud = false) {
       localStorage.setItem(STORAGE_KEY_SALES, JSON.stringify(list));
@@ -3722,48 +3836,207 @@
       const modal = document.getElementById('modal-po-input');
       const form = document.getElementById('form-po-input');
       const salesSelect = document.getElementById('po-form-sales');
-      const productsContainer = document.getElementById('po-form-products-inputs');
+      const hiddenSalesInput = document.getElementById('po-form-sales-hidden');
+      const dateInput = document.getElementById('po-form-date');
+      const hiddenId = document.getElementById('po-form-id');
+      const editBanner = document.getElementById('po-form-edit-banner');
+      const lockedAlert = document.getElementById('po-form-locked-alert');
       const searchBreadInput = document.getElementById('po-form-search-bread');
-      const activeSales = getSalesData().filter(s => s.status === 'aktif');
-      const products = getProductsData();
+      const submitBtn = document.getElementById('po-form-submit-btn');
 
       form.reset();
       if (searchBreadInput) searchBreadInput.value = '';
-      document.getElementById('po-form-id').value = '';
-      document.getElementById('po-form-date').value = currentPODate;
 
-      // Populate Sales
-      salesSelect.innerHTML = activeSales.map(s => `
-        <option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.route || 'Rute Bebas')}</option>
-      `).join('');
+      const allPO = getPOSalesData();
 
-      let existingItems = {};
       if (poId) {
-        const po = getPOSalesData().find(p => p.id === poId);
-        if (po) {
-          document.getElementById('po-form-id').value = po.id;
-          document.getElementById('po-form-date').value = po.date;
-          salesSelect.value = po.salesId;
-          document.getElementById('po-form-notes').value = po.notes || '';
-          existingItems = po.items || {};
+        // ========================================================
+        // MODE AKSI EDIT PO (DIPERBOLEHKAN MENGUBAH / MENAMBAH PO)
+        // ========================================================
+        const po = allPO.find(p => p.id === poId);
+        if (!po) {
+          showToast('Data PO tidak ditemukan!', 'error');
+          return;
+        }
+
+        hiddenId.value = po.id;
+        dateInput.value = po.date;
+        dateInput.disabled = true; // Tanggal terkunci pada data PO ini
+        dateInput.classList.add('bg-slate-100', 'cursor-not-allowed');
+
+        if (editBanner) editBanner.classList.remove('hidden');
+        if (lockedAlert) lockedAlert.classList.add('hidden');
+
+        // Pilihan sales terkunci khusus untuk pemilik PO ini
+        salesSelect.innerHTML = `<option value="${po.salesId}" selected>${escapeHtml(po.salesName)} - ${escapeHtml(po.salesRoute || 'Rute Bebas')}</option>`;
+        salesSelect.disabled = true;
+        salesSelect.classList.add('bg-slate-100', 'cursor-not-allowed');
+        if (hiddenSalesInput) hiddenSalesInput.value = po.salesId;
+
+        document.getElementById('po-form-notes').value = po.notes || '';
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Perbarui PO Sales</span>`;
+          submitBtn.className = 'px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold cursor-pointer inline-flex items-center gap-2 shadow-sm transition';
+        }
+
+        renderPOModalProductRows(po.salesId, po.items || {});
+      } else {
+        // ========================================================
+        // MODE INPUT PO BARU (SALES YANG SUDAH ADA PO AKAN TERKUNCI)
+        // ========================================================
+        hiddenId.value = '';
+        const targetDate = currentPODate || getTomorrowYMD();
+        dateInput.value = targetDate;
+        dateInput.disabled = false;
+        dateInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
+
+        if (editBanner) editBanner.classList.add('hidden');
+
+        salesSelect.disabled = false;
+        salesSelect.classList.remove('bg-slate-100', 'cursor-not-allowed');
+
+        refreshSalesOptionsForDate(targetDate);
+      }
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    // Refresh daftar sales pada dropdown PO berdasarkan tanggal target (mengunci sales yang sudah input PO)
+    function refreshSalesOptionsForDate(targetDate) {
+      const salesSelect = document.getElementById('po-form-sales');
+      const hiddenSalesInput = document.getElementById('po-form-sales-hidden');
+      const lockedAlert = document.getElementById('po-form-locked-alert');
+      const submitBtn = document.getElementById('po-form-submit-btn');
+
+      const allSales = getSalesData();
+      const activeSales = allSales.filter(s => s.status === 'aktif');
+      const allPO = getPOSalesData();
+
+      // Cari sales yang SUDAH input PO pada tanggal target
+      const posOnDate = allPO.filter(p => p.date === targetDate);
+      const registeredSalesIds = new Set(posOnDate.map(p => p.salesId));
+
+      const availableSales = activeSales.filter(s => !registeredSalesIds.has(s.id));
+      const lockedSales = activeSales.filter(s => registeredSalesIds.has(s.id));
+
+      let optionsHtml = '';
+      if (availableSales.length > 0) {
+        optionsHtml += availableSales.map(s => {
+          const tierObj = PRICE_TIERS.find(t => t.id === (s.priceLevel || 'level1')) || PRICE_TIERS[0];
+          return `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.route || 'Rute Bebas')} [${tierObj.name}]</option>`;
+        }).join('');
+      }
+
+      // Sales yang sudah ada PO dikunci (disabled + ikon gembok)
+      if (lockedSales.length > 0) {
+        optionsHtml += lockedSales.map(s => {
+          return `<option value="${s.id}" disabled class="text-slate-400 bg-slate-100 font-normal">🔒 ${escapeHtml(s.name)} (Terkunci - PO Sudah Ada)</option>`;
+        }).join('');
+      }
+
+      if (activeSales.length === 0) {
+        optionsHtml = `<option value="" disabled selected>Belum ada data sales aktif</option>`;
+      }
+
+      salesSelect.innerHTML = optionsHtml;
+
+      if (availableSales.length === 0 && activeSales.length > 0) {
+        // Semua sales aktif pada tanggal ini sudah memiliki PO
+        if (lockedAlert) lockedAlert.classList.remove('hidden');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i><span>Semua Sales Terkunci (Gunakan Edit PO)</span>`;
+          submitBtn.className = 'px-4 py-2 rounded-xl bg-slate-300 text-slate-500 font-bold cursor-not-allowed inline-flex items-center gap-2 transition';
+        }
+        if (hiddenSalesInput) hiddenSalesInput.value = '';
+        renderPOModalProductRows(null, {});
+      } else {
+        if (lockedAlert) lockedAlert.classList.add('hidden');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i><span>Simpan PO Sales</span>`;
+          submitBtn.className = 'px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold cursor-pointer inline-flex items-center gap-2 shadow-sm transition';
+        }
+        const chosenSalesId = availableSales[0] ? availableSales[0].id : (activeSales[0] ? activeSales[0].id : '');
+        salesSelect.value = chosenSalesId;
+        if (hiddenSalesInput) hiddenSalesInput.value = chosenSalesId;
+        renderPOModalProductRows(chosenSalesId, {});
+      }
+
+      lucide.createIcons();
+    }
+
+    // Handler jika tanggal target di modal diubah
+    function handlePODateChangeInModal() {
+      const isEditMode = !!document.getElementById('po-form-id').value;
+      if (isEditMode) return;
+      const targetDate = document.getElementById('po-form-date').value;
+      refreshSalesOptionsForDate(targetDate);
+    }
+
+    // Handler jika pilihan sales di modal diganti
+    function handlePOSalesSelectChange() {
+      const salesSelect = document.getElementById('po-form-sales');
+      const chosenSalesId = salesSelect.value;
+      const hiddenSalesInput = document.getElementById('po-form-sales-hidden');
+      if (hiddenSalesInput) hiddenSalesInput.value = chosenSalesId;
+
+      // Ambil nilai yang sedang diketik agar tidak ter-reset
+      const currentTypedItems = {};
+      document.querySelectorAll('.po-input-qty').forEach(input => {
+        const pId = input.getAttribute('data-prod-id');
+        const q = parseInt(input.value, 10) || 0;
+        if (q > 0) currentTypedItems[pId] = q;
+      });
+
+      renderPOModalProductRows(chosenSalesId, currentTypedItems);
+    }
+
+    // Render baris input produk untuk modal PO sales
+    function renderPOModalProductRows(salesId, existingItems = {}) {
+      const productsContainer = document.getElementById('po-form-products-inputs');
+      const statusBadge = document.getElementById('po-form-sales-status-badge');
+      const allSales = getSalesData();
+      const sales = allSales.find(s => s.id === salesId);
+      const tierId = (sales && sales.priceLevel) ? sales.priceLevel : 'level1';
+      const tierObj = PRICE_TIERS.find(t => t.id === tierId) || PRICE_TIERS[0];
+      const products = getProductsData();
+
+      if (statusBadge) {
+        if (sales) {
+          statusBadge.innerText = `${tierObj.name} (+${tierObj.marginPct}%)`;
+          statusBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full bg-${tierObj.color || 'blue'}-50 text-${tierObj.color || 'blue'}-800 border border-${tierObj.color || 'blue'}-200`;
+        } else {
+          statusBadge.innerText = 'Sales Terkunci';
+          statusBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
         }
       }
 
-      // Generate input field untuk 25 produk sesuai urutan standar
       productsContainer.innerHTML = products.map((p, idx) => {
-        const val = (existingItems[p.id] !== undefined ? existingItems[p.id] : 0);
+        const val = (existingItems[p.id] !== undefined ? existingItems[p.id] : 
+                    (existingItems[p.code] !== undefined ? existingItems[p.code] : 
+                    (existingItems[p.name] !== undefined ? existingItems[p.name] : 0)));
         const stdCode = getProductStandardCode(p.name);
         const conv = FACTORY_BREAD_CONVERSIONS[stdCode] || { unit: 'pcs', type: 'KB' };
         const unit = conv.unit || 'pcs';
         const isQtyActive = val > 0;
+        const unitPrice = getProductPriceForSales(p, tierId);
 
         return `
           <div class="po-bread-item-row flex items-center justify-between gap-2.5 p-2 rounded-lg border transition ${isQtyActive ? 'bg-amber-50/70 border-amber-300 font-bold' : 'bg-white border-slate-200'}" data-bread-name="${escapeHtml(p.name).toLowerCase()}" data-bread-code="${escapeHtml(p.code || '').toLowerCase()}">
             <div class="flex items-center gap-2">
               <span class="text-[10px] text-slate-400 w-4 font-mono">${idx + 1}.</span>
               <div>
-                <span class="font-bold text-slate-900 text-xs">${escapeHtml(p.name)}</span>
-                <span class="text-[9.5px] px-1 py-0.2 rounded font-semibold ${conv.type === 'KB' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'} ml-1">${conv.type}</span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-slate-900 text-xs">${escapeHtml(p.name)}</span>
+                  <span class="text-[9px] px-1 py-0.2 rounded font-semibold ${conv.type === 'KB' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}">${conv.type}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 font-medium">
+                  <span class="text-amber-800 font-bold po-row-unit-price" data-prod-id="${p.id}">${formatRupiah(unitPrice)}</span> / ${unit}
+                </div>
               </div>
             </div>
             <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -3784,13 +4057,10 @@
       }).join('');
 
       updatePOFormLiveTotals();
-
-      modal.classList.remove('hidden');
-      lucide.createIcons();
     }
 
     function updatePOFormLiveTotals() {
-      const salesId = document.getElementById('po-form-sales')?.value;
+      const salesId = document.getElementById('po-form-sales')?.value || document.getElementById('po-form-sales-hidden')?.value;
       const salesList = getSalesData();
       const sales = salesList.find(s => s.id === salesId);
       const tierId = (sales && sales.priceLevel) ? sales.priceLevel : 'level1';
@@ -3818,7 +4088,7 @@
           totalPcs += qty;
           const p = products.find(prod => prod.id === pId);
           if (p) {
-            const uPrice = (p.prices && p.prices[tierId]) ? p.prices[tierId] : (p.prices?.level1 || p.factoryPrice || 0);
+            const uPrice = getProductPriceForSales(p, tierId);
             totalAmount += (qty * uPrice);
           }
         }
@@ -3881,20 +4151,47 @@
       e.preventDefault();
       const poId = document.getElementById('po-form-id').value;
       const targetDate = document.getElementById('po-form-date').value;
-      const salesId = document.getElementById('po-form-sales').value;
+      const salesId = document.getElementById('po-form-sales').value || document.getElementById('po-form-sales-hidden')?.value;
       const notes = document.getElementById('po-form-notes').value.trim();
 
-      const sales = getSalesData().find(s => s.id === salesId);
-      if (!sales || !targetDate) return;
+      if (!targetDate || !salesId) {
+        showToast('Mohon pilih tanggal dan nama sales.', 'error');
+        return;
+      }
 
-      const items = {};
-      document.querySelectorAll('.po-input-qty').forEach(input => {
-        const pId = input.getAttribute('data-prod-id');
-        const qty = parseInt(input.value) || 0;
-        items[pId] = qty;
-      });
+      const salesList = getSalesData();
+      const sales = salesList.find(s => s.id === salesId);
+      if (!sales) {
+        showToast('Data sales tidak ditemukan!', 'error');
+        return;
+      }
 
       let allPO = getPOSalesData();
+
+      // VALIDASI PENGUNCIAN PO: Jika mode tambah baru, sales yang sudah punya PO di tanggal ini TIDAK BOLEH tambah PO lagi!
+      if (!poId) {
+        const existingPO = allPO.find(p => p.date === targetDate && p.salesId === sales.id);
+        if (existingPO) {
+          showToast(`Sales "${sales.name}" sudah terkunci karena telah memiliki PO pada tanggal ${formatIndoDate(targetDate)}. Silakan gunakan menu Edit PO (✏️) pada tabel untuk menambah/mengubah pesanan.`, 'error');
+          return;
+        }
+      }
+
+      const items = {};
+      let totalOrderPcs = 0;
+      document.querySelectorAll('.po-input-qty').forEach(input => {
+        const pId = input.getAttribute('data-prod-id');
+        const qty = parseInt(input.value, 10) || 0;
+        if (qty > 0) {
+          items[pId] = qty;
+          totalOrderPcs += qty;
+        }
+      });
+
+      if (totalOrderPcs === 0) {
+        showToast('Mohon masukkan minimal 1 varian roti yang dipesan!', 'warning');
+        return;
+      }
 
       if (poId) {
         allPO = allPO.map(p => {
@@ -3905,36 +4202,31 @@
         });
         showToast(`PO ${sales.name} berhasil diperbarui.`);
       } else {
-        // Cek jika sales sudah pernah PO pada tanggal yang sama, kita tawarkan update atau gabung
-        const existingIdx = allPO.findIndex(p => p.date === targetDate && p.salesId === sales.id);
-        if (existingIdx >= 0) {
-          allPO[existingIdx].items = items;
-          allPO[existingIdx].notes = notes;
-          showToast(`PO ${sales.name} untuk ${formatIndoDate(targetDate)} diperbarui.`);
-        } else {
-          const newPO = {
-            id: 'PO-' + String(Date.now()).slice(-5),
-            date: targetDate,
-            salesId: sales.id,
-            salesName: sales.name,
-            salesRoute: sales.route || 'Rute Bebas',
-            salesPhone: sales.phone,
-            items,
-            notes: notes || '-'
-          };
-          allPO.unshift(newPO);
-          showToast(`PO ${sales.name} berhasil dicatat.`);
-        }
+        const newPO = {
+          id: 'PO-' + String(Date.now()).slice(-5),
+          date: targetDate,
+          salesId: sales.id,
+          salesName: sales.name,
+          salesRoute: sales.route || 'Rute Bebas',
+          salesPhone: sales.phone,
+          items,
+          notes: notes || '-'
+        };
+        allPO.unshift(newPO);
+        showToast(`PO ${sales.name} berhasil dicatat.`);
       }
 
       currentPODate = targetDate;
-      document.getElementById('po-date-filter').value = currentPODate;
+      const dateFilterEl = document.getElementById('po-date-filter');
+      if (dateFilterEl) dateFilterEl.value = currentPODate;
       savePOSalesData(allPO);
       closePOInputModal();
 
       // OTOMATIS LANGSUNG TERBITKAN / SINKRONKAN KE TRANSAKSI SALES (ZERO STOCK)!
       publishPOToTransactions(targetDate, false);
-      showToast(`PO ${sales.name} disimpan & otomatis masuk ke Transaksi Sales (Siap Cetak Nota A5)!`, 'success');
+      showToast(poId 
+        ? `PO ${sales.name} diperbarui & otomatis sinkron ke Transaksi Sales (Siap Cetak Nota A5)!` 
+        : `PO ${sales.name} disimpan & otomatis masuk ke Transaksi Sales (Siap Cetak Nota A5)!`, 'success');
     }
 
     // Kirim Rekapitulasi PO ke WhatsApp Pabrik Roti
@@ -4036,15 +4328,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           (po.items[prod.name] !== undefined ? po.items[prod.name] : 0))
         )) || 0;
 
-        // Ambil harga jual ke sales
-        let unitPrice = 0;
-        if (prod.prices && prod.prices[priceTier]) {
-          unitPrice = Number(prod.prices[priceTier]);
-        } else if (prod.prices && prod.prices.level1) {
-          unitPrice = Number(prod.prices.level1);
-        } else {
-          unitPrice = Number(prod.factoryPrice || 0);
-        }
+        // Ambil harga jual ke sales sesuai status sales & margin tier
+        const unitPrice = getProductPriceForSales(prod, priceTier);
 
         const subtotal = qty > 0 ? (qty * unitPrice) : 0;
         if (qty > 0) {
@@ -4400,6 +4685,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             const salesList = getSalesData();
             const sObj = salesList.find(s => s.id === po.salesId || s.name === po.salesName);
             const tierId = (sObj && sObj.priceLevel) ? sObj.priceLevel : 'level1';
+            const tierObj = PRICE_TIERS.find(t => t.id === tierId) || PRICE_TIERS[0];
 
             // Ringkasan item orderan sales
             const itemSummaryList = [];
@@ -4411,7 +4697,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               )) || 0;
               if (qty > 0) {
                 sPcs += qty;
-                const uPrice = (p.prices && p.prices[tierId]) ? p.prices[tierId] : (p.prices?.level1 || p.factoryPrice || 0);
+                const uPrice = getProductPriceForSales(p, tierId);
                 sAmount += (qty * uPrice);
                 itemSummaryList.push(`${p.name} (${qty})`);
               }
@@ -4426,6 +4712,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                   <div>
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="font-bold text-slate-900">${escapeHtml(po.salesName)}</span>
+                      <span class="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full font-bold">${escapeHtml(tierObj.name)} (+${tierObj.marginPct}%)</span>
                       <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">Rute: ${escapeHtml(po.salesRoute || '-')}</span>
                     </div>
                     <div class="text-[10.5px] text-slate-500 mt-0.5">
@@ -4588,10 +4875,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           )) || 0;
 
           if (qty > 0) {
-            let unitPrice = 0;
-            if (p.prices && p.prices[tierId]) unitPrice = Number(p.prices[tierId]);
-            else if (p.prices && p.prices.level1) unitPrice = Number(p.prices.level1);
-            else unitPrice = Number(p.factoryPrice || 0);
+            const unitPrice = getProductPriceForSales(p, tierId);
 
             const subtotal = qty * unitPrice;
             const fCost = Number(p.factoryPrice || 0) * qty;
@@ -4625,6 +4909,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             ex.totalAmount = totalAmount;
             ex.totalFactoryCost = totalFactoryCost;
             ex.remainingAmount = totalAmount;
+            ex.tierName = tierObj.name;
             ex.poId = po.id;
             ex.source = 'auto_po';
             ex.notes = po.notes || 'Diperbarui otomatis dari Rekap PO Pabrik';
@@ -6551,8 +6836,11 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                   ${badgeMethod}
                   <span class="text-[10px] text-slate-400 font-normal">(${t.totalQty || (t.items ? t.items.reduce((a,b)=>a+b.qty,0) : 0)} Pcs &bull; ${t.items ? t.items.length : 0} varian)</span>
                 </div>
-                <div class="text-xs text-slate-500 mt-1">
+                <div class="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
                   ${tokoDisplay}${escapeHtml(t.salesName)} &bull; ${formatIndoDate(t.date)} ${t.salesRoute ? '&bull; Rute: ' + escapeHtml(t.salesRoute) : ''}
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    ${escapeHtml(t.tierName || 'Sales Besar')}
+                  </span>
                 </div>
               </div>
               
@@ -6658,11 +6946,21 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           </div>
         `;
       } else {
-        document.getElementById('sales-container').innerHTML = filteredSales.map(s => `
+        document.getElementById('sales-container').innerHTML = filteredSales.map(s => {
+          const tierObj = PRICE_TIERS.find(t => t.id === (s.priceLevel || 'level1')) || PRICE_TIERS[0];
+          return `
           <div class="bg-white p-3.5 rounded-2xl border flex justify-between items-center shadow-sm">
             <div>
-              <div class="font-bold text-slate-900">${escapeHtml(s.name)} <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">${s.status.toUpperCase()}</span></div>
-              <div class="text-xs text-slate-500">${escapeHtml(s.phone)} &bull; ${escapeHtml(s.route)}</div>
+              <div class="font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+                <span>${escapeHtml(s.name)}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                  ${escapeHtml(tierObj.name)} (+${tierObj.marginPct}%)
+                </span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${s.status === 'aktif' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">
+                  ${s.status.toUpperCase()}
+                </span>
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(s.phone)} &bull; ${escapeHtml(s.route)}</div>
             </div>
             <div class="flex items-center gap-1.5">
               <button onclick="openSalesModal('${s.id}')" title="Edit Sales" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-brand-600 hover:bg-slate-50 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
@@ -6670,7 +6968,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               <button onclick="deleteSales('${s.id}')" title="Hapus Sales" class="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       }
       lucide.createIcons();
     }
@@ -6684,6 +6983,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const nameInput = document.getElementById('sales-form-name');
       const phoneInput = document.getElementById('sales-form-phone');
       const routeInput = document.getElementById('sales-form-route');
+      const priceLevelSelect = document.getElementById('sales-form-price-level');
 
       if (salesId && typeof salesId === 'string') {
         const s = getSalesData().find(x => x.id === salesId);
@@ -6694,6 +6994,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           if (nameInput) nameInput.value = s.name;
           if (phoneInput) phoneInput.value = s.phone;
           if (routeInput) routeInput.value = s.route || '';
+          if (priceLevelSelect) priceLevelSelect.value = s.priceLevel || 'level1';
           modal.classList.remove('hidden');
           lucide.createIcons();
           return;
@@ -6707,6 +7008,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (nameInput) nameInput.value = '';
       if (phoneInput) phoneInput.value = '';
       if (routeInput) routeInput.value = '';
+      if (priceLevelSelect) priceLevelSelect.value = 'level1';
       modal.classList.remove('hidden');
       lucide.createIcons();
     }
@@ -6717,17 +7019,26 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const n = document.getElementById('sales-form-name').value.trim();
       const p = document.getElementById('sales-form-phone').value.trim();
       const route = document.getElementById('sales-form-route').value.trim() || 'Rute Bebas';
+      const priceLevel = document.getElementById('sales-form-price-level')?.value || 'level1';
       if (!n || !p) return;
 
+      const tierObj = PRICE_TIERS.find(t => t.id === priceLevel) || PRICE_TIERS[0];
       let list = getSalesData();
       if (salesId) {
-        list = list.map(s => s.id === salesId ? { ...s, name: n, phone: p, route } : s);
+        list = list.map(s => s.id === salesId ? { ...s, name: n, phone: p, route, priceLevel } : s);
         saveSalesData(list);
-        showToast(`Data sales "${n}" berhasil diperbarui.`);
+        showToast(`Data sales "${n}" (${tierObj.name}) berhasil diperbarui.`);
       } else {
-        list.unshift({ id: 'SLS-' + String(Date.now()).slice(-4), name: n, phone: p, route, status: 'aktif' });
+        list.unshift({ 
+          id: 'SLS-' + String(Date.now()).slice(-4), 
+          name: n, 
+          phone: p, 
+          route, 
+          priceLevel, 
+          status: 'aktif' 
+        });
         saveSalesData(list);
-        showToast(`Sales baru "${n}" berhasil didaftarkan.`);
+        showToast(`Sales baru "${n}" dengan status "${tierObj.name}" berhasil didaftarkan.`);
       }
       closeSalesModal();
     }
