@@ -592,7 +592,7 @@
             </div>
             
             <button 
-              onclick="showSection('po-sales')" 
+              onclick="switchTab('po')" 
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-2xs self-start sm:self-auto transition cursor-pointer"
               title="Kelola pesanan dan muatan sales di menu Rekap PO Sales">
               <i data-lucide="clipboard-list" class="w-4 h-4 text-brand-600"></i>
@@ -644,7 +644,7 @@
           
           <div class="flex items-center gap-2 flex-wrap">
             <button 
-              onclick="showSection('po-sales')" 
+              onclick="switchTab('po')" 
               class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm transition self-start sm:self-auto cursor-pointer"
               title="Kelola pesanan sales & muatan kiriman pabrik di menu Rekap PO Sales">
               <i data-lucide="clipboard-list" class="w-4 h-4"></i>
@@ -653,7 +653,40 @@
           </div>
         </div>
 
-        <!-- Filter & Search Bar Transaksi -->
+        <!-- Filter Tanggal & Quick Pills Transaksi (Sinkron Otomatis dengan Rekap PO) -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-4 h-4 text-brand-500"></i>
+              <span>Tanggal Transaksi:</span>
+            </span>
+            <input 
+              type="date" 
+              id="filter-trx-date" 
+              onchange="onTrxDateInputChange()" 
+              title="Filter transaksi berdasarkan tanggal drop roti"
+              class="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 focus:outline-none focus:border-brand-500"
+            >
+          </div>
+
+          <!-- Quick Date Pills Transaksi -->
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs flex-wrap">
+            <button type="button" onclick="setTrxDateQuick('all')" id="trx-btn-all" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              Semua Tanggal
+            </button>
+            <button type="button" onclick="setTrxDateQuick(0)" id="trx-btn-today" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              Hari Ini
+            </button>
+            <button type="button" onclick="setTrxDateQuick(1)" id="trx-btn-tomorrow" class="px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer">
+              Besok (PO Pabrik)
+            </button>
+            <button type="button" onclick="setTrxDateQuick(2)" id="trx-btn-lusa" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              Lusa
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Status & Search Bar Transaksi -->
         <div class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-2 shadow-xs">
           <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs overflow-x-auto">
             <button onclick="setTrxFilter('all')" id="filter-trx-all" class="px-3 py-1 rounded-lg font-semibold bg-white text-slate-800 shadow-xs transition whitespace-nowrap">
@@ -670,34 +703,15 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-2 flex-1 min-w-[280px]">
-            <div class="relative flex-1 min-w-[170px]">
-              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input 
-                id="search-trx" 
-                type="text" 
-                oninput="renderTransactionList()" 
-                placeholder="Cari nota TRX, nama sales, atau rute..." 
-                class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:bg-white"
-              >
-            </div>
-            
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-              <input 
-                id="filter-trx-date" 
-                type="date" 
-                onchange="renderTransactionList()" 
-                title="Filter berdasarkan tanggal transaksi drop roti"
-                class="px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold focus:outline-none focus:border-brand-500"
-              >
-              <button 
-                type="button" 
-                onclick="resetTrxDateFilter()" 
-                title="Tampilkan Semua Tanggal"
-                class="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
-                Semua
-              </button>
-            </div>
+          <div class="relative flex-1 min-w-[200px]">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input 
+              id="search-trx" 
+              type="text" 
+              oninput="renderTransactionList()" 
+              placeholder="Cari nota TRX, nama sales, atau rute..." 
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 focus:bg-white"
+            >
           </div>
         </div>
 
@@ -3822,24 +3836,65 @@
     }
 
     // --- 4. FITUR REKAP PO SALES (PRE-ORDER PABRIK) ---
-    function setPODateQuick(offset) {
-      currentPODate = addDaysYMD(todayStr, offset);
-      document.getElementById('po-date-filter').value = currentPODate;
+    function updatePODatePillsHighlight(activeDate) {
+      const today = getTodayYMD();
+      const tomorrow = addDaysYMD(today, 1);
+      const lusa = addDaysYMD(today, 2);
 
-      // Update pills highlight
       const btns = [
-        { id: 'po-btn-today', offset: 0 },
-        { id: 'po-btn-tomorrow', offset: 1 },
-        { id: 'po-btn-lusa', offset: 2 }
+        { id: 'po-btn-today', active: activeDate === today },
+        { id: 'po-btn-tomorrow', active: activeDate === tomorrow },
+        { id: 'po-btn-lusa', active: activeDate === lusa }
       ];
       btns.forEach(b => {
         const el = document.getElementById(b.id);
-        if (b.offset === offset) {
-          el.className = 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition';
-        } else {
-          el.className = 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900';
+        if (el) {
+          el.className = b.active 
+            ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
+            : 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer';
         }
       });
+    }
+
+    function updateTrxDatePillsHighlight(activeDate) {
+      const today = getTodayYMD();
+      const tomorrow = addDaysYMD(today, 1);
+      const lusa = addDaysYMD(today, 2);
+
+      const isAll = !activeDate;
+      const isToday = activeDate === today;
+      const isTomorrow = activeDate === tomorrow;
+      const isLusa = activeDate === lusa;
+
+      const setStyle = (id, active) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.className = active
+            ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
+            : 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer';
+        }
+      };
+
+      setStyle('trx-btn-all', isAll);
+      setStyle('trx-btn-today', isToday);
+      setStyle('trx-btn-tomorrow', isTomorrow);
+      setStyle('trx-btn-lusa', isLusa);
+    }
+
+    function setPODateQuick(offset) {
+      currentPODate = addDaysYMD(todayStr, offset);
+      const poEl = document.getElementById('po-date-filter');
+      if (poEl) poEl.value = currentPODate;
+
+      // Sinkronkan ke filter transaksi drop roti
+      const trxEl = document.getElementById('filter-trx-date');
+      if (trxEl) {
+        trxEl.value = currentPODate;
+        delete trxEl.dataset.customMode;
+      }
+
+      updatePODatePillsHighlight(currentPODate);
+      updateTrxDatePillsHighlight(currentPODate);
 
       renderPOSalesMatrix();
     }
@@ -3851,6 +3906,15 @@
       } else if (dateInput) {
         dateInput.value = currentPODate;
       }
+
+      // Sinkronkan ke input Transaksi Sales jika tidak dalam custom mode 'all'
+      const trxDateEl = document.getElementById('filter-trx-date');
+      if (trxDateEl && !trxDateEl.dataset.customMode) {
+        trxDateEl.value = currentPODate;
+      }
+
+      updatePODatePillsHighlight(currentPODate);
+      updateTrxDatePillsHighlight(trxDateEl ? trxDateEl.value : currentPODate);
 
       document.getElementById('po-active-date-badge').innerText = `Tanggal: ${formatIndoDate(currentPODate)}`;
       document.getElementById('po-kpi-date-label').innerText = `Per ${formatIndoDate(currentPODate)}`;
@@ -5009,6 +5073,27 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         let allTrx = getTransactionsData();
         let trxChanged = false;
 
+        // 0. Auto Deduplikasi transaksi (mencegah duplikat transaksi jika ada 2 trx untuk 1 PO / tanggal-sales yang sama)
+        const seenKeys = new Set();
+        const deduplicatedTrx = [];
+        let dupFound = false;
+        allTrx.forEach(t => {
+          const key = t.poId 
+            ? `poid_${t.poId}` 
+            : `datesales_${t.date}_${(t.salesId || t.salesName || '').toLowerCase().trim()}`;
+          if (seenKeys.has(key)) {
+            dupFound = true;
+            deleteItemFromSupabase('transactions', t.id);
+          } else {
+            seenKeys.add(key);
+            deduplicatedTrx.push(t);
+          }
+        });
+        if (dupFound) {
+          allTrx = deduplicatedTrx;
+          trxChanged = true;
+        }
+
         // 1. Bersihkan transaksi auto_po yatim (orphan) jika data PO-nya sudah dihapus dari Rekap PO
         const validPOIds = new Set(allPO.map(p => p.id));
         const validPODateSales = new Set(allPO.map(p => `${p.date}_${p.salesId || p.salesName}`));
@@ -5108,9 +5193,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         if (totalQty === 0) return; // Sales tidak ada pesanan
 
-        // Cek apakah transaksi sudah ada sebelumnya
+        // Cek apakah transaksi sudah ada sebelumnya (cocokkan poId atau tanggal + identitas sales)
         const existingTrxIdx = trxList.findIndex(t => 
-          (t.poId && t.poId === po.id) || (t.date === po.date && t.salesId === po.salesId)
+          (t.poId && t.poId === po.id) || 
+          (t.items && t.items[0] && t.items[0].poId === po.id) ||
+          (t.date === po.date && (
+            (t.salesId && po.salesId && t.salesId === po.salesId) || 
+            (t.salesName && po.salesName && t.salesName.toLowerCase().trim() === po.salesName.toLowerCase().trim())
+          ))
         );
 
         if (existingTrxIdx >= 0) {
@@ -7343,23 +7433,71 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     });
 
-    function resetTrxDateFilter() {
+    function setTrxDateQuick(mode) {
       const el = document.getElementById('filter-trx-date');
-      if (el) el.value = '';
+      if (mode === 'all') {
+        if (el) {
+          el.value = '';
+          el.dataset.customMode = 'all';
+        }
+        updateTrxDatePillsHighlight('');
+        renderTransactionList();
+        return;
+      }
+
+      const offset = Number(mode);
+      const targetDate = addDaysYMD(todayStr, offset);
+      currentPODate = targetDate; // Sinkronkan ke PO date
+
+      if (el) {
+        el.value = targetDate;
+        delete el.dataset.customMode;
+      }
+      const poEl = document.getElementById('po-date-filter');
+      if (poEl) poEl.value = targetDate;
+
+      updateTrxDatePillsHighlight(targetDate);
+      updatePODatePillsHighlight(targetDate);
       renderTransactionList();
+    }
+
+    function onTrxDateInputChange() {
+      const el = document.getElementById('filter-trx-date');
+      const val = el ? el.value : '';
+      if (val) {
+        currentPODate = val;
+        delete el.dataset.customMode;
+        const poEl = document.getElementById('po-date-filter');
+        if (poEl) poEl.value = val;
+        updatePODatePillsHighlight(val);
+      } else if (el) {
+        el.dataset.customMode = 'all';
+      }
+      updateTrxDatePillsHighlight(val);
+      renderTransactionList();
+    }
+
+    function resetTrxDateFilter() {
+      setTrxDateQuick('all');
     }
 
     function renderTransactionList() {
       autoSyncAllPOsToTransactions();
       const list = getTransactionsData();
       const container = document.getElementById('trx-container');
-      const search = (document.getElementById('search-trx').value || '').toLowerCase();
+      const search = (document.getElementById('search-trx')?.value || '').toLowerCase();
 
-      // Hitung counter status untuk tab filter
-      const countAll = list.length;
-      const countMenunggu = list.filter(t => t.paymentMethod === 'menunggu_setoran' || t.deliveryStatus === 'menunggu_setoran').length;
-      const countKasbon = list.filter(t => t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas').length;
-      const countLunas = list.filter(t => t.paymentStatus === 'lunas').length;
+      const dateFilterEl = document.getElementById('filter-trx-date');
+      const dateFilterVal = dateFilterEl ? dateFilterEl.value : '';
+
+      // Terapkan filter tanggal terlebih dahulu untuk data & counter
+      const dateFilteredList = dateFilterVal ? list.filter(t => t.date === dateFilterVal) : list;
+
+      // Hitung counter status untuk tab filter berdasarkan tanggal aktif
+      const countAll = dateFilteredList.length;
+      const countMenunggu = dateFilteredList.filter(t => t.paymentMethod === 'menunggu_setoran' || t.deliveryStatus === 'menunggu_setoran').length;
+      const countKasbon = dateFilteredList.filter(t => t.paymentMethod === 'kasbon' && t.paymentStatus === 'belum_lunas').length;
+      const countLunas = dateFilteredList.filter(t => t.paymentStatus === 'lunas').length;
 
       const elAll = document.getElementById('count-all-trx');
       const elMenunggu = document.getElementById('count-menunggu-trx');
@@ -7371,13 +7509,19 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (elKasbon) elKasbon.innerText = countKasbon;
       if (elLunas) elLunas.innerText = countLunas;
 
-      const dateFilterEl = document.getElementById('filter-trx-date');
-      const dateFilterVal = dateFilterEl ? dateFilterEl.value : '';
-
-      let filtered = list.filter(t => {
-        if (dateFilterVal && t.date !== dateFilterVal) {
-          return false;
+      // Update badge di header tab transaksi
+      const trxTotalBadge = document.getElementById('trx-total-badge');
+      if (trxTotalBadge) {
+        if (dateFilterVal) {
+          trxTotalBadge.innerText = `Tanggal: ${formatIndoDate(dateFilterVal)} (${countAll} Nota)`;
+        } else {
+          trxTotalBadge.innerText = `Semua Tanggal (${countAll} Nota)`;
         }
+      }
+
+      updateTrxDatePillsHighlight(dateFilterVal);
+
+      let filtered = dateFilteredList.filter(t => {
         if (currentTrxFilter === 'menunggu') {
           return t.paymentMethod === 'menunggu_setoran' || t.deliveryStatus === 'menunggu_setoran';
         } else if (currentTrxFilter === 'kasbon') {
@@ -8029,14 +8173,28 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       });
 
       if (tabId === 'po') {
+        const poDateEl = document.getElementById('po-date-filter');
+        if (poDateEl && poDateEl.value !== currentPODate) {
+          poDateEl.value = currentPODate;
+        }
+        updatePODatePillsHighlight(currentPODate);
         renderPOSalesMatrix();
       } else if (tabId === 'transaksi') {
+        const trxDateEl = document.getElementById('filter-trx-date');
+        if (trxDateEl && !trxDateEl.dataset.customMode && (!trxDateEl.value || trxDateEl.value !== currentPODate)) {
+          trxDateEl.value = currentPODate;
+        }
+        updateTrxDatePillsHighlight(trxDateEl ? trxDateEl.value : '');
         renderTransactionList();
       }
 
       lucide.createIcons();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    window.showSection = function(id) {
+      switchTab(id === 'po-sales' ? 'po' : id);
+    };
 
     function escapeHtml(text) {
       if (!text) return '';
@@ -8047,6 +8205,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     document.addEventListener('DOMContentLoaded', async () => {
       // 0. Bersihkan cache dummy lama jika ada
       cleanupLegacyDummyData();
+
+      // 0.5 Inisialisasi tanggal aktif PO dan Transaksi Drop Roti
+      const initialDate = currentPODate || getTomorrowYMD();
+      currentPODate = initialDate;
+      const initPODateEl = document.getElementById('po-date-filter');
+      if (initPODateEl) initPODateEl.value = initialDate;
+      const initTrxDateEl = document.getElementById('filter-trx-date');
+      if (initTrxDateEl) initTrxDateEl.value = initialDate;
+      updatePODatePillsHighlight(initialDate);
+      updateTrxDatePillsHighlight(initialDate);
 
       // 1. Render data awal dari cache lokal
       renderAllViews();
