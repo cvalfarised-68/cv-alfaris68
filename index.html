@@ -83,7 +83,7 @@
     @media print {
       @page {
         size: auto;
-        margin: 8mm 12mm;
+        margin: 4mm 6mm !important;
       }
       html, body {
         width: 100% !important;
@@ -206,13 +206,32 @@
       }
 
       /* Hindari pemotongan baris di tengah tabel atau tanda tangan */
-      tr, .avoid-break {
+      tr, .avoid-break, .nota-a5-sheet, .tracer-sheet, .ambil-pabrik-sheet, .po-card-sheet {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
+
+      /* Break halaman otomatis tanpa halaman kosong tersisa */
       .page-break {
         page-break-before: always !important;
         break-before: page !important;
+      }
+      .page-break-after-always,
+      .nota-batch-page:not(:last-child),
+      .tracer-sheet:not(:last-child),
+      .po-card-sheet:not(:last-child) {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .nota-batch-page:last-child,
+      .tracer-sheet:last-child,
+      .po-card-sheet:last-child,
+      .nota-a5-sheet:last-child,
+      .ambil-pabrik-sheet:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
       }
 
       /* Fallback jika tanpa flag */
@@ -654,7 +673,16 @@
             </p>
           </div>
           
-          <div></div>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              onclick="printAllSalesNotaOnActiveDate()" 
+              class="px-3.5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              title="Cetak Semua Nota Penjualan Sales A5 Sekaligus (1 Lembar per Sales, Siap Cetak / PDF)">
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span>Cetak Semua Nota Sales (Batch A5)</span>
+            </button>
+          </div>
         </div>
 
         <!-- Filter Tanggal & Quick Pills Transaksi (Sinkron Otomatis dengan Rekap PO) -->
@@ -765,6 +793,15 @@
             </button>
 
             <button 
+              type="button"
+              onclick="openPabrikReconciliationModal('spk')" 
+              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition cursor-pointer"
+              title="Input Realisasi SPK Perolehan Roti Pabrik & Rekonsiliasi Otomatis ke Sales">
+              <i data-lucide="file-check-2" class="w-4 h-4"></i>
+              <span>Realisasi SPK Pabrik</span>
+            </button>
+
+            <button 
               onclick="printAllPOSalesCardsOnDate()" 
               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition cursor-pointer"
               title="Cetak Semua Kartu Rekap PO Sales Sesuai Format Fisik Pabrik">
@@ -866,10 +903,10 @@
           <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <button 
               type="button"
-              onclick="openPabrikReconciliationModal()" 
+              onclick="openPabrikReconciliationModal('loaded')" 
               class="px-3 py-2 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap">
               <i data-lucide="truck" class="w-4 h-4 text-brand-600"></i>
-              <span>Cek Slot Muatan</span>
+              <span>Muatan & Armada Truk</span>
             </button>
 
             <button 
@@ -1804,11 +1841,11 @@
           </div>
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-              <span>Kalkulator Muatan Pabrik & Slot Armada</span>
+              <span>Pusat Logistik Pabrik: SPK, Muatan & Armada Truk</span>
               <span id="recon-modal-date-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">08/11/2026</span>
               <span id="recon-modal-armada-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">3 TRUK</span>
             </h3>
-            <p class="text-[11px] text-slate-400">Formula Resmi Isi Keranjang Pabrik &bull; Zero Stock (Semua Roti Dibawa Sales)</p>
+            <p class="text-[11px] text-slate-400">Formula Resmi Friend's Bakery &bull; Realisasi SPK &bull; Penataan Armada Truk &bull; Zero Stock</p>
           </div>
         </div>
         <button onclick="closePabrikReconciliationModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
@@ -1970,14 +2007,22 @@
           <div id="recon-recommendation-items" class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1"></div>
         </div>
 
-        <!-- TAB NAVIGATION (3 Tab: Produk Dimuat, Alokasi Sales, Rincian 25 Formula) -->
+        <!-- TAB NAVIGATION (4 Tab: Realisasi SPK Pabrik, Muatan Armada Truk, Alokasi Sales, Rincian 25 Formula) -->
         <div class="border-b border-slate-200 flex items-center gap-2 overflow-x-auto">
+          <button 
+            id="tab-btn-recon-spk" 
+            onclick="switchReconTab('spk')" 
+            class="px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+            <i data-lucide="file-check-2" class="w-4 h-4"></i>
+            <span>📋 Realisasi SPK Pabrik (Perolehan Roti)</span>
+            <span id="recon-tab-spk-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">SPK Pabrik</span>
+          </button>
           <button 
             id="tab-btn-recon-loaded" 
             onclick="switchReconTab('loaded')" 
-            class="px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-            <i data-lucide="package-check" class="w-4 h-4"></i>
-            <span>📦 Produk Dimuat Armada</span>
+            class="px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+            <i data-lucide="truck" class="w-4 h-4"></i>
+            <span>🚚 Muatan Armada Truk</span>
             <span id="recon-tab-loaded-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">0 Varian</span>
           </button>
           <button 
@@ -1998,8 +2043,181 @@
           </button>
         </div>
 
-        <!-- TAB CONTENT 1: DAFTAR PRODUK YANG DIMUAT DI DALAM ARMADA (ACTIVE DEFAULT) -->
-        <div id="recon-tab-content-loaded" class="space-y-3">
+        <!-- TAB CONTENT 0: REALISASI SPK PABRIK (PEROLEHAN ROTI DARI PABRIK) -->
+        <div id="recon-tab-content-spk" class="space-y-3">
+          <!-- Control Bar SPK -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <i data-lucide="file-check-2" class="w-3 h-3 inline mr-1"></i> SPK FRIEND'S BAKERY
+                  </span>
+                  <span id="spk-status-indicator" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                    Menunggu Verifikasi SPK
+                  </span>
+                </div>
+                <h4 class="text-sm sm:text-base font-black text-slate-900">
+                  Perolehan Roti Riil dari Pabrik (Sesuai Stok SPK)
+                </h4>
+                <p class="text-[11px] text-slate-500 font-medium">
+                  Inputkan jumlah roti riil yang diberikan pabrik. Jika ada selisih stok kurang dari pabrik, klik <strong>Sesuaikan Otomatis ke Sales</strong> untuk memotong kuota pesanan sales secara proporsional.
+                </p>
+              </div>
+
+              <!-- Input No SPK & Actions -->
+              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-600">No. SPK:</span>
+                  <input 
+                    type="text" 
+                    id="spk-doc-number" 
+                    placeholder="Contoh: SPK-FB-20261108-01" 
+                    class="text-xs font-bold text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 w-44"
+                  >
+                </div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <button 
+                    type="button" 
+                    onclick="copyAllPOToSPK()" 
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition cursor-pointer"
+                    title="Salin seluruh jumlah dari PO Diminta jika stok pabrik terpenuhi 100%">
+                    ⚡ Salin Semua dari PO
+                  </button>
+                  <button 
+                    type="button" 
+                    onclick="applySPKToSalesProportional()" 
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-2xs transition cursor-pointer"
+                    title="Potong pesanan sales secara proporsional otomatis jika roti di pabrik kurang">
+                    ⚡ Sesuaikan Otomatis ke Sales
+                  </button>
+                  <button 
+                    type="button" 
+                    onclick="saveSPKRealizationInputs()" 
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition cursor-pointer">
+                    💾 Simpan Realisasi SPK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabel Rekonsiliasi SPK Pabrik -->
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
+            <table class="w-full text-[11px] text-left">
+              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-2.5 text-center w-8">No</th>
+                  <th class="py-2.5 px-2.5 w-16">Inisial</th>
+                  <th class="py-2.5 px-2.5">Nama Varian Roti</th>
+                  <th class="py-2.5 px-2.5 text-center">Tipe Krjg</th>
+                  <th class="py-2.5 px-2.5 text-center">Isi/Krjg</th>
+                  <th class="py-2.5 px-2.5 text-right font-bold text-slate-700">PO Diminta</th>
+                  <th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-50/50 w-36">Realisasi SPK (Input)</th>
+                  <th class="py-2.5 px-2.5 text-right font-bold text-slate-800">Hasil Krjg SPK</th>
+                  <th class="py-2.5 px-2.5 text-center font-bold">Selisih vs PO</th>
+                  <th class="py-2.5 px-2.5 text-center">Status Stok Pabrik</th>
+                </tr>
+              </thead>
+              <tbody id="recon-spk-tbody" class="divide-y divide-slate-100">
+                <!-- Diisi otomatis oleh renderSPKTabContent -->
+              </tbody>
+              <tfoot id="recon-spk-tfoot" class="bg-slate-50 font-bold border-t border-slate-200">
+                <!-- Diisi otomatis oleh renderSPKTabContent -->
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT 1: DAFTAR PRODUK YANG DIMUAT DI DALAM ARMADA -->
+        <div id="recon-tab-content-loaded" class="hidden space-y-3">
+          <!-- BARIS KONTROL MODE PENATAAN MUATAN (OTOMATIS VS ATUR MANUAL) -->
+          <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between flex-wrap gap-2.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-brand-600"></i>
+                <span>Mode Penataan Muatan Truk:</span>
+              </span>
+              <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl text-xs">
+                <button 
+                  type="button" 
+                  id="btn-truck-mode-auto" 
+                  onclick="setTruckAllocationMode('auto')" 
+                  class="px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer">
+                  ⚙️ Otomatis (Bagi Rata)
+                </button>
+                <button 
+                  type="button" 
+                  id="btn-truck-mode-manual" 
+                  onclick="setTruckAllocationMode('manual')" 
+                  class="px-3 py-1 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">
+                  ✍️ Atur Manual per Truk
+                </button>
+              </div>
+            </div>
+
+            <div id="manual-truck-action-btns" class="hidden flex items-center gap-2 flex-wrap">
+              <button 
+                type="button" 
+                onclick="presetManualFromAutoDivision()" 
+                class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition cursor-pointer"
+                title="Salin hasil bagi rata otomatis sebagai draft penataan manual">
+                ⚡ Salin dari Bagi Rata
+              </button>
+              <button 
+                type="button" 
+                onclick="saveManualTruckAllocation()" 
+                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer">
+                💾 Simpan Penataan Truk
+              </button>
+            </div>
+          </div>
+
+          <!-- PANEL MODE MANUAL: PENGATURAN KERANJANG PER TRUK -->
+          <div id="recon-manual-allocation-panel" class="hidden space-y-3">
+            <div class="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl text-xs space-y-1">
+              <div class="font-black text-amber-950 flex items-center gap-1.5">
+                <i data-lucide="edit-3" class="w-4 h-4 text-amber-600"></i>
+                <span>Penataan Manual Beban Muatan Armada per Truk:</span>
+              </div>
+              <p class="text-[11px] text-amber-900 leading-snug">
+                Tentukan jumlah keranjang yang dimuat pada masing-masing mobil truk secara bebas sesuai kebutuhan lapangan. Live capacity counter di bawah akan menghitung sisa slot keranjang pada tiap truk. Hasil penataan ini otomatis diterapkan ke <strong>Tracer Lembar Bongkar</strong>.
+              </p>
+            </div>
+
+            <!-- Live Capacity Counters per Truk Mode Manual -->
+            <div id="recon-manual-truck-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+              <!-- Diisi otomatis oleh JS -->
+            </div>
+
+            <!-- Tabel Grid Alokasi Keranjang per Truk -->
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
+              <table class="w-full text-[11px] text-left">
+                <thead id="recon-manual-thead" class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                  <!-- Diisi otomatis oleh JS sesuai jumlah truk aktif -->
+                </thead>
+                <tbody id="recon-manual-tbody" class="divide-y divide-slate-100">
+                  <!-- Diisi otomatis oleh JS -->
+                </tbody>
+                <tfoot id="recon-manual-tfoot" class="bg-slate-50 font-bold border-t border-slate-200">
+                  <!-- Diisi otomatis oleh JS -->
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[10.5px] text-slate-500 font-medium">*Isikan angka keranjang (KB/KMK). Tekan tombol Simpan di kanan atas atau bawah bila sudah sesuai.</span>
+              <button 
+                type="button" 
+                onclick="saveManualTruckAllocation()" 
+                class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer">
+                💾 Simpan Penataan Truk & Sinkronkan
+              </button>
+            </div>
+          </div>
+
+          <!-- PANEL MODE OTOMATIS: DEFAULT VIEW (MULTI TRUCK CARDS + CHECKLIST TABEL) -->
+          <div id="recon-auto-allocation-panel" class="space-y-3">
           <!-- MULTI-TRUCK DIVISION PANEL (Jika multi-armada / 2-3 truk) -->
           <div id="recon-multitruck-allocation" class="hidden p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-xs space-y-2">
             <div class="flex items-center justify-between">
@@ -2093,7 +2311,8 @@
               </tfoot>
             </table>
           </div>
-        </div>
+          </div> <!-- Close recon-auto-allocation-panel -->
+        </div> <!-- Close recon-tab-content-loaded -->
 
         <!-- TAB CONTENT 2: DAFTAR SALES & TOMBOL EDIT PO -->
         <div id="recon-tab-content-sales" class="hidden space-y-2">
@@ -4938,14 +5157,83 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     // FITUR INTEGRASI OTOMATIS: REKAP PO PABRIK KE TRANSAKSI SALES
     // ========================================================
 
-    let currentReconTab = 'loaded';
+    let currentReconTab = 'spk';
+    let truckAllocationMode = 'auto'; // 'auto' | 'manual'
+
+    // --- FITUR REALISASI SPK PABRIK (PEROLEHAN ROTI DARI PABRIK) ---
+    function getSPKRealizationData(date) {
+      const targetDate = date || currentPODate || getTodayYMD();
+      const raw = localStorage.getItem('alfaris_spk_realization_' + targetDate);
+      if (raw) {
+        try { return JSON.parse(raw); } catch (e) { console.error('Error parse SPK:', e); }
+      }
+      return {
+        spkNumber: '',
+        date: targetDate,
+        updatedAt: null,
+        items: {}
+      };
+    }
+
+    function saveSPKRealizationData(date, data) {
+      const targetDate = date || currentPODate || getTodayYMD();
+      localStorage.setItem('alfaris_spk_realization_' + targetDate, JSON.stringify(data));
+    }
+
+    // --- FITUR PENATAAN MANUAL MUATAN ARMADA TRUK ---
+    function getManualTruckAllocData(date) {
+      const targetDate = date || currentPODate || getTodayYMD();
+      const raw = localStorage.getItem('alfaris_truck_alloc_manual_' + targetDate);
+      if (raw) {
+        try { return JSON.parse(raw); } catch (e) { console.error('Error parse Manual Truck Alloc:', e); }
+      }
+      return {
+        mode: 'auto',
+        date: targetDate,
+        allocations: {} // { 'MPS': [28, 28, 23], ... } in baskets
+      };
+    }
+
+    function saveManualTruckAllocData(date, data) {
+      const targetDate = date || currentPODate || getTodayYMD();
+      localStorage.setItem('alfaris_truck_alloc_manual_' + targetDate, JSON.stringify(data));
+    }
+
+    function setTruckAllocationMode(mode) {
+      truckAllocationMode = mode || 'auto';
+      const manualData = getManualTruckAllocData(currentPODate);
+      manualData.mode = truckAllocationMode;
+      saveManualTruckAllocData(currentPODate, manualData);
+
+      const btnAuto = document.getElementById('btn-truck-mode-auto');
+      const btnManual = document.getElementById('btn-truck-mode-manual');
+      const manualActionBtns = document.getElementById('manual-truck-action-btns');
+
+      if (btnAuto) {
+        btnAuto.className = truckAllocationMode === 'auto' 
+          ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
+          : 'px-3 py-1 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer';
+      }
+      if (btnManual) {
+        btnManual.className = truckAllocationMode === 'manual' 
+          ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
+          : 'px-3 py-1 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer';
+      }
+      if (manualActionBtns) {
+        manualActionBtns.classList.toggle('hidden', truckAllocationMode !== 'manual');
+      }
+
+      renderReconModalContent();
+    }
 
     function switchReconTab(tabName) {
-      currentReconTab = tabName || 'loaded';
+      currentReconTab = tabName || 'spk';
+      const btnSpk = document.getElementById('tab-btn-recon-spk');
       const btnLoaded = document.getElementById('tab-btn-recon-loaded');
       const btnSales = document.getElementById('tab-btn-recon-sales');
       const btnBaskets = document.getElementById('tab-btn-recon-baskets');
 
+      const contentSpk = document.getElementById('recon-tab-content-spk');
       const contentLoaded = document.getElementById('recon-tab-content-loaded');
       const contentSales = document.getElementById('recon-tab-content-sales');
       const contentBaskets = document.getElementById('recon-tab-content-baskets');
@@ -4953,13 +5241,20 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const activeClass = 'px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
       const inactiveClass = 'px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
 
+      if (btnSpk) btnSpk.className = currentReconTab === 'spk' ? activeClass : inactiveClass;
       if (btnLoaded) btnLoaded.className = currentReconTab === 'loaded' ? activeClass : inactiveClass;
       if (btnSales) btnSales.className = currentReconTab === 'sales' ? activeClass : inactiveClass;
       if (btnBaskets) btnBaskets.className = currentReconTab === 'baskets' ? activeClass : inactiveClass;
 
+      if (contentSpk) contentSpk.classList.toggle('hidden', currentReconTab !== 'spk');
       if (contentLoaded) contentLoaded.classList.toggle('hidden', currentReconTab !== 'loaded');
       if (contentSales) contentSales.classList.toggle('hidden', currentReconTab !== 'sales');
       if (contentBaskets) contentBaskets.classList.toggle('hidden', currentReconTab !== 'baskets');
+
+      if (currentReconTab === 'spk') {
+        renderSPKTabContent();
+      }
+
       lucide.createIcons();
     }
 
@@ -5094,7 +5389,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       lucide.createIcons();
     }
 
-    function openPabrikReconciliationModal() {
+    function openPabrikReconciliationModal(initialTab = 'spk') {
       const modal = document.getElementById('modal-pabrik-reconciliation');
       if (!modal) return;
 
@@ -5106,11 +5401,323 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (inputKb) inputKb.value = armada.kb;
       if (inputKmk) inputKmk.value = armada.kmk;
 
-      switchReconTab(currentReconTab || 'loaded');
+      const manualData = getManualTruckAllocData(currentPODate);
+      truckAllocationMode = manualData.mode || 'auto';
+
+      currentReconTab = initialTab || 'spk';
+      switchReconTab(currentReconTab);
       renderReconModalContent();
 
       modal.classList.remove('hidden');
       lucide.createIcons();
+    }
+
+    // Render Konten Tab SPK Pabrik
+    function renderSPKTabContent() {
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const armada = getFactoryArmadaForDate(currentPODate);
+
+      // Agregasi seluruh PO Diminta pada tanggal aktif
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+
+      const calc = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
+      const spkData = getSPKRealizationData(currentPODate);
+
+      const docNumInput = document.getElementById('spk-doc-number');
+      if (docNumInput && !docNumInput.value) {
+        docNumInput.value = spkData.spkNumber || ('SPK-FB-' + currentPODate.replace(/-/g, '') + '-01');
+      }
+
+      const spkStatusInd = document.getElementById('spk-status-indicator');
+      if (spkStatusInd) {
+        if (spkData.updatedAt) {
+          spkStatusInd.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300';
+          spkStatusInd.innerText = '✓ SPK Tersimpan (' + (spkData.spkNumber || 'SPK Terverifikasi') + ')';
+        } else {
+          spkStatusInd.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300';
+          spkStatusInd.innerText = 'Draft SPK (Belum Disimpan)';
+        }
+      }
+
+      const tbody = document.getElementById('recon-spk-tbody');
+      const tfoot = document.getElementById('recon-spk-tfoot');
+      if (!tbody) return;
+
+      let totalPOUnits = 0;
+      let totalSPKUnits = 0;
+      let totalSPKKB = 0;
+      let totalSPKKMK = 0;
+
+      tbody.innerHTML = calc.itemsBreakdown.map((item, idx) => {
+        const poQty = Number(item.orderQty) || 0;
+        totalPOUnits += poQty;
+
+        // Default SPK qty: ambil dari data SPK tersimpan, atau jika belum ada default sama dengan poQty
+        const spkQty = spkData.items && spkData.items[item.code] !== undefined 
+          ? Number(spkData.items[item.code]) 
+          : poQty;
+        totalSPKUnits += spkQty;
+
+        const upb = Number(item.unitsPerBasket) || 60;
+        const spkBaskets = spkQty > 0 ? Math.ceil(spkQty / upb) : 0;
+        if (item.basketType === 'KB') totalSPKKB += spkBaskets;
+        else totalSPKKMK += spkBaskets;
+
+        const diff = spkQty - poQty;
+        let diffBadge = '';
+        let statusText = '';
+
+        if (diff === 0) {
+          diffBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Sesuai PO</span>';
+          statusText = '<span class="text-emerald-700 font-bold">Lengkap 100%</span>';
+        } else if (diff < 0) {
+          diffBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">${diff} ${item.unit}</span>`;
+          statusText = `<span class="text-rose-700 font-bold">Kurang ${Math.abs(diff)} ${item.unit}</span>`;
+        } else {
+          diffBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">+${diff} ${item.unit}</span>`;
+          statusText = `<span class="text-blue-700 font-bold">Lebih ${diff} ${item.unit}</span>`;
+        }
+
+        const isRowActive = poQty > 0 || spkQty > 0;
+
+        return `
+          <tr class="hover:bg-slate-50 transition ${isRowActive ? 'bg-white' : 'opacity-50'}">
+            <td class="py-2 px-2.5 text-center text-slate-400 font-mono">${idx + 1}</td>
+            <td class="py-2 px-2.5 font-bold text-slate-900">${escapeHtml(item.code)}</td>
+            <td class="py-2 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
+            <td class="py-2 px-2.5 text-center">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.basketType === 'KB' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                ${item.basketType}
+              </span>
+            </td>
+            <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${item.unitsPerBasket} ${item.unit}</td>
+            <td class="py-2 px-2.5 text-right font-bold text-slate-700">${poQty.toLocaleString('id-ID')} ${item.unit}</td>
+            <td class="py-1.5 px-2 text-right bg-indigo-50/50">
+              <input 
+                type="number" 
+                id="spk-input-${item.code}" 
+                value="${spkQty}" 
+                min="0" 
+                oninput="onSPKQtyInputChange('${item.code}')" 
+                class="w-24 text-right font-black text-indigo-950 bg-white border border-indigo-300 focus:border-indigo-600 rounded-lg px-2 py-1 text-xs"
+              >
+            </td>
+            <td class="py-2 px-2.5 text-right font-black text-indigo-900">
+              ${spkBaskets} ${item.basketType}
+            </td>
+            <td class="py-2 px-2.5 text-center" id="spk-diff-cell-${item.code}">
+              ${diffBadge}
+            </td>
+            <td class="py-2 px-2.5 text-center" id="spk-status-cell-${item.code}">
+              ${statusText}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (tfoot) {
+        const netDiff = totalSPKUnits - totalPOUnits;
+        const netDiffText = netDiff === 0 
+          ? '<span class="text-emerald-700">0 Pas</span>' 
+          : (netDiff > 0 ? `<span class="text-blue-700">+${netDiff} unit</span>` : `<span class="text-rose-700">${netDiff} unit</span>`);
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-3 px-3 text-right font-black text-slate-900 uppercase">TOTAL REALISASI SPK PABRIK:</td>
+            <td class="py-3 px-2.5 text-right font-black text-slate-800 text-xs">${totalPOUnits.toLocaleString('id-ID')} unit</td>
+            <td id="spk-tfoot-total-units" class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm bg-indigo-100/60">
+              ${totalSPKUnits.toLocaleString('id-ID')} unit
+            </td>
+            <td class="py-3 px-2.5 text-right font-black text-indigo-900 text-xs sm:text-sm">
+              ${totalSPKKB} KB • ${totalSPKKMK} KMK
+            </td>
+            <td class="py-3 px-2.5 text-center font-black">${netDiffText}</td>
+            <td class="py-3 px-2.5 text-center font-bold text-indigo-800 text-[10.5px]">Friend's Bakery</td>
+          </tr>
+        `;
+      }
+    }
+
+    function onSPKQtyInputChange(code) {
+      // Re-calculate totals live
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+
+      const poQty = aggItems[code] || 0;
+      const inputEl = document.getElementById('spk-input-' + code);
+      const spkQty = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+      const diff = spkQty - poQty;
+
+      const diffCell = document.getElementById('spk-diff-cell-' + code);
+      const statusCell = document.getElementById('spk-status-cell-' + code);
+
+      if (diffCell) {
+        if (diff === 0) {
+          diffCell.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Sesuai PO</span>';
+        } else if (diff < 0) {
+          diffCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">${diff}</span>`;
+        } else {
+          diffCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">+${diff}</span>`;
+        }
+      }
+
+      if (statusCell) {
+        if (diff === 0) {
+          statusCell.innerHTML = '<span class="text-emerald-700 font-bold">Lengkap 100%</span>';
+        } else if (diff < 0) {
+          statusCell.innerHTML = `<span class="text-rose-700 font-bold">Kurang ${Math.abs(diff)}</span>`;
+        } else {
+          statusCell.innerHTML = `<span class="text-blue-700 font-bold">Lebih ${diff}</span>`;
+        }
+      }
+    }
+
+    function copyAllPOToSPK() {
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+
+      const spkData = getSPKRealizationData(currentPODate);
+      spkData.items = { ...aggItems };
+      spkData.updatedAt = new Date().toISOString();
+      const docInput = document.getElementById('spk-doc-number');
+      if (docInput && docInput.value) spkData.spkNumber = docInput.value;
+
+      saveSPKRealizationData(currentPODate, spkData);
+      renderSPKTabContent();
+      showToast('Seluruh produk berhasil disalin 100% sesuai PO!', 'success');
+    }
+
+    function saveSPKRealizationInputs() {
+      const docInput = document.getElementById('spk-doc-number');
+      const spkNumber = docInput ? docInput.value.trim() : '';
+
+      const spkItems = {};
+      STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
+        const inputEl = document.getElementById('spk-input-' + p.code);
+        if (inputEl) {
+          spkItems[p.code] = Math.max(0, parseInt(inputEl.value || '0', 10));
+        }
+      });
+
+      const spkData = {
+        spkNumber: spkNumber || ('SPK-FB-' + currentPODate.replace(/-/g, '') + '-01'),
+        date: currentPODate,
+        updatedAt: new Date().toISOString(),
+        items: spkItems
+      };
+
+      saveSPKRealizationData(currentPODate, spkData);
+      renderSPKTabContent();
+      showToast('Realisasi SPK Pabrik berhasil disimpan!', 'success');
+    }
+
+    function applySPKToSalesProportional() {
+      saveSPKRealizationInputs();
+      const spkData = getSPKRealizationData(currentPODate);
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+
+      if (posOnDate.length === 0) {
+        showToast('Tidak ada data PO sales pada tanggal ini untuk disesuaikan!', 'warning');
+        return;
+      }
+
+      let changeCount = 0;
+
+      // Untuk setiap produk, cek apakah SPK berbeda dari total PO
+      STANDARD_FACTORY_25_PRODUCTS.forEach(prod => {
+        const code = prod.code;
+        const targetTotal = Number(spkData.items[code] !== undefined ? spkData.items[code] : 0);
+        const origTotal = posOnDate.reduce((sum, p) => sum + (Number(p.items && p.items[code]) || 0), 0);
+
+        if (origTotal <= 0 || origTotal === targetTotal) return;
+
+        changeCount++;
+        const ratio = targetTotal / origTotal;
+        let allocated = 0;
+
+        const allocs = posOnDate.map(po => {
+          const curQty = Number(po.items && po.items[code]) || 0;
+          const raw = curQty * ratio;
+          const base = Math.floor(raw);
+          allocated += base;
+          return { po, orig: curQty, base, frac: raw - base };
+        });
+
+        // Bagikan sisa integer (remainder) ke sales dengan fractional part terbesar
+        let rem = targetTotal - allocated;
+        allocs.sort((a, b) => b.frac - a.frac);
+        for (let i = 0; i < rem; i++) {
+          allocs[i % allocs.length].base += 1;
+        }
+
+        // Terapkan ke masing-masing PO
+        allocs.forEach(a => {
+          if (!a.po.items) a.po.items = {};
+          a.po.items[code] = a.base;
+        });
+      });
+
+      if (changeCount === 0) {
+        showToast('Semua pesanan sales sudah sesuai dengan SPK pabrik!', 'info');
+        return;
+      }
+
+      // Hitung ulang total Pcs dan Total Amount pada setiap PO
+      const products = getProductsData();
+      posOnDate.forEach(po => {
+        let totalPcs = 0;
+        let totalVal = 0;
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, q]) => {
+            const qty = Number(q) || 0;
+            totalPcs += qty;
+            const p = products.find(prod => prod.id === k || prod.code === k || prod.name === k);
+            const price = p ? Number(p.price || p.unitPrice || 0) : 0;
+            totalVal += (qty * price);
+          });
+        }
+        po.totalPcs = totalPcs;
+        po.totalAmount = totalVal;
+      });
+
+      savePOSalesData(allPO);
+
+      // Sinkronkan ke Transaksi Sales secara instan
+      if (typeof autoSyncAllPOsToTransactions === 'function') {
+        autoSyncAllPOsToTransactions();
+      }
+
+      renderPOSalesMatrix();
+      renderTransactionList();
+      renderReconModalContent();
+      renderSPKTabContent();
+
+      showToast('Pesanan sales berhasil disesuaikan secara proporsional dengan realisasi SPK pabrik!', 'success');
     }
 
     function renderReconModalContent() {
@@ -5300,6 +5907,37 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const rawPlates = truckCount === 3 
         ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
         : (truckCount === 2 ? ['S 9631 NF', 'N 8124 TA'] : [armada.nopol || 'S 9631 NF']);
+
+      // Toggle Tampilan Panel Otomatis vs Manual
+      const autoPanel = document.getElementById('recon-auto-allocation-panel');
+      const manualPanel = document.getElementById('recon-manual-allocation-panel');
+      const btnAuto = document.getElementById('btn-truck-mode-auto');
+      const btnManual = document.getElementById('btn-truck-mode-manual');
+      const manualActionBtns = document.getElementById('manual-truck-action-btns');
+
+      if (btnAuto) {
+        btnAuto.className = truckAllocationMode === 'auto' 
+          ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
+          : 'px-3 py-1 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer';
+      }
+      if (btnManual) {
+        btnManual.className = truckAllocationMode === 'manual' 
+          ? 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer'
+          : 'px-3 py-1 rounded-lg font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer';
+      }
+      if (manualActionBtns) {
+        manualActionBtns.classList.toggle('hidden', truckAllocationMode !== 'manual');
+      }
+
+      if (autoPanel && manualPanel) {
+        autoPanel.classList.toggle('hidden', truckAllocationMode === 'manual');
+        manualPanel.classList.toggle('hidden', truckAllocationMode !== 'manual');
+      }
+
+      if (truckAllocationMode === 'manual') {
+        renderManualTruckAllocationGrid(loadedItems, truckCount, rawPlates, truckKB, truckKMK);
+      }
+
       const dividedTrucks = divideLoadAcrossTrucks(loadedItems, truckCount, rawPlates, truckKB, truckKMK);
 
       const multiTruckPanel = document.getElementById('recon-multitruck-allocation');
@@ -6296,12 +6934,72 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       renderReconModalContent();
     }
 
+    // Fungsi Alokasi Muatan Armada Truk (Mendukung Mode Otomatis Bagi Rata & Mode Manual Kustomisasi Owner)
     function divideLoadAcrossTrucks(loadedItems, truckCount, truckPlates, truckKB, truckKMK) {
       const count = Math.max(1, truckCount || 1);
       const defaultPlates = count === 3 
         ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
         : (count === 2 ? ['S 9631 NF', 'N 8124 TA'] : ['S 9631 NF']);
 
+      const manualData = getManualTruckAllocData(currentPODate);
+
+      // JIKA MODE MANUAL AKTIF DAN ADA ALOKASI TERSIMPAN:
+      if (manualData && manualData.mode === 'manual' && manualData.allocations && Object.keys(manualData.allocations).length > 0) {
+        const manualTrucks = [];
+        for (let i = 0; i < count; i++) {
+          manualTrucks.push({
+            index: i + 1,
+            name: `Truk ${i + 1}`,
+            plate: (truckPlates && truckPlates[i]) ? truckPlates[i] : (defaultPlates[i] || `Truk ${i + 1}`),
+            items: [],
+            totalUnits: 0,
+            totalKB: 0,
+            totalKMK: 0,
+            capacityKB: Math.round((truckKB || 204) / count),
+            capacityKMK: Math.round((truckKMK || 33) / count),
+            isManual: true
+          });
+        }
+
+        (loadedItems || []).forEach(item => {
+          const allocBaskets = manualData.allocations[item.code] || [];
+          const upb = Number(item.unitsPerBasket) || 60;
+
+          for (let i = 0; i < count; i++) {
+            const b = allocBaskets[i] || 0;
+            if (b > 0) {
+              const qty = b * upb;
+              const fPrice = Number(item.fPrice) || 0;
+              manualTrucks[i].items.push({
+                code: item.code,
+                name: item.name,
+                basketType: item.basketType || 'KB',
+                unitsPerBasket: upb,
+                unit: item.unit || 'pcs',
+                qty,
+                baskets: b, // Bilangan bulat keranjang
+                fullBaskets: b,
+                hasPartial: false,
+                partialUnits: 0,
+                fPrice,
+                subtotalHPP: qty * fPrice
+              });
+              manualTrucks[i].totalUnits += qty;
+              if (item.basketType === 'KB') manualTrucks[i].totalKB += b;
+              else manualTrucks[i].totalKMK += b;
+            }
+          }
+        });
+
+        manualTrucks.forEach(t => {
+          t.totalKB = Math.round(t.totalKB);
+          t.totalKMK = Math.round(t.totalKMK);
+        });
+
+        return manualTrucks;
+      }
+
+      // DEFAULT: MODE OTOMATIS BAGI RATA (ROUND BASKETS / TANPA KOMA)
       const trucks = [];
       for (let i = 0; i < count; i++) {
         trucks.push({
@@ -6313,7 +7011,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           totalKB: 0,
           totalKMK: 0,
           capacityKB: Math.round((truckKB || 204) / count),
-          capacityKMK: Math.round((truckKMK || 33) / count)
+          capacityKMK: Math.round((truckKMK || 33) / count),
+          isManual: false
         });
       }
 
@@ -6392,6 +7091,289 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       });
 
       return trucks;
+    }
+
+    // Helper Penataan Manual Muatan Armada
+    function presetManualFromAutoDivision() {
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const armada = getFactoryArmadaForDate(currentPODate);
+      const truckCount = armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1));
+
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+
+      const calc = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
+      const loadedItems = calc.itemsBreakdown.filter(it => it.orderQty > 0);
+      const rawPlates = truckCount === 3 
+        ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
+        : (truckCount === 2 ? ['S 9631 NF', 'N 8124 TA'] : [armada.nopol || 'S 9631 NF']);
+
+      // Jalankan auto division murni
+      const autoTrucks = [];
+      for (let i = 0; i < truckCount; i++) {
+        autoTrucks.push({ totalKB: 0, totalKMK: 0 });
+      }
+      let partialTurn = 0;
+      const allocMap = {};
+
+      loadedItems.forEach(item => {
+        const total = Number(item.orderQty) || 0;
+        const upb = Number(item.unitsPerBasket) || 60;
+        const fullBaskets = Math.floor(total / upb);
+        const remUnits = total % upb;
+
+        const baseFull = Math.floor(fullBaskets / truckCount);
+        const extraFull = fullBaskets % truckCount;
+
+        const alloc = [];
+        for (let i = 0; i < truckCount; i++) {
+          alloc.push(baseFull + (i < extraFull ? 1 : 0));
+        }
+
+        if (remUnits > 0) {
+          let target = 0;
+          if (extraFull > 0 && extraFull < truckCount) {
+            target = extraFull;
+          }
+          alloc[target % truckCount] += 1;
+        }
+
+        allocMap[item.code] = alloc;
+      });
+
+      const manualData = {
+        mode: 'manual',
+        date: currentPODate,
+        allocations: allocMap
+      };
+      saveManualTruckAllocData(currentPODate, manualData);
+      renderReconModalContent();
+      showToast('Penataan manual berhasil disalin dari pembagian rata!', 'success');
+    }
+
+    // Fungsi Render Tabel Grid Penataan Manual Muatan Armada
+    function renderManualTruckAllocationGrid(loadedItems, truckCount, rawPlates, truckKB, truckKMK) {
+      const manualData = getManualTruckAllocData(currentPODate);
+      const thead = document.getElementById('recon-manual-thead');
+      const tbody = document.getElementById('recon-manual-tbody');
+      const tfoot = document.getElementById('recon-manual-tfoot');
+      const cards = document.getElementById('recon-manual-truck-cards');
+
+      const perTruckCapKB = Math.round(truckKB / truckCount);
+      const perTruckCapKMK = Math.round(truckKMK / truckCount);
+
+      if (thead) {
+        let truckHeaders = '';
+        for (let i = 0; i < truckCount; i++) {
+          truckHeaders += `
+            <th class="py-2.5 px-2 text-center font-bold text-amber-950 bg-amber-100/60 border-l border-amber-200">
+              🚚 Truk ${i + 1}<br><span class="text-[9.5px] font-normal text-slate-600">${rawPlates[i] || ('Truk ' + (i + 1))}</span>
+            </th>
+          `;
+        }
+
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2.5 px-2.5 text-center w-8">No</th>
+            <th class="py-2.5 px-2.5 w-16">Inisial</th>
+            <th class="py-2.5 px-2.5">Nama Produk Roti</th>
+            <th class="py-2.5 px-2.5 text-center">Tipe Krjg</th>
+            <th class="py-2.5 px-2.5 text-center">Isi/Krjg</th>
+            <th class="py-2.5 px-2.5 text-right font-bold text-slate-800">Total Dimuat</th>
+            ${truckHeaders}
+            <th class="py-2.5 px-2.5 text-center font-bold">Status Alokasi</th>
+          </tr>
+        `;
+      }
+
+      const truckSums = Array.from({ length: truckCount }, () => ({ kb: 0, kmk: 0, units: 0 }));
+
+      if (tbody) {
+        if (!loadedItems || loadedItems.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="10" class="py-6 text-center text-slate-400 font-medium">Belum ada varian produk yang dipesan untuk tanggal ini.</td></tr>';
+        } else {
+          tbody.innerHTML = loadedItems.map((item, idx) => {
+            const upb = Number(item.unitsPerBasket) || 60;
+            const totalUnits = Number(item.qty || item.orderQty || 0);
+            const totalBaskets = item.baskets || Math.ceil(totalUnits / upb);
+            const alloc = (manualData.allocations && manualData.allocations[item.code]) || [];
+
+            let sumAlloc = 0;
+            let truckInputs = '';
+
+            for (let i = 0; i < truckCount; i++) {
+              const b = alloc[i] !== undefined ? alloc[i] : 0;
+              sumAlloc += b;
+              if (item.basketType === 'KB') truckSums[i].kb += b;
+              else truckSums[i].kmk += b;
+              truckSums[i].units += (b * upb);
+
+              truckInputs += `
+                <td class="py-2 px-2 text-center border-l border-slate-100 bg-amber-50/20">
+                  <div class="flex items-center justify-center gap-1">
+                    <input 
+                      type="number" 
+                      id="manual-basket-${item.code}-t${i + 1}" 
+                      value="${b}" 
+                      min="0" 
+                      oninput="onManualBasketRowChange('${item.code}', ${truckCount}, ${totalBaskets})" 
+                      class="w-16 text-center font-black text-slate-900 bg-white border border-slate-300 focus:border-amber-500 rounded px-1.5 py-1 text-xs"
+                    >
+                    <span class="text-[10px] text-slate-400 font-mono">${item.basketType}</span>
+                  </div>
+                </td>
+              `;
+            }
+
+            const diff = totalBaskets - sumAlloc;
+            let statusHtml = '';
+            if (diff === 0) {
+              statusHtml = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Pas Lengkap</span>';
+            } else if (diff > 0) {
+              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diff} ${item.basketType}</span>`;
+            } else {
+              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diff)} ${item.basketType}</span>`;
+            }
+
+            return `
+              <tr class="hover:bg-slate-50 transition" id="manual-row-${item.code}">
+                <td class="py-2 px-2.5 text-center text-slate-400 font-mono">${idx + 1}</td>
+                <td class="py-2 px-2.5 font-bold text-slate-900">${escapeHtml(item.code)}</td>
+                <td class="py-2 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
+                <td class="py-2 px-2.5 text-center">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.basketType === 'KB' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                    ${item.basketType}
+                  </span>
+                </td>
+                <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${upb} ${item.unit || 'pcs'}</td>
+                <td class="py-2 px-2.5 text-right font-black text-slate-900">
+                  <span>${totalBaskets} ${item.basketType}</span>
+                  <span class="block text-[9.5px] font-normal text-slate-400">${totalUnits.toLocaleString('id-ID')} pcs</span>
+                </td>
+                ${truckInputs}
+                <td class="py-2 px-2.5 text-center" id="manual-status-${item.code}">
+                  ${statusHtml}
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      if (tfoot) {
+        let truckFooters = '';
+        for (let i = 0; i < truckCount; i++) {
+          truckFooters += `
+            <td class="py-2.5 px-2 text-center font-black text-amber-900 border-l border-slate-200">
+              ${truckSums[i].kb} KB • ${truckSums[i].kmk} KMK
+              <span class="block text-[9.5px] font-normal text-slate-500">${truckSums[i].units.toLocaleString('id-ID')} pcs</span>
+            </td>
+          `;
+        }
+
+        tfoot.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-2.5 px-3 text-right font-black text-slate-900 uppercase">TOTAL KERANJANG TERBAGI:</td>
+            ${truckFooters}
+            <td class="py-2.5 px-2.5 text-center font-bold text-emerald-700 text-[10px]">Tersinkron</td>
+          </tr>
+        `;
+      }
+
+      // Render Cards Live Kapasitas Truk
+      if (cards) {
+        cards.innerHTML = truckSums.map((t, idx) => {
+          const capKB = perTruckCapKB;
+          const capKMK = perTruckCapKMK;
+          const pctKB = capKB > 0 ? Math.round((t.kb / capKB) * 100) : 0;
+          return `
+            <div class="p-3 bg-white rounded-xl border border-amber-300 shadow-2xs space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-black text-amber-950 text-xs">🚚 Truk ${idx + 1} (${rawPlates[idx] || ('Truk ' + (idx + 1))})</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${pctKB <= 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                  ${pctKB}% Kapasitas
+                </span>
+              </div>
+              <div class="text-[11px] text-slate-700 font-semibold">
+                Kapasitas: ${capKB} KB + ${capKMK} KMK
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
+                <div class="${pctKB <= 100 ? 'bg-amber-500' : 'bg-rose-600'} h-2 rounded-full" style="width: ${Math.min(100, pctKB)}%"></div>
+              </div>
+              <div class="pt-1 flex items-center justify-between text-[10.5px]">
+                <span class="font-bold text-slate-800">Muatan: ${t.kb} KB + ${t.kmk} KMK</span>
+                <span class="text-slate-500 font-mono">${t.units.toLocaleString('id-ID')} pcs</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function onManualBasketRowChange(code, truckCount, totalBaskets) {
+      let sum = 0;
+      for (let i = 0; i < truckCount; i++) {
+        const inputEl = document.getElementById(`manual-basket-${code}-t${i + 1}`);
+        sum += inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+      }
+
+      const diff = totalBaskets - sum;
+      const statusEl = document.getElementById('manual-status-' + code);
+      if (statusEl) {
+        if (diff === 0) {
+          statusEl.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Pas Lengkap</span>';
+        } else if (diff > 0) {
+          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diff} krjg</span>`;
+        } else {
+          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diff)} krjg</span>`;
+        }
+      }
+    }
+
+    function saveManualTruckAllocation() {
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const armada = getFactoryArmadaForDate(currentPODate);
+      const truckCount = armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1));
+
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+
+      const calc = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
+      const loadedItems = calc.itemsBreakdown.filter(it => it.orderQty > 0);
+
+      const allocMap = {};
+      loadedItems.forEach(item => {
+        const truckBaskets = [];
+        for (let i = 0; i < truckCount; i++) {
+          const inputEl = document.getElementById(`manual-basket-${item.code}-t${i + 1}`);
+          const b = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+          truckBaskets.push(b);
+        }
+        allocMap[item.code] = truckBaskets;
+      });
+
+      const manualData = {
+        mode: 'manual',
+        date: currentPODate,
+        allocations: allocMap
+      };
+      saveManualTruckAllocData(currentPODate, manualData);
+      renderReconModalContent();
+      showToast('Penataan muatan armada manual berhasil disimpan!', 'success');
     }
 
     function buildTracerBongkarHTML(targetDate, truckFilter = 'all') {
@@ -8119,14 +9101,62 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     // --- TEMPLATE & FITUR NOTA PENJUALAN SALES (UKURAN KERTAS A5) ---
-    function setPrintPageSize(sizeCSS, marginCSS = '6mm 8mm') {
+    function setPrintPageSize(sizeCSS, marginCSS = '4mm 6mm') {
       let styleEl = document.getElementById('dynamic-page-print-style');
       if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = 'dynamic-page-print-style';
         document.head.appendChild(styleEl);
       }
-      styleEl.innerHTML = `@media print { @page { size: ${sizeCSS}; margin: ${marginCSS}; } }`;
+      styleEl.innerHTML = `@media print { @page { size: ${sizeCSS}; margin: ${marginCSS} !important; } }`;
+    }
+
+    // --- 1-KLIK CETAK SEMUA NOTA TRANSAKSI SALES (BATCH A5) ---
+    function printAllSalesNotaOnActiveDate() {
+      if (typeof autoSyncAllPOsToTransactions === 'function') {
+        autoSyncAllPOsToTransactions();
+      }
+
+      const list = getTransactionsData();
+      const dateFilterEl = document.getElementById('filter-trx-date');
+      const dateFilterVal = (dateFilterEl && dateFilterEl.value) ? dateFilterEl.value : '';
+
+      // Filter berdasarkan tanggal aktif jika ada
+      let targetList = dateFilterVal ? list.filter(t => t.date === dateFilterVal) : list;
+
+      // Filter transaksi yang memiliki barang / Qty > 0
+      targetList = targetList.filter(t => (t.items && t.items.length > 0) || Number(t.totalQty) > 0);
+
+      // Urutkan alfabetis berdasarkan nama sales agar rapi
+      targetList.sort((a, b) => (a.salesName || '').localeCompare(b.salesName || ''));
+
+      if (targetList.length === 0) {
+        showToast(`Tidak ada transaksi sales untuk tanggal ${dateFilterVal ? formatIndoDate(dateFilterVal) : 'terpilih'}!`, 'warning');
+        return;
+      }
+
+      const printArea = document.getElementById('print-area-nota');
+      if (!printArea) return;
+
+      // Atur ukuran halaman print ke A5 Portrait dengan margin 4mm 6mm anti blank page
+      setPrintPageSize('A5 portrait', '4mm 6mm');
+
+      // Bungkus setiap nota transaksi dalam .nota-batch-page
+      printArea.innerHTML = targetList.map((trx, idx) => `
+        <div class="nota-batch-page ${idx < targetList.length - 1 ? 'page-break-after-always' : ''}">
+          ${buildNotaHTML(trx)}
+        </div>
+      `).join('');
+
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik', 'printing-tracer');
+      document.body.classList.add('printing-nota');
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-nota');
+        }, 1000);
+      }, 250);
     }
 
     function buildNotaHTML(trx) {
@@ -8191,7 +9221,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       ` : '';
 
       return `
-        <div class="nota-a5-sheet bg-white text-slate-900 font-sans mx-auto text-xs" style="width: 100%; max-width: 148mm; margin: 0 auto; padding: 2mm 3mm; box-sizing: border-box; page-break-inside: avoid;">
+        <div class="nota-a5-sheet bg-white text-slate-900 font-sans mx-auto text-xs" style="width: 100%; max-width: 148mm; margin: 0 auto; padding: 1.5mm 3mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
           <!-- KOP PERUSAHAAN & IDENTITAS NOTA -->
           <div class="flex items-center justify-between border-b-2 border-slate-900 pb-2 mb-2">
             <div class="flex items-center gap-2.5">
