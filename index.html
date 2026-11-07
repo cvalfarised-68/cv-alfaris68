@@ -871,6 +871,49 @@
           </div>
         </div>
 
+        <!-- Pilihan Kendaraan Armada Pabrik (Dipilih Manual oleh Owner) -->
+        <div class="bg-amber-50/70 border border-amber-200/90 p-3 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+              <i data-lucide="truck" class="w-4 h-4 text-brand-600"></i>
+              <span>Pilihan Mobil Armada:</span>
+            </span>
+            <div class="inline-flex rounded-xl p-1 bg-white border border-amber-200 gap-1 text-xs shadow-2xs">
+              <button 
+                type="button" 
+                id="btn-po-armada-1" 
+                onclick="setManualArmadaPreset('rabu_kamis_1mobil')" 
+                class="px-2.5 py-1 rounded-lg font-bold transition">
+                🚚 1 Mobil (204 KB)
+              </button>
+              <button 
+                type="button" 
+                id="btn-po-armada-2" 
+                onclick="setManualArmadaPreset('2_truk')" 
+                class="px-2.5 py-1 rounded-lg font-bold transition">
+                🚚🚚 2 Truk (408 KB)
+              </button>
+              <button 
+                type="button" 
+                id="btn-po-armada-3" 
+                onclick="setManualArmadaPreset('sabtu_3truk')" 
+                class="px-2.5 py-1 rounded-lg font-bold transition">
+                🚚🚚🚚 3 Truk (612 KB)
+              </button>
+            </div>
+            <select 
+              id="po-armada-select-extra" 
+              onchange="onManualArmadaSelectChange(this.value)" 
+              class="text-xs font-semibold text-slate-700 bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-brand-500">
+              <!-- Diisi otomatis oleh updateManualArmadaUI() -->
+            </select>
+          </div>
+          <div id="po-armada-summary-badge" class="text-[11px] font-bold text-amber-900 bg-amber-100/90 border border-amber-300 px-3 py-1 rounded-xl flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-700"></i>
+            <span id="po-armada-summary-text">Armada Aktif: 1 Mobil Box (204 KB + 33 KMK)</span>
+          </div>
+        </div>
+
         <!-- Top Summary Cards untuk PO Tanggal Terpilih -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <!-- Total Roti Ambil Pabrik -->
@@ -2133,22 +2176,16 @@
             </div>
           </div>
 
-          <!-- Tabel Rekonsiliasi SPK Pabrik -->
+          <!-- Live Capacity Cards per Truk untuk Realisasi SPK Pabrik -->
+          <div id="recon-spk-truck-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
+            <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada aktif -->
+          </div>
+
+          <!-- Tabel Rekonsiliasi SPK Pabrik (Per Mobil dalam Satuan Pcs/Bdl) -->
           <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
             <table class="w-full text-[11px] text-left">
-              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th class="py-2.5 px-2.5 text-center w-8">No</th>
-                  <th class="py-2.5 px-2.5 w-16">Inisial</th>
-                  <th class="py-2.5 px-2.5">Nama Varian Roti</th>
-                  <th class="py-2.5 px-2.5 text-center">Tipe Krjg</th>
-                  <th class="py-2.5 px-2.5 text-center">Isi/Krjg</th>
-                  <th class="py-2.5 px-2.5 text-right font-bold text-slate-700">PO Diminta</th>
-                  <th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-50/50 w-36">Realisasi SPK (Input)</th>
-                  <th class="py-2.5 px-2.5 text-right font-bold text-slate-800">Hasil Krjg SPK</th>
-                  <th class="py-2.5 px-2.5 text-center font-bold">Selisih vs PO</th>
-                  <th class="py-2.5 px-2.5 text-center">Status Stok Pabrik</th>
-                </tr>
+              <thead id="recon-spk-thead" class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada aktif -->
               </thead>
               <tbody id="recon-spk-tbody" class="divide-y divide-slate-100">
                 <!-- Diisi otomatis oleh renderSPKTabContent -->
@@ -3890,14 +3927,23 @@
       'TF': { type: 'KB', unitsPerBasket: 15, unit: 'pcs', fullName: 'TAWAR KUNCIR' }
     };
 
-    // Jadwal Rutin Pengiriman / Pengambilan Pabrik CV. Alfaris Enam Delapan:
-    // - Rabu: 1 Mobil (Grand Max Box)
-    // - Kamis: 1 Mobil (Grand Max Box)
-    // - Sabtu: 3 Mobil Truk (Beban muatan dibagi rata sesuai kapasitas mobil)
+    const STANDARD_FACTORY_25_PRODUCTS = STANDARD_PRODUCT_ORDER.map(code => {
+      const conv = FACTORY_BREAD_CONVERSIONS[code] || { type: 'KB', unitsPerBasket: 60, unit: 'pcs', fullName: code };
+      return {
+        code,
+        name: conv.fullName || code,
+        basketType: conv.type || 'KB',
+        unitsPerBasket: conv.unitsPerBasket || 60,
+        unit: conv.unit || 'pcs'
+      };
+    });
+
+    // Daftar Pilihan Kendaraan Armada Pabrik CV. Alfaris Enam Delapan:
+    // Pilihan armada ditentukan langsung secara manual oleh Owner untuk setiap tanggal pengambilan
     const FACTORY_ARMADA_LIST = [
-      { id: 'sabtu_3truk', nopol: '3 TRUK (RUTIN SABTU)', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (Rutin Hari Sabtu - 612 KB + 99 KMK)' },
+      { id: 'rabu_kamis_1mobil', nopol: 'S 9631 NF', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (204 KB + 33 KMK)' },
       { id: '2_truk', nopol: '2 MOBIL TRUK', kb: 408, kmk: 66, trucksCount: 2, desc: '2 Mobil Truk (408 KB + 66 KMK)' },
-      { id: 'rabu_kamis_1mobil', nopol: 'S 9631 NF (RUTIN RABU/KAMIS)', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (Rutin Rabu/Kamis - 204 KB + 33 KMK)' },
+      { id: 'sabtu_3truk', nopol: '3 MOBIL TRUK', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (612 KB + 99 KMK)' },
       { id: 'gm_8050', nopol: 'W 8050 NW', kb: 186, kmk: 31, trucksCount: 1, desc: '1 Mobil Box W 8050 NW (186 KB + 31 KMK)' },
       { id: 'gm_8683', nopol: 'W 8683 PA', kb: 204, kmk: 32, trucksCount: 1, desc: '1 Mobil Box W 8683 PA (204 KB + 32 KMK)' },
       { id: 'l300_8351', nopol: 'W 8351 QG', kb: 210, kmk: 0,  trucksCount: 1, desc: '1 Mobil Box L300 W 8351 QG (210 KB)' },
@@ -3917,34 +3963,91 @@
         }
       } catch (e) {}
 
-      // Deteksi hari rutin operasional pabrik jika belum ada kustomisasi manual
-      if (dateStr) {
-        try {
-          const d = new Date(dateStr + 'T00:00:00');
-          const day = d.getDay(); // 0: Min, 3: Rab, 4: Kam, 6: Sab
-          if (day === 6) { // Hari Sabtu: Rutin 3 Mobil Truk
-            return { nopol: '3 TRUK (RUTIN SABTU)', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (Rutin Hari Sabtu - 612 KB + 99 KMK)' };
-          } else if (day === 3 || day === 4) { // Hari Rabu & Kamis: Rutin 1 Mobil
-            return { nopol: 'S 9631 NF (RUTIN RABU/KAMIS)', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (Rutin Rabu/Kamis - 204 KB + 33 KMK)' };
-          }
-        } catch (e) {}
-      }
-
-      // Jika ada pesanan besar (> 240 KB / > 8.000 pcs), otomatis tawarkan preset 3 truk
-      const allPO = getPOSalesData().filter(p => p.date === dateStr);
-      let totalItemsCount = 0;
-      allPO.forEach(p => Object.values(p.items || {}).forEach(q => totalItemsCount += Number(q || 0)));
-      if (totalItemsCount > 8000) {
-        return { nopol: '3 TRUK (RUTIN SABTU)', kb: 612, kmk: 99, trucksCount: 3, desc: '3 Mobil Truk (612 KB + 99 KMK)' };
-      }
-
-      return { nopol: 'S 9631 NF (RUTIN RABU/KAMIS)', kb: 204, kmk: 33, trucksCount: 1, desc: '1 Mobil Box S 9631 NF (204 KB + 33 KMK)' };
+      // Default awal jika Owner belum menentukan armada pada tanggal ini: 1 Mobil Box (204 KB + 33 KMK)
+      // Bebas dari tebakan otomatis hari (Owner memegang kendali penuh sesuai armada riil)
+      return { 
+        id: 'rabu_kamis_1mobil', 
+        nopol: 'S 9631 NF', 
+        kb: 204, 
+        kmk: 33, 
+        trucksCount: 1, 
+        desc: '1 Mobil Box S 9631 NF (204 KB + 33 KMK)' 
+      };
     }
 
     function saveFactoryArmadaForDate(dateStr, armadaObj) {
       try {
         localStorage.setItem(`alfaris_armada_${dateStr}`, JSON.stringify(armadaObj));
       } catch (e) {}
+    }
+
+    function setManualArmadaPreset(presetId, explicitDate = null) {
+      const arm = FACTORY_ARMADA_LIST.find(a => a.id === presetId || a.nopol === presetId) || FACTORY_ARMADA_LIST[0];
+      const dateInput = document.getElementById('po-date-filter');
+      const targetDate = explicitDate || (dateInput && dateInput.value) || currentPODate || getTodayYMD();
+      saveFactoryArmadaForDate(targetDate, {
+        id: arm.id,
+        nopol: arm.nopol,
+        kb: arm.kb,
+        kmk: arm.kmk,
+        trucksCount: arm.trucksCount || 1,
+        desc: arm.desc
+      });
+
+      updateManualArmadaUI(arm);
+      renderPOSalesMatrix();
+      const modal = document.getElementById('modal-pabrik-recon');
+      if (modal && !modal.classList.contains('hidden')) {
+        renderReconModalContent();
+        renderSPKTabContent();
+      }
+      showToast(`Pilihan Armada berhasil diubah: ${arm.desc || arm.nopol}`, 'success');
+    }
+
+    function onManualArmadaSelectChange(val) {
+      const arm = FACTORY_ARMADA_LIST.find(a => a.nopol === val || a.id === val) || FACTORY_ARMADA_LIST[0];
+      setManualArmadaPreset(arm.id);
+    }
+
+    function updateManualArmadaUI(currentArmada) {
+      const arm = currentArmada || getFactoryArmadaForDate(currentPODate);
+      const count = arm.trucksCount || (arm.kb >= 600 ? 3 : (arm.kb >= 400 ? 2 : 1));
+
+      // 1. Update tombol preset di Tab Rekap PO
+      const btn1 = document.getElementById('btn-po-armada-1');
+      const btn2 = document.getElementById('btn-po-armada-2');
+      const btn3 = document.getElementById('btn-po-armada-3');
+
+      const activeClass = 'px-2.5 py-1 rounded-lg font-bold bg-amber-600 text-white shadow-xs transition';
+      const inactiveClass = 'px-2.5 py-1 rounded-lg font-semibold text-slate-700 hover:bg-amber-100 transition';
+
+      if (btn1) btn1.className = (count === 1 && arm.kb === 204) ? activeClass : inactiveClass;
+      if (btn2) btn2.className = (count === 2) ? activeClass : inactiveClass;
+      if (btn3) btn3.className = (count === 3) ? activeClass : inactiveClass;
+
+      // 2. Update dropdown mobil lain di Tab PO
+      const poSelect = document.getElementById('po-armada-select-extra');
+      if (poSelect) {
+        if (!poSelect.dataset.populated) {
+          poSelect.innerHTML = FACTORY_ARMADA_LIST.map(a => `
+            <option value="${escapeHtml(a.nopol)}">${escapeHtml(a.desc || a.nopol)}</option>
+          `).join('');
+          poSelect.dataset.populated = 'true';
+        }
+        poSelect.value = arm.nopol;
+      }
+
+      // 3. Update summary badge
+      const badgeText = document.getElementById('po-armada-summary-text');
+      if (badgeText) {
+        badgeText.innerText = `Armada: ${arm.nopol} (${arm.kb} KB + ${arm.kmk} KMK)`;
+      }
+
+      // 4. Update dropdown di Modal Rekon bila ada
+      const reconSelect = document.getElementById('recon-armada-select');
+      if (reconSelect) {
+        reconSelect.value = arm.nopol;
+      }
     }
 
     function calculateFactoryLoad(itemsMap, truckKB = 204, truckKMK = 33) {
@@ -4440,6 +4543,7 @@
 
       document.getElementById('po-active-date-badge').innerText = `Tanggal: ${formatIndoDate(currentPODate)}`;
       document.getElementById('po-kpi-date-label').innerText = `Per ${formatIndoDate(currentPODate)}`;
+      updateManualArmadaUI();
 
       const products = getProductsData();
       const allPO = getPOSalesData();
@@ -5196,12 +5300,20 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const targetDate = date || currentPODate || getTodayYMD();
       const raw = localStorage.getItem('alfaris_spk_realization_' + targetDate);
       if (raw) {
-        try { return JSON.parse(raw); } catch (e) { console.error('Error parse SPK:', e); }
+        try { 
+          const parsed = JSON.parse(raw);
+          if (parsed) {
+            if (!parsed.itemsPerTruck) parsed.itemsPerTruck = {};
+            if (!parsed.items) parsed.items = {};
+            return parsed;
+          }
+        } catch (e) { console.error('Error parse SPK:', e); }
       }
       return {
         spkNumber: '',
         date: targetDate,
         updatedAt: null,
+        itemsPerTruck: {},
         items: {}
       };
     }
@@ -5300,48 +5412,13 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function setReconArmadaPreset(presetId) {
-      const arm = FACTORY_ARMADA_LIST.find(a => a.id === presetId || a.nopol === presetId) || FACTORY_ARMADA_LIST[0];
-      const select = document.getElementById('recon-armada-select');
-      if (select) select.value = arm.nopol;
-
-      const inputKb = document.getElementById('recon-armada-kb');
-      const inputKmk = document.getElementById('recon-armada-kmk');
-      if (inputKb) inputKb.value = arm.kb;
-      if (inputKmk) inputKmk.value = arm.kmk;
-
-      saveFactoryArmadaForDate(currentPODate, {
-        nopol: arm.nopol,
-        kb: arm.kb,
-        kmk: arm.kmk,
-        trucksCount: arm.trucksCount || 1,
-        desc: arm.desc
-      });
-
-      renderReconModalContent();
-      renderPOSalesMatrix();
+      setManualArmadaPreset(presetId);
     }
 
     function onReconArmadaChanged() {
       const select = document.getElementById('recon-armada-select');
       if (!select) return;
-      const nopol = select.value;
-      const arm = FACTORY_ARMADA_LIST.find(a => a.nopol === nopol) || FACTORY_ARMADA_LIST[0];
-
-      const inputKb = document.getElementById('recon-armada-kb');
-      const inputKmk = document.getElementById('recon-armada-kmk');
-      if (inputKb) inputKb.value = arm.kb;
-      if (inputKmk) inputKmk.value = arm.kmk;
-
-      saveFactoryArmadaForDate(currentPODate, {
-        nopol: arm.nopol,
-        kb: arm.kb,
-        kmk: arm.kmk,
-        trucksCount: arm.trucksCount || 1,
-        desc: arm.desc
-      });
-
-      renderReconModalContent();
-      renderPOSalesMatrix();
+      onManualArmadaSelectChange(select.value);
     }
 
     function onReconCapacityCustomInput() {
@@ -5443,11 +5520,18 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       lucide.createIcons();
     }
 
-    // Render Konten Tab SPK Pabrik
+    // Render Konten Tab SPK Pabrik (Realisasi Per Mobil dalam Pcs/Bdl)
     function renderSPKTabContent() {
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
       const armada = getFactoryArmadaForDate(currentPODate);
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
+      const rawPlates = truckCount === 3 
+        ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
+        : (truckCount === 2 ? ['S 9631 NF', 'N 8124 TA'] : [armada.nopol || 'S 9631 NF']);
+
+      const perTruckCapKB = Math.round((armada.kb || 204) / truckCount);
+      const perTruckCapKMK = Math.round((armada.kmk || 33) / truckCount);
 
       // Agregasi seluruh PO Diminta pada tanggal aktif
       const aggItems = {};
@@ -5461,6 +5545,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       const calc = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
       const spkData = getSPKRealizationData(currentPODate);
+      const manualData = getManualTruckAllocData(currentPODate);
 
       const docNumInput = document.getElementById('spk-doc-number');
       if (docNumInput && !docNumInput.value) {
@@ -5478,8 +5563,46 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }
       }
 
+      // 1. Render Header Tabel SPK secara dinamis sesuai jumlah mobil
+      const thead = document.getElementById('recon-spk-thead');
+      if (thead) {
+        let truckHeaders = '';
+        if (truckCount > 1) {
+          for (let i = 0; i < truckCount; i++) {
+            truckHeaders += `
+              <th class="py-2.5 px-2 text-center font-bold text-indigo-950 bg-indigo-100/60 border-l border-indigo-200">
+                🚚 Truk ${i + 1}<br><span class="text-[9px] font-normal text-slate-600">${rawPlates[i]}</span>
+              </th>
+            `;
+          }
+        } else {
+          truckHeaders = `
+            <th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-50/70 w-36">
+              🚚 Realisasi SPK (Pcs/Bdl)
+            </th>
+          `;
+        }
+
+        thead.innerHTML = `
+          <tr>
+            <th class="py-2.5 px-2.5 text-center w-8">No</th>
+            <th class="py-2.5 px-2.5 w-16">Inisial</th>
+            <th class="py-2.5 px-2.5">Nama Varian Roti</th>
+            <th class="py-2.5 px-2.5 text-center">Tipe Krjg</th>
+            <th class="py-2.5 px-2.5 text-center">Isi/Krjg</th>
+            <th class="py-2.5 px-2.5 text-right font-bold text-slate-700">PO Diminta</th>
+            ${truckHeaders}
+            ${truckCount > 1 ? '<th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-100/40">Total SPK Riil</th>' : ''}
+            <th class="py-2.5 px-2.5 text-right font-bold text-slate-800">Hasil Krjg SPK</th>
+            <th class="py-2.5 px-2.5 text-center font-bold">Selisih vs PO</th>
+            <th class="py-2.5 px-2.5 text-center">Status Stok Pabrik</th>
+          </tr>
+        `;
+      }
+
       const tbody = document.getElementById('recon-spk-tbody');
       const tfoot = document.getElementById('recon-spk-tfoot');
+      const cards = document.getElementById('recon-spk-truck-cards');
       if (!tbody) return;
 
       let totalPOUnits = 0;
@@ -5487,22 +5610,90 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       let totalSPKKB = 0;
       let totalSPKKMK = 0;
 
+      // Inisialisasi sum muatan per truk
+      const truckTotals = Array.from({ length: truckCount }, () => ({ pcs: 0, kb: 0, kmk: 0 }));
+
       tbody.innerHTML = calc.itemsBreakdown.map((item, idx) => {
         const poQty = Number(item.orderQty) || 0;
         totalPOUnits += poQty;
-
-        // Default SPK qty: ambil dari data SPK tersimpan, atau jika belum ada default sama dengan poQty
-        const spkQty = spkData.items && spkData.items[item.code] !== undefined 
-          ? Number(spkData.items[item.code]) 
-          : poQty;
-        totalSPKUnits += spkQty;
-
         const upb = Number(item.unitsPerBasket) || 60;
-        const spkBaskets = spkQty > 0 ? Math.ceil(spkQty / upb) : 0;
-        if (item.basketType === 'KB') totalSPKKB += spkBaskets;
-        else totalSPKKMK += spkBaskets;
 
-        const diff = spkQty - poQty;
+        // Ambil alokasi truk tersimpan (dari itemsPerTruck atau manualData.allocations)
+        let alloc = (spkData.itemsPerTruck && spkData.itemsPerTruck[item.code]) || 
+                    (manualData && manualData.allocations && manualData.allocations[item.code]);
+
+        if (!alloc || alloc.length !== truckCount) {
+          const targetQty = (spkData.items && spkData.items[item.code] !== undefined) 
+            ? Number(spkData.items[item.code]) 
+            : poQty;
+          const base = Math.floor(targetQty / truckCount);
+          const rem = targetQty % truckCount;
+          alloc = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+        }
+
+        let rowSPKTotal = 0;
+        let truckInputsHtml = '';
+
+        for (let i = 0; i < truckCount; i++) {
+          const tPcs = Number(alloc[i]) || 0;
+          rowSPKTotal += tPcs;
+          const tBaskets = tPcs > 0 ? Math.ceil(tPcs / upb) : 0;
+
+          truckTotals[i].pcs += tPcs;
+          if (item.basketType === 'KB') truckTotals[i].kb += tBaskets;
+          else truckTotals[i].kmk += tBaskets;
+
+          if (truckCount > 1) {
+            truckInputsHtml += `
+              <td class="py-1.5 px-2 text-center bg-indigo-50/20 border-l border-indigo-100">
+                <div class="flex flex-col items-center justify-center">
+                  <div class="flex items-center justify-center gap-1">
+                    <input 
+                      type="number" 
+                      id="spk-truck-pcs-${item.code}-t${i}" 
+                      value="${tPcs}" 
+                      min="0" 
+                      oninput="onSPKTruckPcsChange('${item.code}', ${truckCount}, ${upb}, '${item.basketType}', '${item.unit || 'pcs'}', ${poQty})" 
+                      class="w-18 text-right font-black text-indigo-950 bg-white border border-indigo-300 focus:border-indigo-600 rounded-lg px-1.5 py-1 text-xs"
+                    >
+                    <span class="text-[10px] text-slate-400 font-mono">${item.unit || 'pcs'}</span>
+                  </div>
+                  <span id="spk-truck-basket-label-${item.code}-t${i}" class="text-[10px] text-indigo-700 font-bold mt-0.5">
+                    (${tBaskets} ${item.basketType})
+                  </span>
+                </div>
+              </td>
+            `;
+          } else {
+            truckInputsHtml = `
+              <td class="py-1.5 px-2 text-right bg-indigo-50/30">
+                <div class="flex flex-col items-end">
+                  <div class="flex items-center justify-end gap-1">
+                    <input 
+                      type="number" 
+                      id="spk-truck-pcs-${item.code}-t0" 
+                      value="${tPcs}" 
+                      min="0" 
+                      oninput="onSPKTruckPcsChange('${item.code}', 1, ${upb}, '${item.basketType}', '${item.unit || 'pcs'}', ${poQty})" 
+                      class="w-22 text-right font-black text-indigo-950 bg-white border border-indigo-300 focus:border-indigo-600 rounded-lg px-2 py-1 text-xs"
+                    >
+                    <span class="text-[10px] text-slate-500 font-mono">${item.unit || 'pcs'}</span>
+                  </div>
+                  <span id="spk-truck-basket-label-${item.code}-t0" class="text-[10px] text-indigo-700 font-bold mt-0.5">
+                    (${tBaskets} ${item.basketType})
+                  </span>
+                </div>
+              </td>
+            `;
+          }
+        }
+
+        totalSPKUnits += rowSPKTotal;
+        const rowBaskets = rowSPKTotal > 0 ? Math.ceil(rowSPKTotal / upb) : 0;
+        if (item.basketType === 'KB') totalSPKKB += rowBaskets;
+        else totalSPKKMK += rowBaskets;
+
+        const diff = rowSPKTotal - poQty;
         let diffBadge = '';
         let statusText = '';
 
@@ -5510,17 +5701,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           diffBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Sesuai PO</span>';
           statusText = '<span class="text-emerald-700 font-bold">Lengkap 100%</span>';
         } else if (diff < 0) {
-          diffBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">${diff} ${item.unit}</span>`;
-          statusText = `<span class="text-rose-700 font-bold">Kurang ${Math.abs(diff)} ${item.unit}</span>`;
+          diffBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">${diff} ${item.unit || 'pcs'}</span>`;
+          statusText = `<span class="text-rose-700 font-bold">Kurang ${Math.abs(diff)} ${item.unit || 'pcs'}</span>`;
         } else {
-          diffBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">+${diff} ${item.unit}</span>`;
-          statusText = `<span class="text-blue-700 font-bold">Lebih ${diff} ${item.unit}</span>`;
+          diffBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">+${diff} ${item.unit || 'pcs'}</span>`;
+          statusText = `<span class="text-blue-700 font-bold">Lebih ${diff} ${item.unit || 'pcs'}</span>`;
         }
 
-        const isRowActive = poQty > 0 || spkQty > 0;
+        const isRowActive = poQty > 0 || rowSPKTotal > 0;
 
         return `
-          <tr class="hover:bg-slate-50 transition ${isRowActive ? 'bg-white' : 'opacity-50'}">
+          <tr class="hover:bg-slate-50 transition ${isRowActive ? 'bg-white' : 'opacity-50'}" id="spk-row-${item.code}">
             <td class="py-2 px-2.5 text-center text-slate-400 font-mono">${idx + 1}</td>
             <td class="py-2 px-2.5 font-bold text-slate-900">${escapeHtml(item.code)}</td>
             <td class="py-2 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
@@ -5529,20 +5720,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 ${item.basketType}
               </span>
             </td>
-            <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${item.unitsPerBasket} ${item.unit}</td>
-            <td class="py-2 px-2.5 text-right font-bold text-slate-700">${poQty.toLocaleString('id-ID')} ${item.unit}</td>
-            <td class="py-1.5 px-2 text-right bg-indigo-50/50">
-              <input 
-                type="number" 
-                id="spk-input-${item.code}" 
-                value="${spkQty}" 
-                min="0" 
-                oninput="onSPKQtyInputChange('${item.code}')" 
-                class="w-24 text-right font-black text-indigo-950 bg-white border border-indigo-300 focus:border-indigo-600 rounded-lg px-2 py-1 text-xs"
-              >
-            </td>
-            <td class="py-2 px-2.5 text-right font-black text-indigo-900">
-              ${spkBaskets} ${item.basketType}
+            <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${upb} ${item.unit || 'pcs'}</td>
+            <td class="py-2 px-2.5 text-right font-bold text-slate-700">${poQty.toLocaleString('id-ID')} ${item.unit || 'pcs'}</td>
+            ${truckInputsHtml}
+            ${truckCount > 1 ? `
+              <td class="py-2 px-2.5 text-right font-black text-indigo-950 bg-indigo-50/30" id="spk-row-total-pcs-${item.code}">
+                ${rowSPKTotal.toLocaleString('id-ID')} ${item.unit || 'pcs'}
+              </td>
+            ` : ''}
+            <td class="py-2 px-2.5 text-right font-black text-indigo-900" id="spk-row-total-baskets-${item.code}">
+              ${rowBaskets} ${item.basketType}
             </td>
             <td class="py-2 px-2.5 text-center" id="spk-diff-cell-${item.code}">
               ${diffBadge}
@@ -5554,19 +5741,66 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         `;
       }).join('');
 
+      // 2. Render Cards Live Kapasitas Truk di Bagian Atas SPK
+      if (cards) {
+        cards.innerHTML = truckTotals.map((t, idx) => {
+          const capKB = perTruckCapKB;
+          const capKMK = perTruckCapKMK;
+          const capEquiv = capKB + Math.round(capKMK * 3 / 7);
+          const equiv = t.kb + Math.round(t.kmk * 3 / 7);
+          const pct = capEquiv > 0 ? Math.round((equiv / capEquiv) * 100) : 0;
+          return `
+            <div class="p-3 bg-white rounded-xl border border-indigo-200 shadow-2xs space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="font-black text-indigo-950 text-xs">🚚 Truk ${idx + 1} (${rawPlates[idx] || ('Truk ' + (idx + 1))})</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${pct <= 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                  ${pct}% Kapasitas
+                </span>
+              </div>
+              <div class="text-[11px] text-slate-700 font-semibold">
+                Kapasitas: ${capKB} KB + ${capKMK} KMK
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
+                <div class="${pct <= 100 ? 'bg-indigo-600' : 'bg-rose-600'} h-2 rounded-full" style="width: ${Math.min(100, pct)}%"></div>
+              </div>
+              <div class="pt-1 flex items-center justify-between text-[10.5px]">
+                <span class="font-bold text-slate-800">Muatan: ${t.kb} KB + ${t.kmk} KMK</span>
+                <span class="text-slate-500 font-mono font-bold">${t.pcs.toLocaleString('id-ID')} pcs</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 3. Render Footer Tabel SPK
       if (tfoot) {
         const netDiff = totalSPKUnits - totalPOUnits;
         const netDiffText = netDiff === 0 
           ? '<span class="text-emerald-700">0 Pas</span>' 
           : (netDiff > 0 ? `<span class="text-blue-700">+${netDiff} unit</span>` : `<span class="text-rose-700">${netDiff} unit</span>`);
 
+        let truckFooters = '';
+        if (truckCount > 1) {
+          for (let i = 0; i < truckCount; i++) {
+            truckFooters += `
+              <td class="py-3 px-2 text-center font-black text-indigo-950 bg-indigo-100/50 border-l border-indigo-200 text-xs">
+                ${truckTotals[i].pcs.toLocaleString('id-ID')} pcs
+                <span class="block text-[9.5px] font-normal text-indigo-800">${truckTotals[i].kb} KB • ${truckTotals[i].kmk} KMK</span>
+              </td>
+            `;
+          }
+        }
+
         tfoot.innerHTML = `
           <tr>
             <td colspan="5" class="py-3 px-3 text-right font-black text-slate-900 uppercase">TOTAL REALISASI SPK PABRIK:</td>
             <td class="py-3 px-2.5 text-right font-black text-slate-800 text-xs">${totalPOUnits.toLocaleString('id-ID')} unit</td>
-            <td id="spk-tfoot-total-units" class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm bg-indigo-100/60">
-              ${totalSPKUnits.toLocaleString('id-ID')} unit
-            </td>
+            ${truckFooters}
+            ${truckCount > 1 ? `
+              <td id="spk-tfoot-total-units" class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm bg-indigo-100/60">
+                ${totalSPKUnits.toLocaleString('id-ID')} unit
+              </td>
+            ` : ''}
             <td class="py-3 px-2.5 text-right font-black text-indigo-900 text-xs sm:text-sm">
               ${totalSPKKB} KB • ${totalSPKKMK} KMK
             </td>
@@ -5577,34 +5811,45 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     }
 
-    function onSPKQtyInputChange(code) {
-      // Re-calculate totals live
-      const allPO = getPOSalesData();
-      const posOnDate = allPO.filter(po => po.date === currentPODate);
-      const aggItems = {};
-      posOnDate.forEach(po => {
-        if (po.items) {
-          Object.entries(po.items).forEach(([k, v]) => {
-            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
-          });
+    function onSPKTruckPcsChange(code, truckCount, upb, basketType, unit, poQty) {
+      let sumPcs = 0;
+      for (let i = 0; i < truckCount; i++) {
+        const inputEl = document.getElementById(`spk-truck-pcs-${code}-t${i}`);
+        const pQty = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+        sumPcs += pQty;
+
+        const basketLabel = document.getElementById(`spk-truck-basket-label-${code}-t${i}`);
+        if (basketLabel) {
+          const b = pQty > 0 ? Math.ceil(pQty / upb) : 0;
+          basketLabel.innerText = `(${b} ${basketType})`;
         }
-      });
+      }
 
-      const poQty = aggItems[code] || 0;
-      const inputEl = document.getElementById('spk-input-' + code);
-      const spkQty = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
-      const diff = spkQty - poQty;
+      // Update total pcs row
+      const totalPcsCell = document.getElementById(`spk-row-total-pcs-${code}`);
+      if (totalPcsCell) {
+        totalPcsCell.innerText = `${sumPcs.toLocaleString('id-ID')} ${unit}`;
+      }
 
-      const diffCell = document.getElementById('spk-diff-cell-' + code);
-      const statusCell = document.getElementById('spk-status-cell-' + code);
+      // Update total baskets row
+      const totalBasketsCell = document.getElementById(`spk-row-total-baskets-${code}`);
+      if (totalBasketsCell) {
+        const b = sumPcs > 0 ? Math.ceil(sumPcs / upb) : 0;
+        totalBasketsCell.innerText = `${b} ${basketType}`;
+      }
+
+      // Update diff & status
+      const diff = sumPcs - poQty;
+      const diffCell = document.getElementById(`spk-diff-cell-${code}`);
+      const statusCell = document.getElementById(`spk-status-cell-${code}`);
 
       if (diffCell) {
         if (diff === 0) {
           diffCell.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Sesuai PO</span>';
         } else if (diff < 0) {
-          diffCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">${diff}</span>`;
+          diffCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">${diff} ${unit}</span>`;
         } else {
-          diffCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">+${diff}</span>`;
+          diffCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">+${diff} ${unit}</span>`;
         }
       }
 
@@ -5612,9 +5857,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         if (diff === 0) {
           statusCell.innerHTML = '<span class="text-emerald-700 font-bold">Lengkap 100%</span>';
         } else if (diff < 0) {
-          statusCell.innerHTML = `<span class="text-rose-700 font-bold">Kurang ${Math.abs(diff)}</span>`;
+          statusCell.innerHTML = `<span class="text-rose-700 font-bold">Kurang ${Math.abs(diff)} ${unit}</span>`;
         } else {
-          statusCell.innerHTML = `<span class="text-blue-700 font-bold">Lebih ${diff}</span>`;
+          statusCell.innerHTML = `<span class="text-blue-700 font-bold">Lebih ${diff} ${unit}</span>`;
         }
       }
     }
@@ -5622,6 +5867,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     function copyAllPOToSPK() {
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const armada = getFactoryArmadaForDate(currentPODate);
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
+
       const aggItems = {};
       posOnDate.forEach(po => {
         if (po.items) {
@@ -5631,39 +5879,80 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }
       });
 
+      const spkItemsPerTruck = {};
+      const spkTotalItems = {};
+
+      STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
+        const poQty = aggItems[p.code] || 0;
+        const base = Math.floor(poQty / truckCount);
+        const rem = poQty % truckCount;
+        spkItemsPerTruck[p.code] = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+        spkTotalItems[p.code] = poQty;
+      });
+
       const spkData = getSPKRealizationData(currentPODate);
-      spkData.items = { ...aggItems };
+      spkData.items = spkTotalItems;
+      spkData.itemsPerTruck = spkItemsPerTruck;
       spkData.updatedAt = new Date().toISOString();
       const docInput = document.getElementById('spk-doc-number');
       if (docInput && docInput.value) spkData.spkNumber = docInput.value;
 
       saveSPKRealizationData(currentPODate, spkData);
+
+      // Sinkronkan juga ke alokasi truk manual
+      saveManualTruckAllocData(currentPODate, {
+        mode: 'manual',
+        date: currentPODate,
+        allocations: spkItemsPerTruck
+      });
+
       renderSPKTabContent();
-      showToast('Seluruh produk berhasil disalin 100% sesuai PO!', 'success');
+      renderReconModalContent();
+      showToast('Seluruh produk berhasil disalin 100% dari PO dan dibagi ke armada!', 'success');
     }
 
     function saveSPKRealizationInputs() {
       const docInput = document.getElementById('spk-doc-number');
       const spkNumber = docInput ? docInput.value.trim() : '';
+      const armada = getFactoryArmadaForDate(currentPODate);
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
 
       const spkItems = {};
+      const spkItemsPerTruck = {};
+
       STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
-        const inputEl = document.getElementById('spk-input-' + p.code);
-        if (inputEl) {
-          spkItems[p.code] = Math.max(0, parseInt(inputEl.value || '0', 10));
+        const tPcs = [];
+        let rowSum = 0;
+        for (let i = 0; i < truckCount; i++) {
+          const inputEl = document.getElementById(`spk-truck-pcs-${p.code}-t${i}`);
+          const val = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+          tPcs.push(val);
+          rowSum += val;
         }
+        spkItemsPerTruck[p.code] = tPcs;
+        spkItems[p.code] = rowSum;
       });
 
       const spkData = {
         spkNumber: spkNumber || ('SPK-FB-' + currentPODate.replace(/-/g, '') + '-01'),
         date: currentPODate,
         updatedAt: new Date().toISOString(),
+        itemsPerTruck: spkItemsPerTruck,
         items: spkItems
       };
 
       saveSPKRealizationData(currentPODate, spkData);
+
+      // Otomatis sinkronkan juga ke manual truck allocation
+      saveManualTruckAllocData(currentPODate, {
+        mode: 'manual',
+        date: currentPODate,
+        allocations: spkItemsPerTruck
+      });
+
       renderSPKTabContent();
-      showToast('Realisasi SPK Pabrik berhasil disimpan!', 'success');
+      renderReconModalContent();
+      showToast('Realisasi SPK Pabrik & Muatan Truk berhasil disimpan!', 'success');
     }
 
     function applySPKToSalesProportional() {
@@ -6973,9 +7262,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         : (count === 2 ? ['S 9631 NF', 'N 8124 TA'] : ['S 9631 NF']);
 
       const manualData = getManualTruckAllocData(currentPODate);
+      const spkData = getSPKRealizationData(currentPODate);
+
+      const manualAlloc = (manualData && manualData.mode === 'manual' && manualData.allocations && Object.keys(manualData.allocations).length > 0)
+        ? manualData.allocations
+        : (spkData && spkData.itemsPerTruck && Object.keys(spkData.itemsPerTruck).length > 0 ? spkData.itemsPerTruck : null);
 
       // JIKA MODE MANUAL AKTIF DAN ADA ALOKASI TERSIMPAN:
-      if (manualData && manualData.mode === 'manual' && manualData.allocations && Object.keys(manualData.allocations).length > 0) {
+      if (manualAlloc) {
         const manualTrucks = [];
         for (let i = 0; i < count; i++) {
           manualTrucks.push({
@@ -6993,13 +7287,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }
 
         (loadedItems || []).forEach(item => {
-          const allocBaskets = manualData.allocations[item.code] || [];
+          const alloc = manualAlloc[item.code] || [];
           const upb = Number(item.unitsPerBasket) || 60;
 
           for (let i = 0; i < count; i++) {
-            const b = allocBaskets[i] || 0;
-            if (b > 0) {
-              const qty = b * upb;
+            const rawVal = alloc[i] || 0;
+            if (rawVal > 0) {
+              const qty = rawVal;
+              const baskets = Math.ceil(qty / upb);
+              const fullBaskets = Math.floor(qty / upb);
+              const remUnits = qty % upb;
               const fPrice = Number(item.fPrice) || 0;
               manualTrucks[i].items.push({
                 code: item.code,
@@ -7008,16 +7305,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 unitsPerBasket: upb,
                 unit: item.unit || 'pcs',
                 qty,
-                baskets: b, // Bilangan bulat keranjang
-                fullBaskets: b,
-                hasPartial: false,
-                partialUnits: 0,
+                baskets, // Keranjang bulat utuh
+                fullBaskets,
+                hasPartial: remUnits > 0,
+                partialUnits: remUnits,
                 fPrice,
                 subtotalHPP: qty * fPrice
               });
               manualTrucks[i].totalUnits += qty;
-              if (item.basketType === 'KB') manualTrucks[i].totalKB += b;
-              else manualTrucks[i].totalKMK += b;
+              if (item.basketType === 'KB') manualTrucks[i].totalKB += baskets;
+              else manualTrucks[i].totalKMK += baskets;
             }
           }
         });
@@ -7047,8 +7344,6 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         });
       }
 
-      let partialTurn = 0;
-
       (loadedItems || []).forEach(item => {
         const total = Number(item.orderQty) || 0;
         if (total <= 0) return;
@@ -7059,41 +7354,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         const baseFull = Math.floor(fullBaskets / count);
         const extraFull = fullBaskets % count;
 
-        const alloc = [];
         for (let i = 0; i < count; i++) {
-          alloc.push({
-            fullBaskets: baseFull + (i < extraFull ? 1 : 0),
-            partialUnits: 0,
-            hasPartial: false
-          });
-        }
-
-        if (remUnits > 0) {
-          let targetTruck = -1;
-          if (extraFull > 0 && extraFull < count) {
-            const nonExtraTrucks = [];
-            for (let i = extraFull; i < count; i++) nonExtraTrucks.push(i);
-            targetTruck = nonExtraTrucks[partialTurn % nonExtraTrucks.length];
-          } else {
-            let minBasketTruck = 0;
-            for (let i = 1; i < count; i++) {
-              const b1 = (item.basketType === 'KB' ? trucks[i].totalKB : trucks[i].totalKMK);
-              const b0 = (item.basketType === 'KB' ? trucks[minBasketTruck].totalKB : trucks[minBasketTruck].totalKMK);
-              if (b1 < b0) minBasketTruck = i;
-            }
-            targetTruck = minBasketTruck;
-          }
-          alloc[targetTruck].partialUnits = remUnits;
-          alloc[targetTruck].hasPartial = true;
-          partialTurn++;
-        }
-
-        for (let i = 0; i < count; i++) {
-          const a = alloc[i];
-          const baskets = a.fullBaskets + (a.hasPartial ? 1 : 0);
-          const qty = (a.fullBaskets * unitsPerBasket) + a.partialUnits;
-
-          if (qty > 0) {
+          const b = baseFull + (i < extraFull ? 1 : 0);
+          if (b > 0) {
+            const qty = b * unitsPerBasket;
             const fPrice = Number(item.fPrice) || 0;
             trucks[i].items.push({
               code: item.code,
@@ -7102,17 +7366,50 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               unitsPerBasket,
               unit: item.unit || 'pcs',
               qty,
-              baskets, // BILANGAN BULAT / INTEGER UTUH (TIDAK KOMA)
-              fullBaskets: a.fullBaskets,
-              hasPartial: a.hasPartial,
-              partialUnits: a.partialUnits,
+              baskets: b,
+              fullBaskets: b,
+              hasPartial: false,
+              partialUnits: 0,
               fPrice,
               subtotalHPP: qty * fPrice
             });
             trucks[i].totalUnits += qty;
-            if (item.basketType === 'KB') trucks[i].totalKB += baskets;
-            else trucks[i].totalKMK += baskets;
+            if (item.basketType === 'KB') trucks[i].totalKB += b;
+            else trucks[i].totalKMK += b;
           }
+        }
+
+        if (remUnits > 0) {
+          let targetTruckIdx = extraFull < count ? extraFull : 0;
+          const targetTruck = trucks[targetTruckIdx];
+          const existing = targetTruck.items.find(it => it.code === item.code);
+          const fPrice = Number(item.fPrice) || 0;
+
+          if (existing) {
+            existing.qty += remUnits;
+            existing.baskets += 1;
+            existing.hasPartial = true;
+            existing.partialUnits = remUnits;
+            existing.subtotalHPP = existing.qty * fPrice;
+          } else {
+            targetTruck.items.push({
+              code: item.code,
+              name: item.name,
+              basketType: item.basketType || 'KB',
+              unitsPerBasket,
+              unit: item.unit || 'pcs',
+              qty: remUnits,
+              baskets: 1,
+              fullBaskets: 0,
+              hasPartial: true,
+              partialUnits: remUnits,
+              fPrice,
+              subtotalHPP: remUnits * fPrice
+            });
+          }
+          targetTruck.totalUnits += remUnits;
+          if (item.basketType === 'KB') targetTruck.totalKB += 1;
+          else targetTruck.totalKMK += 1;
         }
       });
 
@@ -7124,58 +7421,31 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       return trucks;
     }
 
-    // Helper Penataan Manual Muatan Armada
     function presetManualFromAutoDivision() {
-      const allPO = getPOSalesData();
-      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const allPO = getPOSalesData().filter(p => p.date === currentPODate);
       const armada = getFactoryArmadaForDate(currentPODate);
-      const truckCount = armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1));
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
 
-      const aggItems = {};
-      posOnDate.forEach(po => {
-        if (po.items) {
-          Object.entries(po.items).forEach(([k, v]) => {
-            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
-          });
-        }
+      const aggregatedItems = {};
+      allPO.forEach(po => {
+        Object.entries(po.items || {}).forEach(([k, q]) => {
+          aggregatedItems[k] = (aggregatedItems[k] || 0) + Number(q || 0);
+        });
       });
 
-      const calc = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
-      const loadedItems = calc.itemsBreakdown.filter(it => it.orderQty > 0);
-      const rawPlates = truckCount === 3 
-        ? ['S 9631 NF', 'N 8124 TA', 'W 9012 UZ']
-        : (truckCount === 2 ? ['S 9631 NF', 'N 8124 TA'] : [armada.nopol || 'S 9631 NF']);
+      const calc = calculateFactoryLoad(aggregatedItems, armada.kb, armada.kmk);
+      const loadedItems = calc.itemsBreakdown.filter(item => item.orderQty > 0);
 
-      // Jalankan auto division murni
-      const autoTrucks = [];
-      for (let i = 0; i < truckCount; i++) {
-        autoTrucks.push({ totalKB: 0, totalKMK: 0 });
-      }
-      let partialTurn = 0;
       const allocMap = {};
-
       loadedItems.forEach(item => {
         const total = Number(item.orderQty) || 0;
-        const upb = Number(item.unitsPerBasket) || 60;
-        const fullBaskets = Math.floor(total / upb);
-        const remUnits = total % upb;
-
-        const baseFull = Math.floor(fullBaskets / truckCount);
-        const extraFull = fullBaskets % truckCount;
+        const base = Math.floor(total / truckCount);
+        const rem = total % truckCount;
 
         const alloc = [];
         for (let i = 0; i < truckCount; i++) {
-          alloc.push(baseFull + (i < extraFull ? 1 : 0));
+          alloc.push(base + (i < rem ? 1 : 0));
         }
-
-        if (remUnits > 0) {
-          let target = 0;
-          if (extraFull > 0 && extraFull < truckCount) {
-            target = extraFull;
-          }
-          alloc[target % truckCount] += 1;
-        }
-
         allocMap[item.code] = alloc;
       });
 
@@ -7185,13 +7455,20 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         allocations: allocMap
       };
       saveManualTruckAllocData(currentPODate, manualData);
+
+      const spkData = getSPKRealizationData(currentPODate);
+      spkData.itemsPerTruck = { ...allocMap };
+      saveSPKRealizationData(currentPODate, spkData);
+
       renderReconModalContent();
-      showToast('Penataan manual berhasil disalin dari pembagian rata!', 'success');
+      renderSPKTabContent();
+      showToast('Penataan manual muatan truk berhasil dibagi rata dalam Pcs/Bdl!', 'success');
     }
 
-    // Fungsi Render Tabel Grid Penataan Manual Muatan Armada
+    // Fungsi Render Tabel Grid Penataan Manual Muatan Armada (Dalam Pcs/Bdl & Konversi Keranjang)
     function renderManualTruckAllocationGrid(loadedItems, truckCount, rawPlates, truckKB, truckKMK) {
       const manualData = getManualTruckAllocData(currentPODate);
+      const spkData = getSPKRealizationData(currentPODate);
       const thead = document.getElementById('recon-manual-thead');
       const tbody = document.getElementById('recon-manual-tbody');
       const tfoot = document.getElementById('recon-manual-tfoot');
@@ -7234,43 +7511,59 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             const upb = Number(item.unitsPerBasket) || 60;
             const totalUnits = Number(item.qty || item.orderQty || 0);
             const totalBaskets = item.baskets || Math.ceil(totalUnits / upb);
-            const alloc = (manualData.allocations && manualData.allocations[item.code]) || [];
 
-            let sumAlloc = 0;
+            // Alokasi dalam Pcs/Bdl: utamakan manualData, atau spkData.itemsPerTruck
+            let alloc = (manualData.allocations && manualData.allocations[item.code]) || 
+                        (spkData.itemsPerTruck && spkData.itemsPerTruck[item.code]);
+
+            if (!alloc || alloc.length !== truckCount) {
+              const base = Math.floor(totalUnits / truckCount);
+              const rem = totalUnits % truckCount;
+              alloc = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+            }
+
+            let sumAllocPcs = 0;
             let truckInputs = '';
 
             for (let i = 0; i < truckCount; i++) {
-              const b = alloc[i] !== undefined ? alloc[i] : 0;
-              sumAlloc += b;
+              const pQty = Number(alloc[i]) || 0;
+              sumAllocPcs += pQty;
+              const b = pQty > 0 ? Math.ceil(pQty / upb) : 0;
+
               if (item.basketType === 'KB') truckSums[i].kb += b;
               else truckSums[i].kmk += b;
-              truckSums[i].units += (b * upb);
+              truckSums[i].units += pQty;
 
               truckInputs += `
                 <td class="py-2 px-2 text-center border-l border-slate-100 bg-amber-50/20">
-                  <div class="flex items-center justify-center gap-1">
-                    <input 
-                      type="number" 
-                      id="manual-basket-${item.code}-t${i + 1}" 
-                      value="${b}" 
-                      min="0" 
-                      oninput="onManualBasketRowChange('${item.code}', ${truckCount}, ${totalBaskets})" 
-                      class="w-16 text-center font-black text-slate-900 bg-white border border-slate-300 focus:border-amber-500 rounded px-1.5 py-1 text-xs"
-                    >
-                    <span class="text-[10px] text-slate-400 font-mono">${item.basketType}</span>
+                  <div class="flex flex-col items-center justify-center">
+                    <div class="flex items-center justify-center gap-1">
+                      <input 
+                        type="number" 
+                        id="manual-truck-pcs-${item.code}-t${i + 1}" 
+                        value="${pQty}" 
+                        min="0" 
+                        oninput="onManualTruckPcsChange('${item.code}', ${truckCount}, ${upb}, '${item.basketType}', '${item.unit || 'pcs'}', ${totalUnits})" 
+                        class="w-18 text-center font-black text-slate-900 bg-white border border-slate-300 focus:border-amber-500 rounded px-1.5 py-1 text-xs"
+                      >
+                      <span class="text-[10px] text-slate-400 font-mono">${item.unit || 'pcs'}</span>
+                    </div>
+                    <span id="manual-truck-basket-label-${item.code}-t${i + 1}" class="text-[10px] text-amber-800 font-semibold mt-0.5">
+                      (${b} ${item.basketType})
+                    </span>
                   </div>
                 </td>
               `;
             }
 
-            const diff = totalBaskets - sumAlloc;
+            const diffPcs = totalUnits - sumAllocPcs;
             let statusHtml = '';
-            if (diff === 0) {
+            if (diffPcs === 0) {
               statusHtml = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Pas Lengkap</span>';
-            } else if (diff > 0) {
-              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diff} ${item.basketType}</span>`;
+            } else if (diffPcs > 0) {
+              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diffPcs} ${item.unit || 'pcs'} (${Math.ceil(diffPcs / upb)} ${item.basketType})</span>`;
             } else {
-              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diff)} ${item.basketType}</span>`;
+              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diffPcs)} ${item.unit || 'pcs'}</span>`;
             }
 
             return `
@@ -7285,8 +7578,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 </td>
                 <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${upb} ${item.unit || 'pcs'}</td>
                 <td class="py-2 px-2.5 text-right font-black text-slate-900">
-                  <span>${totalBaskets} ${item.basketType}</span>
-                  <span class="block text-[9.5px] font-normal text-slate-400">${totalUnits.toLocaleString('id-ID')} pcs</span>
+                  <span>${totalUnits.toLocaleString('id-ID')} ${item.unit || 'pcs'}</span>
+                  <span class="block text-[9.5px] font-normal text-slate-400">(${totalBaskets} ${item.basketType})</span>
                 </td>
                 ${truckInputs}
                 <td class="py-2 px-2.5 text-center" id="manual-status-${item.code}">
@@ -7311,7 +7604,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         tfoot.innerHTML = `
           <tr>
-            <td colspan="6" class="py-2.5 px-3 text-right font-black text-slate-900 uppercase">TOTAL KERANJANG TERBAGI:</td>
+            <td colspan="6" class="py-2.5 px-3 text-right font-black text-slate-900 uppercase">TOTAL MUATAN TERBAGI:</td>
             ${truckFooters}
             <td class="py-2.5 px-2.5 text-center font-bold text-emerald-700 text-[10px]">Tersinkron</td>
           </tr>
@@ -7323,24 +7616,26 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         cards.innerHTML = truckSums.map((t, idx) => {
           const capKB = perTruckCapKB;
           const capKMK = perTruckCapKMK;
-          const pctKB = capKB > 0 ? Math.round((t.kb / capKB) * 100) : 0;
+          const capEquiv = capKB + Math.round(capKMK * 3 / 7);
+          const equiv = t.kb + Math.round(t.kmk * 3 / 7);
+          const pct = capEquiv > 0 ? Math.round((equiv / capEquiv) * 100) : 0;
           return `
             <div class="p-3 bg-white rounded-xl border border-amber-300 shadow-2xs space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="font-black text-amber-950 text-xs">🚚 Truk ${idx + 1} (${rawPlates[idx] || ('Truk ' + (idx + 1))})</span>
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${pctKB <= 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                  ${pctKB}% Kapasitas
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${pct <= 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                  ${pct}% Kapasitas
                 </span>
               </div>
               <div class="text-[11px] text-slate-700 font-semibold">
                 Kapasitas: ${capKB} KB + ${capKMK} KMK
               </div>
               <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
-                <div class="${pctKB <= 100 ? 'bg-amber-500' : 'bg-rose-600'} h-2 rounded-full" style="width: ${Math.min(100, pctKB)}%"></div>
+                <div class="${pct <= 100 ? 'bg-amber-500' : 'bg-rose-600'} h-2 rounded-full" style="width: ${Math.min(100, pct)}%"></div>
               </div>
               <div class="pt-1 flex items-center justify-between text-[10.5px]">
                 <span class="font-bold text-slate-800">Muatan: ${t.kb} KB + ${t.kmk} KMK</span>
-                <span class="text-slate-500 font-mono">${t.units.toLocaleString('id-ID')} pcs</span>
+                <span class="text-slate-500 font-mono font-bold">${t.units.toLocaleString('id-ID')} pcs</span>
               </div>
             </div>
           `;
@@ -7348,22 +7643,29 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     }
 
-    function onManualBasketRowChange(code, truckCount, totalBaskets) {
-      let sum = 0;
+    function onManualTruckPcsChange(code, truckCount, upb, basketType, unit, totalUnits) {
+      let sumPcs = 0;
       for (let i = 0; i < truckCount; i++) {
-        const inputEl = document.getElementById(`manual-basket-${code}-t${i + 1}`);
-        sum += inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+        const inputEl = document.getElementById(`manual-truck-pcs-${code}-t${i + 1}`);
+        const pQty = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+        sumPcs += pQty;
+
+        const basketLabel = document.getElementById(`manual-truck-basket-label-${code}-t${i + 1}`);
+        if (basketLabel) {
+          const b = pQty > 0 ? Math.ceil(pQty / upb) : 0;
+          basketLabel.innerText = `(${b} ${basketType})`;
+        }
       }
 
-      const diff = totalBaskets - sum;
+      const diffPcs = totalUnits - sumPcs;
       const statusEl = document.getElementById('manual-status-' + code);
       if (statusEl) {
-        if (diff === 0) {
+        if (diffPcs === 0) {
           statusEl.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Pas Lengkap</span>';
-        } else if (diff > 0) {
-          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diff} krjg</span>`;
+        } else if (diffPcs > 0) {
+          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diffPcs} ${unit} (${Math.ceil(diffPcs / upb)} ${basketType})</span>`;
         } else {
-          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diff)} krjg</span>`;
+          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diffPcs)} ${unit}</span>`;
         }
       }
     }
@@ -7372,7 +7674,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
       const armada = getFactoryArmadaForDate(currentPODate);
-      const truckCount = armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1));
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
 
       const aggItems = {};
       posOnDate.forEach(po => {
@@ -7388,13 +7690,13 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       const allocMap = {};
       loadedItems.forEach(item => {
-        const truckBaskets = [];
+        const truckPcs = [];
         for (let i = 0; i < truckCount; i++) {
-          const inputEl = document.getElementById(`manual-basket-${item.code}-t${i + 1}`);
-          const b = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
-          truckBaskets.push(b);
+          const inputEl = document.getElementById(`manual-truck-pcs-${item.code}-t${i + 1}`);
+          const p = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
+          truckPcs.push(p);
         }
-        allocMap[item.code] = truckBaskets;
+        allocMap[item.code] = truckPcs;
       });
 
       const manualData = {
@@ -7403,8 +7705,20 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         allocations: allocMap
       };
       saveManualTruckAllocData(currentPODate, manualData);
+
+      // Sinkronkan juga ke SPK Realization
+      const spkData = getSPKRealizationData(currentPODate);
+      spkData.itemsPerTruck = { ...allocMap };
+      const totalSPK = {};
+      Object.entries(allocMap).forEach(([k, arr]) => {
+        totalSPK[k] = (arr || []).reduce((a, b) => a + Number(b || 0), 0);
+      });
+      spkData.items = totalSPK;
+      saveSPKRealizationData(currentPODate, spkData);
+
       renderReconModalContent();
-      showToast('Penataan muatan armada manual berhasil disimpan!', 'success');
+      renderSPKTabContent();
+      showToast('Penataan muatan armada manual berhasil disimpan & disinkronkan!', 'success');
     }
 
     function buildTracerBongkarHTML(targetDate, truckFilter = 'all') {
