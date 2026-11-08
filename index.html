@@ -3658,6 +3658,33 @@
         if (poSettled.status === 'fulfilled' && !poSettled.value.error && Array.isArray(poSettled.value.data)) {
           localStorage.setItem(STORAGE_KEY_PO, JSON.stringify(poSettled.value.data.map(objectToCamel)));
           tablesUpdated++;
+
+          // Auto-focus ke tanggal yang memiliki data PO aktif jika tanggal yang sedang dipilih kosong
+          const freshPO = getPOSalesData();
+          const currentCount = freshPO.filter(p => p.date === currentPODate).length;
+          if (currentCount === 0 && freshPO.length > 0) {
+            const today = getTodayYMD();
+            const tomorrow = addDaysYMD(today, 1);
+            let target = '';
+            if (freshPO.filter(p => p.date === tomorrow).length > 0) {
+              target = tomorrow;
+            } else if (freshPO.filter(p => p.date === today).length > 0) {
+              target = today;
+            } else {
+              const sortedDates = [...new Set(freshPO.map(p => p.date).filter(Boolean))].sort().reverse();
+              target = sortedDates[0] || tomorrow;
+            }
+
+            if (target && target !== currentPODate) {
+              currentPODate = target;
+              const poDateEl = document.getElementById('po-date-filter');
+              if (poDateEl) poDateEl.value = currentPODate;
+              const trxDateEl = document.getElementById('filter-trx-date');
+              if (trxDateEl && !trxDateEl.dataset.customMode) trxDateEl.value = currentPODate;
+              updatePODatePillsHighlight(currentPODate);
+              updateTrxDatePillsHighlight(currentPODate);
+            }
+          }
         }
 
         renderAllViews();
@@ -4571,7 +4598,7 @@
       const countLusa = allPO.filter(p => p.date === lusa).length;
 
       const btns = [
-        { id: 'po-btn-today', label: `Hari Ini (${countToday})`, active: activeDate === today },
+        { id: 'po-btn-today', label: `Hari Ini (${countToday} PO)`, active: activeDate === today },
         { id: 'po-btn-tomorrow', label: `Besok (${countTomorrow} PO)`, active: activeDate === tomorrow },
         { id: 'po-btn-lusa', label: `Lusa (${countLusa} PO)`, active: activeDate === lusa }
       ];
@@ -4693,6 +4720,26 @@
         tbody.innerHTML = '';
         tfoot.innerHTML = '';
         emptyState.classList.remove('hidden');
+
+        // Berikan petunjuk cerdas jika ada data PO aktif di tanggal lain (misal Hari Ini)
+        const emptyMsgEl = emptyState.querySelector('p.text-xs');
+        const emptySubEl = emptyState.querySelector('p.text-\\[11px\\]');
+        const countToday = allPO.filter(p => p.date === getTodayYMD()).length;
+        const countTomorrow = allPO.filter(p => p.date === addDaysYMD(getTodayYMD(), 1)).length;
+        
+        let hintHtml = '';
+        if (countToday > 0 && currentPODate !== getTodayYMD()) {
+          hintHtml = `Terdapat <strong class="text-amber-800">${countToday} pesanan PO aktif</strong> pada <button type="button" onclick="setPODateQuick(0)" class="text-brand-600 underline font-black hover:text-brand-800 cursor-pointer">Hari Ini (${formatIndoDate(getTodayYMD())})</button>. Klik untuk membukanya.`;
+        } else if (countTomorrow > 0 && currentPODate !== addDaysYMD(getTodayYMD(), 1)) {
+          hintHtml = `Terdapat <strong class="text-amber-800">${countTomorrow} pesanan PO aktif</strong> pada <button type="button" onclick="setPODateQuick(1)" class="text-brand-600 underline font-black hover:text-brand-800 cursor-pointer">Besok (${formatIndoDate(addDaysYMD(getTodayYMD(), 1))})</button>. Klik untuk membukanya.`;
+        }
+
+        if (emptyMsgEl) {
+          emptyMsgEl.innerHTML = `Belum ada data Pre-Order (PO) sales untuk tanggal <strong>${formatIndoDate(currentPODate)}</strong>.`;
+        }
+        if (emptySubEl) {
+          emptySubEl.innerHTML = hintHtml || 'Klik tombol "+ Input PO Sales" di atas untuk memasukkan pesanan rute.';
+        }
 
         document.getElementById('po-kpi-total-pcs').innerText = '0 Pcs';
         document.getElementById('po-kpi-sales-count').innerText = '0 Tim';
@@ -10740,16 +10787,28 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       // 0. Bersihkan cache dummy lama jika ada
       cleanupLegacyDummyData();
 
-      // 0.5 Inisialisasi tanggal aktif PO dan Transaksi Drop Roti (prioritas tanggal aktif berpesanan)
-      let initialDate = currentPODate || getTomorrowYMD();
+      // 0.5 Inisialisasi tanggal aktif PO dan Transaksi Drop Roti (cerdas: prioritas tanggal yang memiliki PO aktif)
       const allPO = getPOSalesData();
-      const tomorrowYMD = addDaysYMD(getTodayYMD(), 1);
-      const lusaYMD = addDaysYMD(getTodayYMD(), 2);
+      const todayYMD = getTodayYMD();
+      const tomorrowYMD = addDaysYMD(todayYMD, 1);
+      const lusaYMD = addDaysYMD(todayYMD, 2);
+
+      const countToday = allPO.filter(p => p.date === todayYMD).length;
       const countTomorrow = allPO.filter(p => p.date === tomorrowYMD).length;
       const countLusa = allPO.filter(p => p.date === lusaYMD).length;
-      if (countTomorrow === 0 && countLusa > 0) {
-        initialDate = lusaYMD; // Otomatis fokus ke tanggal aktif berpesanan (08/11/2026)
+
+      let initialDate = tomorrowYMD;
+      if (countTomorrow > 0) {
+        initialDate = tomorrowYMD;
+      } else if (countToday > 0) {
+        initialDate = todayYMD;
+      } else if (countLusa > 0) {
+        initialDate = lusaYMD;
+      } else {
+        const datesWithPO = [...new Set(allPO.map(p => p.date).filter(Boolean))].sort().reverse();
+        initialDate = datesWithPO[0] || tomorrowYMD;
       }
+
       currentPODate = initialDate;
       const initPODateEl = document.getElementById('po-date-filter');
       if (initPODateEl) initPODateEl.value = initialDate;
