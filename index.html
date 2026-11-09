@@ -4137,6 +4137,56 @@
       po.totalAmount = totalAmount;
     }
 
+    // Self-healing: Menjaga integritas data PO Sales agar tidak hilang atau kosong
+    function ensurePOSalesIntegrity(targetDate = currentPODate) {
+      if (!targetDate) return;
+      let allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === targetDate);
+      const isMissingItems = posOnDate.length === 0 || posOnDate.every(po => !po.items || Object.keys(po.items).length === 0);
+
+      if (isMissingItems) {
+        const allTrx = getTransactionsData();
+        const trxsOnDate = allTrx.filter(t => t.date === targetDate && Array.isArray(t.items) && t.items.length > 0);
+        if (trxsOnDate.length > 0) {
+          console.log('[PO Recovery] Memulihkan data PO Sales dari data transaksi tanggal', targetDate);
+          const products = getProductsData();
+          let recovered = false;
+
+          trxsOnDate.forEach(trx => {
+            let po = allPO.find(p => p.id === trx.poId || p.salesId === trx.sales_id || p.salesId === trx.salesId || p.salesName === trx.sales_name || p.salesName === trx.salesName);
+            if (!po) {
+              po = {
+                id: trx.poId || ('PO-' + String(Date.now()).slice(-5)),
+                date: targetDate,
+                salesId: trx.sales_id || trx.salesId,
+                salesName: trx.sales_name || trx.salesName,
+                salesRoute: trx.sales_route || trx.salesRoute || 'Rute Bebas',
+                salesPhone: trx.sales_phone || trx.salesPhone || '-',
+                items: {},
+                notes: trx.notes || '- [FIX:TRANSAKSI]'
+              };
+              allPO.push(po);
+            }
+            if (!po.items || Object.keys(po.items).length === 0) {
+              po.items = {};
+              trx.items.forEach(it => {
+                const prod = products.find(p => p.name === it.productName || p.code === it.productName || getProductStandardCode(p.name) === getProductStandardCode(it.productName));
+                const targetKey = prod ? prod.id : it.productName;
+                po.items[targetKey] = Number(it.qty) || 0;
+              });
+              recalculatePOSalesTotals(po);
+              recovered = true;
+            }
+          });
+
+          if (recovered) {
+            savePOSalesData(allPO);
+            console.log('[PO Recovery] Berhasil memulihkan', trxsOnDate.length, 'PO Sales!');
+          }
+        }
+      }
+    }
+
     // --- 2.2 KONSTANTA & KALKULATOR RESMI PABRIK (FRIEND'S BAKERY SPREADSHEET) ---
     const FACTORY_BREAD_CONVERSIONS = {
       'MCN': { type: 'KB', unitsPerBasket: 18, unit: 'bdl', fullName: 'MCN' },
@@ -4845,6 +4895,7 @@
     }
 
     function renderPOSalesMatrix() {
+      ensurePOSalesIntegrity(currentPODate);
       const dateInput = document.getElementById('po-date-filter');
       if (dateInput && dateInput.value) {
         currentPODate = dateInput.value;
@@ -4941,7 +4992,7 @@
         let rowColsHtml = '';
 
         products.forEach(p => {
-          const qty = (po.items && po.items[p.id]) || 0;
+          const qty = getPOSalesItemQty(po, p.id);
           salesRowSum += qty;
           productTotals[p.id] += qty;
           grandTotalPcs += qty;
@@ -5852,6 +5903,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
     // Render Konten Tab Terpadu: Realisasi SPK Pabrik & Alokasi Tim Sales
     function renderSPKTabContent() {
+      ensurePOSalesIntegrity(currentPODate);
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
       const products = getProductsData();
@@ -6347,6 +6399,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function copyAllPOToSPK() {
+      ensurePOSalesIntegrity(currentPODate);
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
       const armada = getFactoryArmadaForDate(currentPODate);
@@ -6416,19 +6469,31 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       saveSPKRealizationData(currentPODate, spkData);
 
-      // Simpan perubahan alokasi sales dari sel input matriks
+      // Simpan perubahan alokasi sales dari sel input matriks hanya jika input valid & bukan 0 semua
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
 
       posOnDate.forEach(po => {
+        let hasAnyInput = false;
+        let sumInputs = 0;
         STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
           const inputSales = document.getElementById(`spk-sales-${po.id}-${p.code}`);
           if (inputSales) {
-            const sq = Math.max(0, parseInt(inputSales.value || '0', 10));
-            setPOSalesItemQty(po, p.code, sq);
+            hasAnyInput = true;
+            sumInputs += Math.max(0, parseInt(inputSales.value || '0', 10));
           }
         });
-        recalculatePOSalesTotals(po);
+
+        if (hasAnyInput && sumInputs > 0) {
+          STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
+            const inputSales = document.getElementById(`spk-sales-${po.id}-${p.code}`);
+            if (inputSales) {
+              const sq = Math.max(0, parseInt(inputSales.value || '0', 10));
+              setPOSalesItemQty(po, p.code, sq);
+            }
+          });
+          recalculatePOSalesTotals(po);
+        }
       });
 
       savePOSalesData(allPO);
@@ -6457,6 +6522,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       if (posOnDate.length === 0) {
         showToast('Tidak ada data PO sales pada tanggal ini untuk disesuaikan!', 'warning');
+        return;
+      }
+
+      const totalSPK = Object.values(spkData.items || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+      if (totalSPK === 0) {
+        showToast('Jumlah SPK Pabrik masih 0! Silakan isi kolom SPK atau klik "Salin Semua dari PO" terlebih dahulu.', 'warning');
         return;
       }
 
