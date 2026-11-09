@@ -103,7 +103,8 @@
       body.printing-po-card > *:not(#print-area-po-card),
       body.printing-bongkar > *:not(#print-area-bongkar),
       body.printing-ambil-pabrik > *:not(#print-area-ambil-pabrik),
-      body.printing-tracer > *:not(#print-area-tracer-truk) {
+      body.printing-tracer > *:not(#print-area-tracer-truk),
+      body.printing-spk-motoris > *:not(#print-area-spk-motoris) {
         display: none !important;
       }
 
@@ -236,8 +237,23 @@
         color: #0f172a !important;
       }
 
+      /* Mode Cetak Matriks SPK Pabrik & Alokasi Motoris (Format Sesuai Permintaan Owner) */
+      body.printing-spk-motoris #print-area-spk-motoris, 
+      body.printing-spk-motoris #print-area-spk-motoris * {
+        visibility: visible !important;
+      }
+      body.printing-spk-motoris #print-area-spk-motoris {
+        position: static !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+
       /* Hindari pemotongan baris di tengah tabel atau tanda tangan */
-      tr, .avoid-break, .nota-a5-sheet, .tracer-sheet, .ambil-pabrik-sheet, .po-card-sheet {
+      tr, .avoid-break, .nota-a5-sheet, .tracer-sheet, .ambil-pabrik-sheet, .po-card-sheet, .spk-motoris-sheet {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -250,7 +266,8 @@
       .page-break-after-always,
       .nota-batch-page:not(:last-child),
       .tracer-sheet:not(:last-child),
-      .po-card-sheet:not(:last-child) {
+      .po-card-sheet:not(:last-child),
+      .spk-motoris-sheet:not(:last-child) {
         page-break-after: always !important;
         break-after: page !important;
       }
@@ -258,7 +275,8 @@
       .tracer-sheet:last-child,
       .po-card-sheet:last-child,
       .nota-a5-sheet:last-child,
-      .ambil-pabrik-sheet:last-child {
+      .ambil-pabrik-sheet:last-child,
+      .spk-motoris-sheet:last-child {
         page-break-after: avoid !important;
         break-after: avoid !important;
         margin-bottom: 0 !important;
@@ -266,11 +284,11 @@
       }
 
       /* Fallback jika tanpa flag */
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer) #print-area-po,
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer) #print-area-po * {
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer):not(.printing-spk-motoris) #print-area-po,
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer):not(.printing-spk-motoris) #print-area-po * {
         visibility: visible !important;
       }
-      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer) #print-area-po {
+      body:not(.printing-financial):not(.printing-po):not(.printing-nota):not(.printing-po-card):not(.printing-bongkar):not(.printing-ambil-pabrik):not(.printing-tracer):not(.printing-spk-motoris) #print-area-po {
         position: static !important;
         display: block !important;
         width: 100% !important;
@@ -300,6 +318,9 @@
 
   <!-- ROOT PRINT CONTAINER UNTUK LEMBAR TRACER BONGKAR MUATAN PER TRUK ARMADA (A4 PORTRAIT) -->
   <div id="print-area-tracer-truk" class="hidden"></div>
+
+  <!-- ROOT PRINT CONTAINER UNTUK MATRIKS REKAP SPK & MOTORIS (A4 SESUAI FORMAT OWNER) -->
+  <div id="print-area-spk-motoris" class="hidden"></div>
 
   <!-- ============================================== -->
   <!-- SCREEN: LOGIN ACCESS CV. ALFARIS ENAM DELAPAN -->
@@ -1050,6 +1071,13 @@
               <span id="po-active-date-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
                 Tanggal: -
               </span>
+              <button 
+                onclick="openPreviewSPKMotoris()" 
+                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                title="Cetak Matriks Rekap SPK & Motoris (Format Khusus Permintaan Owner: Total Orderan + SPK Pabrik + Kolom Motoris)">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-slate-950"></i>
+                <span>Cetak SPK & Motoris</span>
+              </button>
               <button 
                 onclick="openPreviewMatriksBongkar()" 
                 class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
@@ -2114,31 +2142,23 @@
           <div id="recon-recommendation-items" class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1"></div>
         </div>
 
-        <!-- TAB NAVIGATION (4 Tab: Realisasi SPK Pabrik, Muatan Armada Truk, Alokasi Sales, Rincian 25 Formula) -->
+        <!-- TAB NAVIGATION (3 Tab Terpadu: Realisasi SPK & Alokasi Sales, Muatan Armada Truk, Rincian 25 Formula) -->
         <div class="border-b border-slate-200 flex items-center gap-2 overflow-x-auto">
           <button 
             id="tab-btn-recon-spk" 
             onclick="switchReconTab('spk')" 
             class="px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-            <i data-lucide="file-check-2" class="w-4 h-4"></i>
-            <span>📋 Realisasi SPK Pabrik (Perolehan Roti)</span>
-            <span id="recon-tab-spk-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">SPK Pabrik</span>
+            <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+            <span>📋 Realisasi SPK & Alokasi Sales</span>
+            <span id="recon-tab-spk-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">SPK & Sales</span>
           </button>
           <button 
             id="tab-btn-recon-loaded" 
             onclick="switchReconTab('loaded')" 
             class="px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
             <i data-lucide="truck" class="w-4 h-4"></i>
-            <span>🚚 Muatan Armada Truk</span>
+            <span>🚚 Penataan Muatan Armada Truk</span>
             <span id="recon-tab-loaded-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">0 Varian</span>
-          </button>
-          <button 
-            id="tab-btn-recon-sales" 
-            onclick="switchReconTab('sales')" 
-            class="px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-            <i data-lucide="users" class="w-4 h-4"></i>
-            <span>👥 Alokasi Tim Sales & Edit PO</span>
-            <span id="recon-tab-sales-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-brand-100 text-brand-800 font-bold">0 Tim</span>
           </button>
           <button 
             id="tab-btn-recon-baskets" 
@@ -2150,7 +2170,7 @@
           </button>
         </div>
 
-        <!-- TAB CONTENT 0: REALISASI SPK PABRIK (PEROLEHAN ROTI DARI PABRIK) -->
+        <!-- TAB CONTENT 0: REALISASI SPK PABRIK & ALOKASI SALES (TERPADU SATU MENU) -->
         <div id="recon-tab-content-spk" class="space-y-3">
           <!-- Control Bar SPK -->
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
@@ -2158,17 +2178,17 @@
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    <i data-lucide="file-check-2" class="w-3 h-3 inline mr-1"></i> SPK FRIEND'S BAKERY
+                    <i data-lucide="file-check-2" class="w-3 h-3 inline mr-1"></i> SPK & ALOKASI MOTORIS
                   </span>
                   <span id="spk-status-indicator" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                     Menunggu Verifikasi SPK
                   </span>
                 </div>
                 <h4 class="text-sm sm:text-base font-black text-slate-900">
-                  Perolehan Roti Riil dari Pabrik (Sesuai Stok SPK)
+                  Realisasi SPK Pabrik & Alokasi Tim Sales (Matriks Roti & Armada)
                 </h4>
                 <p class="text-[11px] text-slate-500 font-medium">
-                  Inputkan jumlah roti riil yang diberikan pabrik. Jika ada selisih stok kurang dari pabrik, klik <strong>Sesuaikan Otomatis ke Sales</strong> untuk memotong kuota pesanan sales secara proporsional.
+                  Inputkan realisasi SPK pabrik per armada dan alokasikan kuota roti ke masing-masing sales dalam satu tampilan matriks terpadu. Klik <strong>Sesuaikan Otomatis ke Sales</strong> jika hasil pabrik kurang agar kuota pesanan terpotong proporsional secara instan.
                 </p>
               </div>
 
@@ -2202,7 +2222,15 @@
                     type="button" 
                     onclick="saveSPKRealizationInputs()" 
                     class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition cursor-pointer">
-                    💾 Simpan Realisasi SPK
+                    💾 Simpan Realisasi SPK & Alokasi
+                  </button>
+                  <button 
+                    type="button" 
+                    onclick="openPreviewSPKMotoris()" 
+                    class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 shadow-2xs transition cursor-pointer inline-flex items-center gap-1.5"
+                    title="Cetak Matriks Rekap SPK & Motoris (Format Sesuai Permintaan Owner)">
+                    <i data-lucide="printer" class="w-3.5 h-3.5 text-amber-300"></i>
+                    <span>🖨️ Cetak Matriks SPK & Motoris</span>
                   </button>
                 </div>
               </div>
@@ -2214,11 +2242,11 @@
             <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada aktif -->
           </div>
 
-          <!-- Tabel Rekonsiliasi SPK Pabrik (Per Mobil dalam Satuan Pcs/Bdl) -->
+          <!-- Tabel Rekonsiliasi SPK Pabrik & Alokasi Sales (Matriks Terpadu) -->
           <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
             <table class="w-full text-[11px] text-left">
               <thead id="recon-spk-thead" class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada aktif -->
+                <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada & sales -->
               </thead>
               <tbody id="recon-spk-tbody" class="divide-y divide-slate-100">
                 <!-- Diisi otomatis oleh renderSPKTabContent -->
@@ -2227,6 +2255,20 @@
                 <!-- Diisi otomatis oleh renderSPKTabContent -->
               </tfoot>
             </table>
+          </div>
+
+          <!-- RINGKASAN TIM SALES & EDIT PO (TERPADU DI BAWAH TABEL SPK) -->
+          <div class="mt-4 pt-4 border-t border-slate-200 space-y-2">
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="users" class="w-4 h-4 text-brand-600"></i>
+                <span>Rincian Tagihan & PO Per Tim Sales:</span>
+              </span>
+              <span class="text-blue-600 font-semibold">*Klik [✏️ Edit PO] bila ingin mengubah pesanan PO lengkap masing-masing sales</span>
+            </div>
+            <div id="recon-sales-list" class="space-y-2">
+              <!-- Diisi otomatis oleh JS -->
+            </div>
           </div>
         </div>
 
@@ -2415,17 +2457,6 @@
           </div> <!-- Close recon-auto-allocation-panel -->
         </div> <!-- Close recon-tab-content-loaded -->
 
-        <!-- TAB CONTENT 2: DAFTAR SALES & TOMBOL EDIT PO -->
-        <div id="recon-tab-content-sales" class="hidden space-y-2">
-          <div class="flex items-center justify-between text-[11px] text-slate-500">
-            <span>Daftar pesanan sales yang siap dialokasikan dari muatan mobil:</span>
-            <span class="text-blue-600 font-semibold">*Klik [✏️ Edit PO] bila kiriman pabrik kurang / sales tambah order</span>
-          </div>
-          <div id="recon-sales-list" class="space-y-2">
-            <!-- Diisi oleh JS -->
-          </div>
-        </div>
-
         <!-- TAB CONTENT 3: RINCIAN 25 KERANJANG STANDAR PABRIK -->
         <div id="recon-tab-content-baskets" class="hidden space-y-2">
           <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
@@ -2461,6 +2492,10 @@
           Tutup
         </button>
         <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="openPreviewSPKMotoris()" class="px-3.5 py-2 text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="printer" class="w-4 h-4 text-amber-700"></i>
+            <span>Cetak Matriks SPK & Motoris (A4)</span>
+          </button>
           <button onclick="printTotalAmbilPabrik()" class="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i>
             <span>Cetak Rekap Muatan Pabrik</span>
@@ -2556,6 +2591,62 @@
           <button onclick="printMatriksBongkarMuatan()" class="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
             <span>Cetak Matriks Bongkar (A4 Landscape)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PREVIEW MATRIKS REKAP SPK & MOTORIS (FORMAT SESUAI PERMINTAAN OWNER) -->
+  <div id="modal-preview-spk-motoris" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[96vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      <!-- Header -->
+      <div class="p-3.5 sm:p-4 border-b flex justify-between items-center bg-slate-900 text-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+              <span>Matriks Rekap Realisasi SPK Pabrik & Alokasi Motoris</span>
+              <span id="preview-spk-motoris-title-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">Format Baku Owner</span>
+              <span id="preview-spk-motoris-armada-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">3 Truk</span>
+            </h3>
+            <p class="text-[11px] text-slate-300">Format Resmi Distributor Friend's Bakery dengan Kolom Total Orderan, SPK Pabrik (SPK 1/2/3), dan Kuota Motoris</p>
+          </div>
+        </div>
+        <button onclick="closePreviewSPKMotoris()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Preview Sheet Area -->
+      <div class="flex-1 overflow-x-auto overflow-y-auto p-3 sm:p-5 bg-slate-100 flex justify-center items-start">
+        <div id="spk-motoris-preview-sheet" class="shadow-lg bg-white rounded w-full min-w-[960px] p-2">
+          <!-- Rendered by buildMatriksSPKMotorisHTML -->
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2">
+          <button onclick="closePreviewSPKMotoris()" class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition">
+            Tutup
+          </button>
+          <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-xl p-1 text-xs">
+            <span class="px-2 text-slate-500 font-bold">Orientasi:</span>
+            <button id="btn-spk-motoris-landscape" onclick="setSPKMotorisOrientation('landscape')" class="px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950 transition cursor-pointer">
+              Landscape (A4)
+            </button>
+            <button id="btn-spk-motoris-portrait" onclick="setSPKMotorisOrientation('portrait')" class="px-2.5 py-1 rounded-lg font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+              Portrait (A4)
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="printMatriksSPKMotoris()" class="px-5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow transition inline-flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="printer" class="w-4 h-4 text-amber-400"></i>
+            <span>Cetak Matriks SPK & Motoris (Printer / PDF)</span>
           </button>
         </div>
       </div>
@@ -5531,15 +5622,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function switchReconTab(tabName) {
+      if (tabName === 'sales') tabName = 'spk'; // Aliaskan tab sales lama ke menu terpadu SPK
       currentReconTab = tabName || 'spk';
       const btnSpk = document.getElementById('tab-btn-recon-spk');
       const btnLoaded = document.getElementById('tab-btn-recon-loaded');
-      const btnSales = document.getElementById('tab-btn-recon-sales');
       const btnBaskets = document.getElementById('tab-btn-recon-baskets');
 
       const contentSpk = document.getElementById('recon-tab-content-spk');
       const contentLoaded = document.getElementById('recon-tab-content-loaded');
-      const contentSales = document.getElementById('recon-tab-content-sales');
       const contentBaskets = document.getElementById('recon-tab-content-baskets');
 
       const activeClass = 'px-3.5 py-2 font-bold text-xs border-b-2 border-brand-500 text-brand-700 flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
@@ -5547,12 +5637,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       if (btnSpk) btnSpk.className = currentReconTab === 'spk' ? activeClass : inactiveClass;
       if (btnLoaded) btnLoaded.className = currentReconTab === 'loaded' ? activeClass : inactiveClass;
-      if (btnSales) btnSales.className = currentReconTab === 'sales' ? activeClass : inactiveClass;
       if (btnBaskets) btnBaskets.className = currentReconTab === 'baskets' ? activeClass : inactiveClass;
 
       if (contentSpk) contentSpk.classList.toggle('hidden', currentReconTab !== 'spk');
       if (contentLoaded) contentLoaded.classList.toggle('hidden', currentReconTab !== 'loaded');
-      if (contentSales) contentSales.classList.toggle('hidden', currentReconTab !== 'sales');
       if (contentBaskets) contentBaskets.classList.toggle('hidden', currentReconTab !== 'baskets');
 
       if (currentReconTab === 'spk') {
@@ -5674,10 +5762,11 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       lucide.createIcons();
     }
 
-    // Render Konten Tab SPK Pabrik (Realisasi Per Mobil dalam Pcs/Bdl)
+    // Render Konten Tab Terpadu: Realisasi SPK Pabrik & Alokasi Tim Sales
     function renderSPKTabContent() {
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const products = getProductsData();
       const armada = getFactoryArmadaForDate(currentPODate);
       const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
       const rawPlates = (armada.plates && armada.plates.length === truckCount)
@@ -5719,7 +5808,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }
       }
 
-      // 1. Render Header Tabel SPK secara dinamis sesuai jumlah mobil
+      const spkBadge = document.getElementById('recon-tab-spk-badge');
+      if (spkBadge) {
+        spkBadge.innerText = `${posOnDate.length} Tim Sales • ${truckCount} Armada`;
+      }
+
+      // 1. Render Header Tabel Terpadu (SPK Pabrik + Alokasi Motoris/Sales)
       const thead = document.getElementById('recon-spk-thead');
       if (thead) {
         let truckHeaders = '';
@@ -5727,31 +5821,47 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           for (let i = 0; i < truckCount; i++) {
             truckHeaders += `
               <th class="py-2.5 px-2 text-center font-bold text-indigo-950 bg-indigo-100/60 border-l border-indigo-200">
-                🚚 Truk ${i + 1}<br><span class="text-[9px] font-normal text-slate-600">${rawPlates[i]}</span>
+                🚚 SPK ${i + 1}<br><span class="text-[9px] font-normal text-slate-600">${rawPlates[i]}</span>
               </th>
             `;
           }
+          truckHeaders += `
+            <th class="py-2.5 px-2 text-right font-black text-indigo-900 bg-indigo-100/40">Total SPK</th>
+          `;
         } else {
           truckHeaders = `
-            <th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-50/70 w-36">
-              🚚 Realisasi SPK (Pcs/Bdl)
+            <th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-50/70 w-32">
+              🚚 SPK 1 (${rawPlates[0] || armada.nopol || 'Armada'})
             </th>
+          `;
+        }
+
+        let salesHeaders = '';
+        if (posOnDate.length > 0) {
+          salesHeaders = posOnDate.map(po => `
+            <th class="py-2.5 px-2 text-center font-bold text-amber-950 bg-amber-100/70 border-l border-amber-200 min-w-[70px]">
+              👤 ${escapeHtml(po.salesName || 'Sales')}<br><span class="text-[9px] font-normal text-amber-800">${escapeHtml(po.salesRoute || 'Rute')}</span>
+            </th>
+          `).join('');
+        } else {
+          salesHeaders = `
+            <th class="py-2.5 px-3 text-center text-slate-400 bg-slate-100 italic font-medium">Belum Ada PO Sales</th>
           `;
         }
 
         thead.innerHTML = `
           <tr>
-            <th class="py-2.5 px-2.5 text-center w-8">No</th>
-            <th class="py-2.5 px-2.5 w-16">Inisial</th>
-            <th class="py-2.5 px-2.5">Nama Varian Roti</th>
-            <th class="py-2.5 px-2.5 text-center">Tipe Krjg</th>
-            <th class="py-2.5 px-2.5 text-center">Isi/Krjg</th>
-            <th class="py-2.5 px-2.5 text-right font-bold text-slate-700">PO Diminta</th>
+            <th class="py-2.5 px-2 text-center w-8">No</th>
+            <th class="py-2.5 px-2 w-14">Inisial</th>
+            <th class="py-2.5 px-2.5 min-w-[110px]">Nama Varian Roti</th>
+            <th class="py-2.5 px-2 text-center">Tipe</th>
+            <th class="py-2.5 px-2 text-center">Isi</th>
+            <th class="py-2.5 px-2.5 text-right font-black text-slate-800 bg-slate-100">PO Diminta</th>
             ${truckHeaders}
-            ${truckCount > 1 ? '<th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-100/40">Total SPK Riil</th>' : ''}
-            <th class="py-2.5 px-2.5 text-right font-bold text-slate-800">Hasil Krjg SPK</th>
-            <th class="py-2.5 px-2.5 text-center font-bold">Selisih vs PO</th>
-            <th class="py-2.5 px-2.5 text-center">Status Stok Pabrik</th>
+            ${salesHeaders}
+            <th class="py-2.5 px-2 text-right font-bold text-slate-800">Krjg SPK</th>
+            <th class="py-2.5 px-2 text-center font-bold">Selisih</th>
+            <th class="py-2.5 px-2 text-center">Status Stok</th>
           </tr>
         `;
       }
@@ -5766,8 +5876,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       let totalSPKKB = 0;
       let totalSPKKMK = 0;
 
-      // Inisialisasi sum muatan per truk
+      // Inisialisasi sum muatan per truk & per sales
       const truckTotals = Array.from({ length: truckCount }, () => ({ pcs: 0, kb: 0, kmk: 0 }));
+      const salesTotals = Array.from({ length: posOnDate.length }, () => 0);
 
       tbody.innerHTML = calc.itemsBreakdown.map((item, idx) => {
         const poQty = Number(item.orderQty) || 0;
@@ -5849,6 +5960,30 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         if (item.basketType === 'KB') totalSPKKB += rowBaskets;
         else totalSPKKMK += rowBaskets;
 
+        // Render Kolom Masing-Masing Sales
+        let salesCellsHtml = '';
+        if (posOnDate.length > 0) {
+          salesCellsHtml = posOnDate.map((po, sIdx) => {
+            const sq = Number(po.items && po.items[item.code]) || 0;
+            salesTotals[sIdx] += sq;
+            return `
+              <td class="py-1.5 px-1.5 text-center bg-amber-50/20 border-l border-amber-100">
+                <input 
+                  type="number" 
+                  id="spk-sales-${po.id}-${item.code}" 
+                  value="${sq}" 
+                  min="0" 
+                  oninput="onMatrixSalesQtyInput('${po.id}', '${item.code}')" 
+                  class="w-14 text-center font-black text-amber-950 bg-white border border-amber-300 focus:border-amber-600 rounded px-1 py-1 text-xs"
+                  title="Alokasi roti untuk ${escapeHtml(po.salesName)}"
+                >
+              </td>
+            `;
+          }).join('');
+        } else {
+          salesCellsHtml = `<td class="py-1.5 px-2 text-center text-slate-400 bg-slate-50">-</td>`;
+        }
+
         const diff = rowSPKTotal - poQty;
         let diffBadge = '';
         let statusText = '';
@@ -5868,29 +6003,30 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         return `
           <tr class="hover:bg-slate-50 transition ${isRowActive ? 'bg-white' : 'opacity-50'}" id="spk-row-${item.code}">
-            <td class="py-2 px-2.5 text-center text-slate-400 font-mono">${idx + 1}</td>
-            <td class="py-2 px-2.5 font-bold text-slate-900">${escapeHtml(item.code)}</td>
+            <td class="py-2 px-2 text-center text-slate-400 font-mono">${idx + 1}</td>
+            <td class="py-2 px-2 font-bold text-slate-900">${escapeHtml(item.code)}</td>
             <td class="py-2 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
-            <td class="py-2 px-2.5 text-center">
+            <td class="py-2 px-2 text-center">
               <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.basketType === 'KB' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
                 ${item.basketType}
               </span>
             </td>
-            <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${upb} ${item.unit || 'pcs'}</td>
-            <td class="py-2 px-2.5 text-right font-bold text-slate-700">${poQty.toLocaleString('id-ID')} ${item.unit || 'pcs'}</td>
+            <td class="py-2 px-2 text-center text-slate-600 font-mono">${upb}</td>
+            <td class="py-2 px-2.5 text-right font-black text-slate-900 bg-slate-50" id="spk-row-po-${item.code}">${poQty.toLocaleString('id-ID')} ${item.unit || 'pcs'}</td>
             ${truckInputsHtml}
             ${truckCount > 1 ? `
-              <td class="py-2 px-2.5 text-right font-black text-indigo-950 bg-indigo-50/30" id="spk-row-total-pcs-${item.code}">
+              <td class="py-2 px-2 text-right font-black text-indigo-950 bg-indigo-50/30" id="spk-row-total-pcs-${item.code}">
                 ${rowSPKTotal.toLocaleString('id-ID')} ${item.unit || 'pcs'}
               </td>
             ` : ''}
-            <td class="py-2 px-2.5 text-right font-black text-indigo-900" id="spk-row-total-baskets-${item.code}">
+            ${salesCellsHtml}
+            <td class="py-2 px-2 text-right font-black text-indigo-900" id="spk-row-total-baskets-${item.code}">
               ${rowBaskets} ${item.basketType}
             </td>
-            <td class="py-2 px-2.5 text-center" id="spk-diff-cell-${item.code}">
+            <td class="py-2 px-2 text-center" id="spk-diff-cell-${item.code}">
               ${diffBadge}
             </td>
-            <td class="py-2 px-2.5 text-center" id="spk-status-cell-${item.code}">
+            <td class="py-2 px-2 text-center" id="spk-status-cell-${item.code}">
               ${statusText}
             </td>
           </tr>
@@ -5908,7 +6044,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           return `
             <div class="p-3 bg-white rounded-xl border border-indigo-200 shadow-2xs space-y-1.5">
               <div class="flex items-center justify-between">
-                <span class="font-black text-indigo-950 text-xs">🚚 Truk ${idx + 1} (${rawPlates[idx] || ('Truk ' + (idx + 1))})</span>
+                <span class="font-black text-indigo-950 text-xs">🚚 SPK ${idx + 1} (${rawPlates[idx] || ('Truk ' + (idx + 1))})</span>
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${pct <= 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                   ${pct}% Kapasitas
                 </span>
@@ -5928,7 +6064,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }).join('');
       }
 
-      // 3. Render Footer Tabel SPK
+      // 3. Render Footer Tabel SPK & Alokasi Sales
       if (tfoot) {
         const netDiff = totalSPKUnits - totalPOUnits;
         const netDiffText = netDiff === 0 
@@ -5945,25 +6081,140 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               </td>
             `;
           }
+          truckFooters += `
+            <td id="spk-tfoot-total-units" class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm bg-indigo-100/60">
+              ${totalSPKUnits.toLocaleString('id-ID')} pcs
+            </td>
+          `;
+        } else {
+          truckFooters = `
+            <td id="spk-tfoot-total-units" class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm bg-indigo-100/60">
+              ${totalSPKUnits.toLocaleString('id-ID')} pcs
+            </td>
+          `;
+        }
+
+        let salesFooters = '';
+        if (posOnDate.length > 0) {
+          salesFooters = posOnDate.map((po, sIdx) => `
+            <td id="spk-tfoot-sales-${po.id}" class="py-3 px-2 text-center font-black text-amber-950 bg-amber-100/50 border-l border-amber-200 text-xs">
+              ${(po.totalPcs || salesTotals[sIdx] || 0).toLocaleString('id-ID')} pcs
+            </td>
+          `).join('');
+        } else {
+          salesFooters = `<td class="py-3 px-2 text-center text-slate-400">-</td>`;
         }
 
         tfoot.innerHTML = `
           <tr>
-            <td colspan="5" class="py-3 px-3 text-right font-black text-slate-900 uppercase">TOTAL REALISASI SPK PABRIK:</td>
-            <td class="py-3 px-2.5 text-right font-black text-slate-800 text-xs">${totalPOUnits.toLocaleString('id-ID')} unit</td>
+            <td colspan="5" class="py-3 px-2 text-right font-black text-slate-900 uppercase">TOTAL KESELURUHAN:</td>
+            <td id="spk-tfoot-po-total" class="py-3 px-2.5 text-right font-black text-slate-800 text-xs">${totalPOUnits.toLocaleString('id-ID')} pcs</td>
             ${truckFooters}
-            ${truckCount > 1 ? `
-              <td id="spk-tfoot-total-units" class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm bg-indigo-100/60">
-                ${totalSPKUnits.toLocaleString('id-ID')} unit
-              </td>
-            ` : ''}
-            <td class="py-3 px-2.5 text-right font-black text-indigo-900 text-xs sm:text-sm">
+            ${salesFooters}
+            <td class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm">
               ${totalSPKKB} KB • ${totalSPKKMK} KMK
             </td>
-            <td class="py-3 px-2.5 text-center font-black">${netDiffText}</td>
-            <td class="py-3 px-2.5 text-center font-bold text-indigo-800 text-[10.5px]">Friend's Bakery</td>
+            <td class="py-3 px-2 text-center font-black">${netDiffText}</td>
+            <td class="py-3 px-2 text-center font-bold text-indigo-800 text-[10.5px]">Friend's Bakery</td>
           </tr>
         `;
+      }
+
+      // 4. Render Ringkasan Tim Sales Card & Tombol Edit PO (di Bawah Tabel Matriks)
+      const salesListEl = document.getElementById('recon-sales-list');
+      if (salesListEl) {
+        if (posOnDate.length === 0) {
+          salesListEl.innerHTML = `<div class="p-6 text-center text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">Belum ada pesanan PO sales yang tercatat pada tanggal ${formatIndoDate(currentPODate)}.</div>`;
+        } else {
+          salesListEl.innerHTML = posOnDate.map(po => {
+            let totalPcs = 0;
+            const items = po.items || {};
+            const itemPills = Object.entries(items).map(([k, qty]) => {
+              const q = Number(qty) || 0;
+              if (q <= 0) return '';
+              totalPcs += q;
+              const p = products.find(prod => prod.id === k || prod.code === k || prod.name === k);
+              const pName = p ? p.name : k;
+              return `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-mono font-bold text-slate-700 border border-slate-200 mr-1 mb-1">${escapeHtml(pName)}: ${q}</span>`;
+            }).filter(Boolean).join('');
+
+            return `
+              <div class="p-3 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-extrabold text-slate-900 text-xs">${escapeHtml(po.salesName || 'Sales')}</span>
+                    <span class="px-2 py-0.2 rounded-full text-[10px] font-bold bg-brand-50 text-brand-700 border border-brand-200">${totalPcs.toLocaleString('id-ID')} Pcs</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(po.salesRoute || 'Rute Bebas')}</div>
+                  <div class="mt-1.5 flex flex-wrap items-center">${itemPills}</div>
+                </div>
+                <div>
+                  <button 
+                    onclick="editPOSales('${po.id}')" 
+                    class="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
+                    title="Ubah pesanan sales ini bila pabrik kurang atau mobil masih longgar">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-brand-600"></i>
+                    <span>Edit PO</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    function onMatrixSalesQtyInput(poId, code) {
+      const inputEl = document.getElementById(`spk-sales-${poId}-${code}`);
+      if (!inputEl) return;
+      const newQty = Math.max(0, parseInt(inputEl.value || '0', 10));
+
+      const allPO = getPOSalesData();
+      const targetPO = allPO.find(p => p.id === poId);
+      if (targetPO) {
+        if (!targetPO.items) targetPO.items = {};
+        targetPO.items[code] = newQty;
+
+        const products = getProductsData();
+        let totalPcs = 0;
+        let totalVal = 0;
+        Object.entries(targetPO.items).forEach(([k, q]) => {
+          const qty = Number(q) || 0;
+          totalPcs += qty;
+          const p = products.find(prod => prod.id === k || prod.code === k || prod.name === k);
+          const price = p ? Number(p.price || p.unitPrice || 0) : 0;
+          totalVal += (qty * price);
+        });
+        targetPO.totalPcs = totalPcs;
+        targetPO.totalAmount = totalVal;
+
+        savePOSalesData(allPO);
+
+        if (typeof autoSyncAllPOsToTransactions === 'function') {
+          autoSyncAllPOsToTransactions();
+        }
+
+        // Update PO diminta pada baris produk
+        const posOnDate = allPO.filter(p => p.date === currentPODate);
+        const rowPOTotal = posOnDate.reduce((sum, p) => sum + (Number(p.items && p.items[code]) || 0), 0);
+        const poCell = document.getElementById(`spk-row-po-${code}`);
+        if (poCell) {
+          poCell.innerText = `${rowPOTotal.toLocaleString('id-ID')} pcs`;
+        }
+
+        // Update footer sales
+        const tfootSales = document.getElementById(`spk-tfoot-sales-${poId}`);
+        if (tfootSales) {
+          tfootSales.innerText = `${totalPcs.toLocaleString('id-ID')} pcs`;
+        }
+
+        // Update grand total PO
+        let grandPO = 0;
+        posOnDate.forEach(p => grandPO += (p.totalPcs || 0));
+        const grandPOCell = document.getElementById(`spk-tfoot-po-total`);
+        if (grandPOCell) {
+          grandPOCell.innerText = `${grandPO.toLocaleString('id-ID')} pcs`;
+        }
       }
     }
 
@@ -6099,6 +6350,39 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       saveSPKRealizationData(currentPODate, spkData);
 
+      // Simpan perubahan alokasi sales dari sel input matriks
+      const allPO = getPOSalesData();
+      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      const products = getProductsData();
+
+      posOnDate.forEach(po => {
+        let totalPcs = 0;
+        let totalVal = 0;
+        if (!po.items) po.items = {};
+
+        STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
+          const inputSales = document.getElementById(`spk-sales-${po.id}-${p.code}`);
+          if (inputSales) {
+            const sq = Math.max(0, parseInt(inputSales.value || '0', 10));
+            po.items[p.code] = sq;
+          }
+          const q = Number(po.items[p.code]) || 0;
+          totalPcs += q;
+          const prodObj = products.find(prod => prod.id === p.code || prod.code === p.code || prod.name === p.code);
+          const price = prodObj ? Number(prodObj.price || prodObj.unitPrice || 0) : 0;
+          totalVal += (q * price);
+        });
+
+        po.totalPcs = totalPcs;
+        po.totalAmount = totalVal;
+      });
+
+      savePOSalesData(allPO);
+
+      if (typeof autoSyncAllPOsToTransactions === 'function') {
+        autoSyncAllPOsToTransactions();
+      }
+
       // Otomatis sinkronkan juga ke manual truck allocation
       saveManualTruckAllocData(currentPODate, {
         mode: 'manual',
@@ -6108,7 +6392,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       renderSPKTabContent();
       renderReconModalContent();
-      showToast('Realisasi SPK Pabrik & Muatan Truk berhasil disimpan!', 'success');
+      showToast('Realisasi SPK Pabrik & Alokasi Sales berhasil disimpan!', 'success');
     }
 
     function applySPKToSalesProportional() {
@@ -7211,7 +7495,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       setPrintPageSize('A4 landscape', '4mm 6mm');
       printArea.innerHTML = buildMatriksBongkarHTML(date);
 
-      document.body.classList.remove('printing-financial', 'printing-po', 'printing-nota', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik');
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-nota', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik', 'printing-tracer', 'printing-spk-motoris');
       document.body.classList.add('printing-bongkar');
 
       setTimeout(() => {
@@ -7220,6 +7504,417 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           document.body.classList.remove('printing-bongkar');
         }, 1000);
       }, 150);
+    }
+
+    // =========================================================================
+    // DOKUMEN CETAK: MATRIKS REALISASI SPK PABRIK & ALOKASI MOTORIS (SALES)
+    // Sesuai format permintaan Owner: Ditambahkan 2 Kolom Setelah Nama Produk:
+    // Kolom 1 = Total Orderan Produk (PO Diminta)
+    // Kolom 2 = SPK dari Pabrik (SPK 1, 2, 3 jika Sabtu; SPK 1 jika Rabu/Kamis)
+    // =========================================================================
+    let currentSPKMotorisOrientation = 'landscape';
+
+    function setSPKMotorisOrientation(orientation) {
+      currentSPKMotorisOrientation = orientation || 'landscape';
+      const btnL = document.getElementById('btn-spk-motoris-landscape');
+      const btnP = document.getElementById('btn-spk-motoris-portrait');
+      if (btnL && btnP) {
+        if (currentSPKMotorisOrientation === 'landscape') {
+          btnL.className = 'px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950 transition cursor-pointer';
+          btnP.className = 'px-2.5 py-1 rounded-lg font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer';
+        } else {
+          btnP.className = 'px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-slate-950 transition cursor-pointer';
+          btnL.className = 'px-2.5 py-1 rounded-lg font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer';
+        }
+      }
+      const sheet = document.getElementById('spk-motoris-preview-sheet');
+      if (sheet) {
+        sheet.innerHTML = buildMatriksSPKMotorisHTML(currentPODate, currentSPKMotorisOrientation);
+      }
+    }
+
+    function openPreviewSPKMotoris(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const allPO = getPOSalesData().filter(p => p.date === date);
+      const armada = getFactoryArmadaForDate(date);
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
+
+      currentSPKMotorisOrientation = (allPO.length <= 4 && truckCount === 1) ? 'portrait' : 'landscape';
+      setSPKMotorisOrientation(currentSPKMotorisOrientation);
+
+      const sheet = document.getElementById('spk-motoris-preview-sheet');
+      if (sheet) {
+        sheet.innerHTML = buildMatriksSPKMotorisHTML(date, currentSPKMotorisOrientation);
+      }
+
+      const armBadge = document.getElementById('preview-spk-motoris-armada-badge');
+      if (armBadge) {
+        armBadge.innerText = truckCount > 1 ? `${truckCount} Truk Armada` : '1 Unit Armada';
+      }
+
+      const titleBadge = document.getElementById('preview-spk-motoris-title-badge');
+      if (titleBadge) {
+        titleBadge.innerText = `${formatIndoDate(date)}`;
+      }
+
+      const modal = document.getElementById('modal-preview-spk-motoris');
+      if (modal) modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closePreviewSPKMotoris() {
+      const modal = document.getElementById('modal-preview-spk-motoris');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function printMatriksSPKMotoris(targetDate, orientation) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const printArea = document.getElementById('print-area-spk-motoris');
+      if (!printArea) return;
+
+      const orient = orientation || currentSPKMotorisOrientation || 'landscape';
+      const pageCSS = orient === 'portrait' ? 'A4 portrait' : 'A4 landscape';
+      setPrintPageSize(pageCSS, '4mm 6mm');
+      printArea.innerHTML = buildMatriksSPKMotorisHTML(date, orient);
+
+      document.body.classList.remove('printing-financial', 'printing-po', 'printing-nota', 'printing-po-card', 'printing-bongkar', 'printing-ambil-pabrik', 'printing-tracer', 'printing-spk-motoris');
+      document.body.classList.add('printing-spk-motoris');
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-spk-motoris');
+        }, 1000);
+      }, 150);
+    }
+
+    function buildMatriksSPKMotorisHTML(targetDate, orientation) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      const allPO = getPOSalesData().filter(p => p.date === date);
+      const armada = getFactoryArmadaForDate(date);
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
+      const rawPlates = (armada.plates && armada.plates.length === truckCount)
+        ? armada.plates
+        : (truckCount === 3 
+            ? ['W 9469 PE', 'W 9986 N', 'W 8050 NW'] 
+            : (truckCount === 2 ? ['W 9469 PE', 'W 9986 N'] : [armada.nopol || 'W 8640 PR']));
+      const isSaturday = (truckCount === 3);
+
+      const spkData = getSPKRealizationData(date);
+      const manualData = getManualTruckAllocData(date);
+
+      let formattedDate = date;
+      try {
+        const d = new Date(date + 'T00:00:00');
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        if (!isNaN(d.getTime())) {
+          formattedDate = `${days[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      } catch (e) {}
+
+      const printTimeStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                           new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+      // Sumbu Horizontal: SPK Pabrik Header
+      let spkColGroupHeader = '';
+      let spkSubHeaders = '';
+
+      if (isSaturday) {
+        spkColGroupHeader = `<th colspan="4" style="border: 1px solid #334155; text-align: center; padding: 4px 2px; background: #e0e7ff; color: #1e1b4b; font-weight: 900; font-size: 7.5pt;">SPK DARI PABRIK (3 ARMADA SABTU)</th>`;
+        spkSubHeaders = `
+          <th style="border: 1px solid #334155; text-align: center; padding: 2px; background: #eef2ff; font-size: 7pt; font-weight: 800; min-width: 38px;">SPK 1<br><span style="font-size: 6pt; font-weight: normal; color: #4338ca;">${rawPlates[0]}</span></th>
+          <th style="border: 1px solid #334155; text-align: center; padding: 2px; background: #eef2ff; font-size: 7pt; font-weight: 800; min-width: 38px;">SPK 2<br><span style="font-size: 6pt; font-weight: normal; color: #4338ca;">${rawPlates[1]}</span></th>
+          <th style="border: 1px solid #334155; text-align: center; padding: 2px; background: #eef2ff; font-size: 7pt; font-weight: 800; min-width: 38px;">SPK 3<br><span style="font-size: 6pt; font-weight: normal; color: #4338ca;">${rawPlates[2]}</span></th>
+          <th style="border: 1px solid #334155; text-align: right; padding: 2px 4px; background: #e0e7ff; font-size: 7pt; font-weight: 900; min-width: 42px;">TOTAL<br>SPK</th>
+        `;
+      } else {
+        spkColGroupHeader = `<th colspan="2" style="border: 1px solid #334155; text-align: center; padding: 4px 2px; background: #e0e7ff; color: #1e1b4b; font-weight: 900; font-size: 7.5pt;">SPK DARI PABRIK</th>`;
+        spkSubHeaders = `
+          <th style="border: 1px solid #334155; text-align: center; padding: 2px; background: #eef2ff; font-size: 7pt; font-weight: 800; min-width: 44px;">SPK 1<br><span style="font-size: 6pt; font-weight: normal; color: #4338ca;">${rawPlates[0] || armada.nopol || 'Armada'}</span></th>
+          <th style="border: 1px solid #334155; text-align: right; padding: 2px 4px; background: #e0e7ff; font-size: 7pt; font-weight: 900; min-width: 44px;">TOTAL<br>SPK</th>
+        `;
+      }
+
+      // Sumbu Horizontal: Motoris / Tim Sales
+      let salesColGroupHeader = '';
+      let salesSubHeaders = '';
+      if (allPO.length > 0) {
+        salesColGroupHeader = `<th colspan="${allPO.length}" style="border: 1px solid #334155; text-align: center; padding: 4px 2px; background: #fef3c7; color: #78350f; font-weight: 900; font-size: 7.5pt;">MOTORIS / ALOKASI TIM SALES</th>`;
+        salesSubHeaders = allPO.map(po => `
+          <th style="border: 1px solid #334155; text-align: center; padding: 2px 3px; background: #fffbeb; font-size: 7pt; font-weight: 900; min-width: 46px; text-transform: uppercase;">
+            ${escapeHtml(po.salesName || 'SALES')}<br><span style="font-size: 6pt; font-weight: normal; color: #92400e;">${escapeHtml(po.salesRoute || 'Rute')}</span>
+          </th>
+        `).join('');
+      } else {
+        salesColGroupHeader = `<th style="border: 1px solid #334155; text-align: center; padding: 4px 2px; background: #fef3c7; color: #78350f; font-weight: 900; font-size: 7.5pt;">MOTORIS / SALES</th>`;
+        salesSubHeaders = `<th style="border: 1px solid #334155; text-align: center; padding: 2px 4px; background: #fffbeb; font-size: 7pt; color: #94a3b8; font-style: italic;">Belum Ada PO</th>`;
+      }
+
+      // Akumulasi Totals
+      let grandTotalOrderan = 0;
+      const truckGrandTotals = Array.from({ length: truckCount }, () => 0);
+      let grandTotalSPK = 0;
+      const salesGrandTotals = Array.from({ length: allPO.length }, () => 0);
+
+      let grandTotalOrderKB = 0;
+      let grandTotalOrderKMK = 0;
+      let grandTotalSPKKB = 0;
+      let grandTotalSPKKMK = 0;
+
+      // Render Baris 25 Produk Sesuai Gambar Lapangan Owner
+      const rowsHtml = STANDARD_PRODUCT_ORDER.map((code, idx) => {
+        const conv = FACTORY_BREAD_CONVERSIONS[code] || { type: 'KB', unitsPerBasket: 60, unit: 'pcs', fullName: code };
+        const upb = Number(conv.unitsPerBasket) || 60;
+        const bType = conv.type || 'KB';
+
+        // 1. Hitung Total Orderan Produk dari Semua Sales
+        let rowOrderTotal = 0;
+        const salesRowValues = allPO.map((po, sIdx) => {
+          const q = Number(po.items && po.items[code]) || 0;
+          rowOrderTotal += q;
+          salesGrandTotals[sIdx] += q;
+          return q;
+        });
+
+        grandTotalOrderan += rowOrderTotal;
+        const rowOrderBaskets = rowOrderTotal > 0 ? Math.ceil(rowOrderTotal / upb) : 0;
+        if (bType === 'KB') grandTotalOrderKB += rowOrderBaskets;
+        else grandTotalOrderKMK += rowOrderBaskets;
+
+        // 2. Ambil Realisasi SPK Pabrik (per armada & total)
+        let alloc = (spkData.itemsPerTruck && spkData.itemsPerTruck[code]) || 
+                    (manualData && manualData.allocations && manualData.allocations[code]);
+
+        if (!alloc || alloc.length !== truckCount) {
+          const targetQty = (spkData.items && spkData.items[code] !== undefined)
+            ? Number(spkData.items[code])
+            : rowOrderTotal;
+          const base = Math.floor(targetQty / truckCount);
+          const rem = targetQty % truckCount;
+          alloc = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+        }
+
+        let rowSPKTotal = 0;
+        let spkCellsHtml = '';
+
+        for (let i = 0; i < truckCount; i++) {
+          const tPcs = Number(alloc[i]) || 0;
+          rowSPKTotal += tPcs;
+          truckGrandTotals[i] += tPcs;
+          const tValText = tPcs > 0 ? tPcs.toLocaleString('id-ID') : '-';
+
+          spkCellsHtml += `
+            <td style="border: 1px solid #cbd5e1; text-align: center; padding: 2px 2px; font-weight: ${tPcs > 0 ? '700' : 'normal'}; color: #1e1b4b; background: ${tPcs > 0 ? '#eef2ff' : '#ffffff'}; font-size: 7.5pt;">
+              ${tValText}
+            </td>
+          `;
+        }
+
+        grandTotalSPK += rowSPKTotal;
+        const rowSPKBaskets = rowSPKTotal > 0 ? Math.ceil(rowSPKTotal / upb) : 0;
+        if (bType === 'KB') grandTotalSPKKB += rowSPKBaskets;
+        else grandTotalSPKKMK += rowSPKBaskets;
+
+        // Kolom Total SPK
+        const totalSPKText = rowSPKTotal > 0 ? rowSPKTotal.toLocaleString('id-ID') : '-';
+        const totalSPKCell = `
+          <td style="border: 1px solid #cbd5e1; text-align: right; padding: 2px 4px; font-weight: 800; color: #1e1b4b; background: #e0e7ff; font-size: 7.5pt;">
+            ${totalSPKText}
+          </td>
+        `;
+
+        // 3. Kolom Sales / Motoris (Seperti Gambar 2: Kosong/Blank jika 0)
+        let salesCellsHtml = '';
+        if (allPO.length > 0) {
+          salesCellsHtml = salesRowValues.map(q => {
+            const valText = q > 0 ? q.toLocaleString('id-ID') : '';
+            return `
+              <td style="border: 1px solid #cbd5e1; text-align: center; padding: 2px 2px; font-weight: ${q > 0 ? '700' : 'normal'}; color: #0f172a; background: ${q > 0 ? '#ffffff' : '#fafafa'}; font-size: 7.5pt;">
+                ${valText}
+              </td>
+            `;
+          }).join('');
+        } else {
+          salesCellsHtml = `<td style="border: 1px solid #cbd5e1; text-align: center; padding: 2px; color: #94a3b8;">-</td>`;
+        }
+
+        const rowBg = idx % 2 === 1 ? 'background-color: #f8fafc;' : 'background-color: #ffffff;';
+        const totalOrderText = rowOrderTotal > 0 ? rowOrderTotal.toLocaleString('id-ID') : '-';
+
+        return `
+          <tr style="${rowBg}">
+            <td style="border: 1px solid #cbd5e1; text-align: center; padding: 2.5px 2px; font-size: 7pt; color: #64748b; font-family: monospace;">${idx + 1}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: left; padding: 2.5px 5px; font-size: 7.5pt; color: #0f172a;">
+              <strong style="color: #0f172a;">${escapeHtml(code)}</strong> 
+              <span style="font-size: 6.5pt; color: #64748b;">(${escapeHtml(conv.fullName || code)})</span>
+            </td>
+            <td style="border: 1px solid #cbd5e1; text-align: right; padding: 2.5px 5px; font-weight: 800; font-size: 7.5pt; color: #0f172a; background: #f1f5f9;">
+              ${totalOrderText}
+            </td>
+            ${spkCellsHtml}
+            ${totalSPKCell}
+            ${salesCellsHtml}
+          </tr>
+        `;
+      }).join('');
+
+      // Sumbu Bawah: Footer SPK & Sales
+      let spkFooters = '';
+      if (isSaturday) {
+        for (let i = 0; i < truckCount; i++) {
+          spkFooters += `
+            <td style="border: 1px solid #334155; text-align: center; padding: 3px 2px; font-weight: 800; font-size: 7.5pt; color: #1e1b4b; background: #eef2ff;">
+              ${truckGrandTotals[i].toLocaleString('id-ID')}
+            </td>
+          `;
+        }
+      } else {
+        spkFooters += `
+          <td style="border: 1px solid #334155; text-align: center; padding: 3px 2px; font-weight: 800; font-size: 7.5pt; color: #1e1b4b; background: #eef2ff;">
+            ${truckGrandTotals[0].toLocaleString('id-ID')}
+          </td>
+        `;
+      }
+
+      const salesFooters = allPO.length > 0 ? salesGrandTotals.map(tot => `
+        <td style="border: 1px solid #334155; text-align: center; padding: 3px 2px; font-weight: 800; font-size: 7.5pt; color: #78350f; background: #fef3c7;">
+          ${tot.toLocaleString('id-ID')}
+        </td>
+      `).join('') : `<td style="border: 1px solid #334155; text-align: center; padding: 3px;">-</td>`;
+
+      const checkBoxes = allPO.length > 0 ? allPO.map(() => `
+        <td style="border: 1px solid #334155; text-align: center; padding: 3px 2px; background: #ffffff;">
+          <span style="display: inline-block; width: 12px; height: 12px; border: 1.5px solid #0f172a; border-radius: 2px;"></span>
+        </td>
+      `).join('') : `<td style="border: 1px solid #334155; text-align: center; padding: 3px;">-</td>`;
+
+      return `
+        <div class="spk-motoris-sheet" style="font-family: Arial, Helvetica, sans-serif; color: #0f172a; background: #ffffff; padding: 6px; box-sizing: border-box; width: 100%;">
+          <!-- Header Surat Rekap -->
+          <div style="border-bottom: 2px solid #0f172a; padding-bottom: 4px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 13pt; font-weight: 900; letter-spacing: 0.5px; color: #0f172a; line-height: 1.1;">CV. ALFARIS ENAM DELAPAN</div>
+              <div style="font-size: 8pt; font-weight: 700; color: #b45309; text-transform: uppercase;">DISTRIBUTOR RESMI FRIEND'S BAKERY</div>
+              <div style="font-size: 7pt; color: #475569;">Dusun Terbuk, RT.01/RW.02, Desa Kawangrejo, Kec. Rejoso, Kab. Pasuruan | WA: 0877-7665-5121</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="display: inline-block; background: #0f172a; color: #ffffff; font-weight: 900; font-size: 8pt; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;">
+                MATRIKS REKAP SPK & MOTORIS
+              </div>
+              <div style="font-size: 7.5pt; font-weight: 700; color: #334155; margin-top: 2px;">
+                Tanggal: <span style="color: #b45309;">${formattedDate}</span>
+              </div>
+              <div style="font-size: 6.5pt; color: #64748b;">
+                No. SPK: <strong>${escapeHtml(spkData.spkNumber || ('SPK-FB-' + date.replace(/-/g, '') + '-01'))}</strong> &bull; Cetak: ${printTimeStr}
+              </div>
+              <div style="font-size: 6.5pt; color: #0369a1; font-weight: 700;">
+                Armada: ${truckCount > 1 ? `${truckCount} Truk Armada (${rawPlates.join(' • ')})` : `1 Unit Armada (${rawPlates[0] || armada.nopol})`}
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabel Matriks Sesuai Permintaan Owner -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 7.5pt; border: 1.5px solid #0f172a;">
+            <thead>
+              <tr style="background-color: #f1f5f9; color: #0f172a;">
+                <th rowspan="2" style="border: 1px solid #334155; text-align: center; padding: 4px 2px; width: 22px;">No</th>
+                <th rowspan="2" style="border: 1px solid #334155; text-align: left; padding: 4px 5px; min-width: 95px;">Nama Produk Roti</th>
+                <th rowspan="2" style="border: 1px solid #334155; text-align: right; padding: 4px 4px; background: #e2e8f0; font-weight: 900; min-width: 48px;">
+                  Jumlah<br>Order
+                </th>
+                ${spkColGroupHeader}
+                ${salesColGroupHeader}
+              </tr>
+              <tr style="background-color: #f8fafc; color: #1e293b;">
+                ${spkSubHeaders}
+                ${salesSubHeaders}
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+            <tfoot>
+              <!-- Baris Total Pcs -->
+              <tr style="background-color: #f1f5f9; font-weight: 800;">
+                <td colspan="2" style="border: 1px solid #334155; text-align: right; padding: 3px 5px; font-size: 7.5pt; text-transform: uppercase;">
+                  TOTAL ORDER (PCS):
+                </td>
+                <td style="border: 1px solid #334155; text-align: right; padding: 3px 4px; font-size: 7.5pt; color: #0f172a; background: #e2e8f0;">
+                  ${grandTotalOrderan.toLocaleString('id-ID')}
+                </td>
+                ${spkFooters}
+                <td style="border: 1px solid #334155; text-align: right; padding: 3px 4px; font-size: 7.5pt; color: #1e1b4b; background: #e0e7ff;">
+                  ${grandTotalSPK.toLocaleString('id-ID')}
+                </td>
+                ${salesFooters}
+              </tr>
+
+              <!-- Baris Konversi Keranjang -->
+              <tr style="background-color: #f8fafc; font-size: 7pt;">
+                <td colspan="2" style="border: 1px solid #334155; text-align: right; padding: 2px 5px; font-weight: 700; color: #475569;">
+                  TOTAL KERANJANG:
+                </td>
+                <td style="border: 1px solid #334155; text-align: right; padding: 2px 4px; font-weight: 700; color: #334155;">
+                  ${grandTotalOrderKB} KB + ${grandTotalOrderKMK} KMK
+                </td>
+                <td colspan="${isSaturday ? 4 : 2}" style="border: 1px solid #334155; text-align: center; padding: 2px 4px; font-weight: 700; color: #1e1b4b; background: #eef2ff;">
+                  Muatan SPK: <strong>${grandTotalSPKKB} KB + ${grandTotalSPKKMK} KMK</strong>
+                </td>
+                <td colspan="${allPO.length || 1}" style="border: 1px solid #334155; text-align: center; padding: 2px 4px; color: #78350f; font-weight: 700;">
+                  *Zero Stock (100% Habis Terdistribusi ke Sales)
+                </td>
+              </tr>
+
+              <!-- Baris Ceklist Verifikasi Fisik -->
+              <tr style="background-color: #ffffff;">
+                <td colspan="2" style="border: 1px solid #334155; text-align: right; padding: 2px 5px; font-weight: 700; font-size: 7pt; color: #475569;">
+                  CEKLIST SERAH TERIMA:
+                </td>
+                <td style="border: 1px solid #334155; text-align: center; padding: 2px; color: #64748b; font-size: 6.5pt;">✓ PO</td>
+                <td colspan="${isSaturday ? 4 : 2}" style="border: 1px solid #334155; text-align: center; padding: 2px; color: #4338ca; font-size: 6.5pt;">
+                  ✓ Pabrik Sesuai SPK
+                </td>
+                ${checkBoxes}
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Area Bawah: Catatan Tim Bongkar & Tanda Tangan Lapangan -->
+          <div style="margin-top: 6px; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 8px; font-size: 7pt; page-break-inside: avoid;">
+            <!-- Kolom Catatan Tim Bongkar -->
+            <div style="border: 1px solid #94a3b8; border-radius: 4px; padding: 4px; background: #fafafa; min-height: 48px;">
+              <div style="font-weight: 800; color: #0f172a; margin-bottom: 2px; text-transform: uppercase; font-size: 6.5pt;">
+                Catatan Tim Bongkar & Distribusi:
+              </div>
+              <div style="color: #64748b; font-style: italic; font-size: 6.5pt;">
+                Tuliskan keterangan bila ada roti tertinggal di pabrik, basah, rusak kemasan, atau selisih fisik saat serah terima ke motoris:
+              </div>
+            </div>
+
+            <!-- Tanda Tangan 1: Kasir / Admin -->
+            <div style="text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px;">
+              <div style="font-size: 6.5pt; color: #64748b;">Mengetahui / Verifikasi:</div>
+              <div style="font-weight: 700; color: #0f172a; margin-bottom: 24px; font-size: 7pt;">Kasir / Admin Alfaris</div>
+              <div style="border-top: 1px dotted #94a3b8; padding-top: 2px; font-size: 6.5pt; color: #475569;">( .................................... )</div>
+            </div>
+
+            <!-- Tanda Tangan 2: Driver Armada Pabrik -->
+            <div style="text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px;">
+              <div style="font-size: 6.5pt; color: #64748b;">Pengemudi Pengangkut:</div>
+              <div style="font-weight: 700; color: #0f172a; margin-bottom: 24px; font-size: 7pt;">Driver Armada Pabrik</div>
+              <div style="border-top: 1px dotted #94a3b8; padding-top: 2px; font-size: 6.5pt; color: #475569;">( .................................... )</div>
+            </div>
+
+            <!-- Tanda Tangan 3: Koordinator Lapangan -->
+            <div style="text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px;">
+              <div style="font-size: 6.5pt; color: #64748b;">Petugas Serah Terima:</div>
+              <div style="font-weight: 700; color: #0f172a; margin-bottom: 24px; font-size: 7pt;">Koordinator Distribusi</div>
+              <div style="border-top: 1px dotted #94a3b8; padding-top: 2px; font-size: 6.5pt; color: #475569;">( .................................... )</div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function buildTotalAmbilPabrikHTML(targetDate) {
