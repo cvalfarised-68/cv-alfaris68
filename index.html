@@ -7057,19 +7057,40 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
             const zebraBg = sIdx % 2 === 1 ? 'background-color: #f8fafc;' : 'background-color: #ffffff;';
 
+            // Baris Kosong untuk Ceklist / Cek Jumlah Produk Fisik oleh Tim Bongkar
+            const emptyCheckCellsHtml = products.map(() => {
+              return `<td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; text-align: center; padding: 0; height: 12px; background: #ffffff;"></td>`;
+            }).join('');
+
+            const rowBg = sIdx % 2 === 1 ? '#f8fafc' : '#ffffff';
+
             return `
-              <tr style="${zebraBg}">
-                <td style="border: 1px solid #64748b; text-align: center; font-weight: 700; padding: 3px 2px; color: #334155;">${sIdx + 1}</td>
-                <td style="border: 1px solid #64748b; padding: 3px 5px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              <!-- BARIS 1: PESANAN PO SISTEM -->
+              <tr style="background-color: ${rowBg};">
+                <td rowspan="2" style="border: 1px solid #64748b; border-bottom: 2px solid #334155; text-align: center; font-weight: 800; padding: 2px; color: #0f172a; vertical-align: middle; background: ${rowBg}; font-size: 7pt;">
+                  ${sIdx + 1}
+                </td>
+                <td style="border: 1px solid #64748b; padding: 2px 4px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; background: ${rowBg}; font-size: 6.8pt;">
                   ${escapeHtml(po.salesName || 'Sales')}
-                  <span style="display: block; font-size: 6pt; font-weight: 500; color: #64748b; line-height: 1;">${escapeHtml(po.salesRoute || '-')}</span>
+                  <span style="display: block; font-size: 5.5pt; font-weight: 500; color: #64748b;">${escapeHtml(po.salesRoute || '-')}</span>
                 </td>
                 ${cellsHtml}
-                <td style="border: 1px solid #64748b; text-align: center; font-weight: 900; background: #e2e8f0; color: #0f172a; padding: 3px 2px;">
+                <td style="border: 1px solid #64748b; text-align: center; font-weight: 900; background: #e2e8f0; color: #0f172a; padding: 2px 1px; font-size: 6.8pt;">
                   ${salesSum.toLocaleString('id-ID')}
                 </td>
-                <td style="border: 1px solid #64748b; text-align: center; padding: 2px;">
-                  <span style="display: inline-block; width: 14px; height: 14px; border: 1.5px solid #475569; border-radius: 2px;"></span>
+                <td style="border: 1px solid #64748b; text-align: center; padding: 1px; background: ${rowBg};">
+                  <span style="display: inline-block; width: 11px; height: 11px; border: 1.2px solid #475569; border-radius: 2px;"></span>
+                </td>
+              </tr>
+              <!-- BARIS 2: BARIS KOSONG UNTUK CEKLIST / CEK JUMLAH TIM BONGKAR -->
+              <tr style="background-color: #ffffff;">
+                <td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; padding: 1px 4px; font-size: 5.5pt; font-weight: 700; color: #64748b; text-align: left; background: #ffffff; height: 12px;">
+                  <span style="font-style: italic; color: #64748b;">✓ Cek Fisik:</span>
+                </td>
+                ${emptyCheckCellsHtml}
+                <td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; background: #f8fafc; text-align: center; height: 12px;"></td>
+                <td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; text-align: center; padding: 1px; background: #ffffff;">
+                  <span style="display: inline-block; width: 11px; height: 11px; border: 1.2px solid #94a3b8; border-radius: 2px; background: #fff;"></span>
                 </td>
               </tr>
             `;
@@ -7144,26 +7165,20 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             </tfoot>
           </table>
 
-          <!-- CATATAN PETUGAS GUDANG & LEMBAR TANDA TANGAN 3 PIHAK -->
-          <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; page-break-inside: avoid;">
-
-
-            <div style="display: flex; gap: 16px; text-align: center; font-size: 6.8pt; flex-shrink: 0;">
-              <div style="width: 120px;">
-                <div style="color: #64748b; font-size: 6.5pt;">Driver Armada Pabrik,</div>
-                <div style="height: 32px;"></div>
-                <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( ___________________ )</div>
-              </div>
-              <div style="width: 130px;">
-                <div style="color: #64748b; font-size: 6.5pt;">Petugas Bongkar Muatan,</div>
-                <div style="height: 32px;"></div>
-                <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( ___________________ )</div>
-              </div>
-              <div style="width: 125px;">
-                <div style="color: #64748b; font-size: 6.5pt;">Koordinator Gudang / Kasir,</div>
-                <div style="height: 32px;"></div>
-                <div style="border-top: 1px solid #0f172a; font-weight: 700; color: #0f172a;">( ___________________ )</div>
-              </div>
+          <!-- KOLOM CATATAN TIM BONGKAR (PENGGANTI TANDA TANGAN) -->
+          <div style="margin-top: 5px; border: 1.5px solid #0f172a; border-radius: 4px; padding: 5px 8px; background: #ffffff; page-break-inside: avoid; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 3px;">
+              <span style="font-weight: 900; font-size: 7.2pt; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px;">
+                📝 KOLOM CATATAN TIM BONGKAR MUATAN (Kondisi Fisik Roti, Selisih Muatan, Penyok, dll):
+              </span>
+              <span style="font-size: 6.5pt; font-weight: 700; color: #334155;">
+                Petugas Bongkar: ___________________________________ &bull; Jam Selesai: ___________ WIB
+              </span>
+            </div>
+            <div style="height: 38px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div style="border-bottom: 1px dashed #94a3b8; height: 12px;"></div>
+              <div style="border-bottom: 1px dashed #94a3b8; height: 12px;"></div>
+              <div style="border-bottom: 1px dashed #94a3b8; height: 12px;"></div>
             </div>
           </div>
         </div>
