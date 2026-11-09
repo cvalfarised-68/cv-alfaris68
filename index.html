@@ -4049,6 +4049,94 @@
       });
     }
 
+    // Helper Resolusi Kuantitas Produk PO Sales (Mendukung p.id, p.code, p.name, maupun Inisial Standar)
+    function getPOSalesItemQty(po, codeOrId) {
+      if (!po || !po.items) return 0;
+      if (po.items[codeOrId] !== undefined) return Number(po.items[codeOrId]) || 0;
+      
+      const products = getProductsData();
+      const stdCode = getProductStandardCode(codeOrId);
+      const p = products.find(prod => 
+        prod.id === codeOrId || 
+        prod.code === codeOrId || 
+        prod.name === codeOrId || 
+        getProductStandardCode(prod.name) === stdCode
+      );
+
+      if (p) {
+        if (po.items[p.id] !== undefined) return Number(po.items[p.id]) || 0;
+        if (po.items[p.code] !== undefined) return Number(po.items[p.code]) || 0;
+        if (po.items[p.name] !== undefined) return Number(po.items[p.name]) || 0;
+      }
+
+      for (const [k, v] of Object.entries(po.items)) {
+        if (getProductStandardCode(k) === stdCode) return Number(v) || 0;
+        const matchP = products.find(prod => prod.id === k || prod.code === k || prod.name === k);
+        if (matchP && (getProductStandardCode(matchP.name) === stdCode || matchP.code === stdCode)) {
+          return Number(v) || 0;
+        }
+      }
+      return 0;
+    }
+
+    // Helper Menetapkan Kuantitas Produk PO Sales (Menjaga Konsistensi Key Produk Tanpa Duplikasi)
+    function setPOSalesItemQty(po, codeOrId, newQty) {
+      if (!po) return;
+      if (!po.items) po.items = {};
+      const products = getProductsData();
+      const stdCode = getProductStandardCode(codeOrId);
+      const p = products.find(prod => 
+        prod.id === codeOrId || 
+        prod.code === codeOrId || 
+        prod.name === codeOrId || 
+        getProductStandardCode(prod.name) === stdCode
+      );
+
+      // Gunakan p.id jika ada agar sinkron dengan form PO Sales, jika tidak gunakan codeOrId
+      const targetKey = p ? p.id : codeOrId;
+
+      // Bersihkan variasi key alias lain agar tidak terjadi perhitungan ganda
+      Object.keys(po.items).forEach(k => {
+        if (k === targetKey) return;
+        if (p && (k === p.id || k === p.code || k === p.name)) {
+          delete po.items[k];
+        } else if (getProductStandardCode(k) === stdCode) {
+          delete po.items[k];
+        }
+      });
+
+      if (newQty > 0) {
+        po.items[targetKey] = newQty;
+      } else {
+        delete po.items[targetKey];
+      }
+    }
+
+    // Helper Menghitung Ulang Total Pcs dan Nominal Rupiah PO Sales
+    function recalculatePOSalesTotals(po) {
+      if (!po) return;
+      const products = getProductsData();
+      const salesList = getSalesData();
+      const sales = salesList.find(s => s.id === po.salesId || s.name === po.salesName);
+      const tierId = (sales && sales.priceLevel) || po.salesTier || 'level1';
+
+      let totalPcs = 0;
+      let totalAmount = 0;
+
+      if (po.items) {
+        Object.entries(po.items).forEach(([k, qty]) => {
+          const q = Number(qty) || 0;
+          if (q <= 0) return;
+          totalPcs += q;
+          const p = products.find(prod => prod.id === k || prod.code === k || prod.name === k || getProductStandardCode(prod.name) === getProductStandardCode(k));
+          const price = p ? getProductPriceForSales(p, tierId) : 0;
+          totalAmount += (q * price);
+        });
+      }
+      po.totalPcs = totalPcs;
+      po.totalAmount = totalAmount;
+    }
+
     // --- 2.2 KONSTANTA & KALKULATOR RESMI PABRIK (FRIEND'S BAKERY SPREADSHEET) ---
     const FACTORY_BREAD_CONVERSIONS = {
       'MCN': { type: 'KB', unitsPerBasket: 18, unit: 'bdl', fullName: 'MCN' },
@@ -5964,7 +6052,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         let salesCellsHtml = '';
         if (posOnDate.length > 0) {
           salesCellsHtml = posOnDate.map((po, sIdx) => {
-            const sq = Number(po.items && po.items[item.code]) || 0;
+            const sq = getPOSalesItemQty(po, item.code);
             salesTotals[sIdx] += sq;
             return `
               <td class="py-1.5 px-1.5 text-center bg-amber-50/20 border-l border-amber-100">
@@ -6172,21 +6260,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const allPO = getPOSalesData();
       const targetPO = allPO.find(p => p.id === poId);
       if (targetPO) {
-        if (!targetPO.items) targetPO.items = {};
-        targetPO.items[code] = newQty;
-
-        const products = getProductsData();
-        let totalPcs = 0;
-        let totalVal = 0;
-        Object.entries(targetPO.items).forEach(([k, q]) => {
-          const qty = Number(q) || 0;
-          totalPcs += qty;
-          const p = products.find(prod => prod.id === k || prod.code === k || prod.name === k);
-          const price = p ? Number(p.price || p.unitPrice || 0) : 0;
-          totalVal += (qty * price);
-        });
-        targetPO.totalPcs = totalPcs;
-        targetPO.totalAmount = totalVal;
+        setPOSalesItemQty(targetPO, code, newQty);
+        recalculatePOSalesTotals(targetPO);
 
         savePOSalesData(allPO);
 
@@ -6196,7 +6271,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         // Update PO diminta pada baris produk
         const posOnDate = allPO.filter(p => p.date === currentPODate);
-        const rowPOTotal = posOnDate.reduce((sum, p) => sum + (Number(p.items && p.items[code]) || 0), 0);
+        const rowPOTotal = posOnDate.reduce((sum, p) => sum + getPOSalesItemQty(p, code), 0);
         const poCell = document.getElementById(`spk-row-po-${code}`);
         if (poCell) {
           poCell.innerText = `${rowPOTotal.toLocaleString('id-ID')} pcs`;
@@ -6205,7 +6280,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         // Update footer sales
         const tfootSales = document.getElementById(`spk-tfoot-sales-${poId}`);
         if (tfootSales) {
-          tfootSales.innerText = `${totalPcs.toLocaleString('id-ID')} pcs`;
+          tfootSales.innerText = `${(targetPO.totalPcs || 0).toLocaleString('id-ID')} pcs`;
         }
 
         // Update grand total PO
@@ -6277,20 +6352,11 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const armada = getFactoryArmadaForDate(currentPODate);
       const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
 
-      const aggItems = {};
-      posOnDate.forEach(po => {
-        if (po.items) {
-          Object.entries(po.items).forEach(([k, v]) => {
-            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
-          });
-        }
-      });
-
       const spkItemsPerTruck = {};
       const spkTotalItems = {};
 
       STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
-        const poQty = aggItems[p.code] || 0;
+        const poQty = posOnDate.reduce((sum, po) => sum + getPOSalesItemQty(po, p.code), 0);
         const base = Math.floor(poQty / truckCount);
         const rem = poQty % truckCount;
         spkItemsPerTruck[p.code] = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
@@ -6353,28 +6419,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       // Simpan perubahan alokasi sales dari sel input matriks
       const allPO = getPOSalesData();
       const posOnDate = allPO.filter(po => po.date === currentPODate);
-      const products = getProductsData();
 
       posOnDate.forEach(po => {
-        let totalPcs = 0;
-        let totalVal = 0;
-        if (!po.items) po.items = {};
-
         STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
           const inputSales = document.getElementById(`spk-sales-${po.id}-${p.code}`);
           if (inputSales) {
             const sq = Math.max(0, parseInt(inputSales.value || '0', 10));
-            po.items[p.code] = sq;
+            setPOSalesItemQty(po, p.code, sq);
           }
-          const q = Number(po.items[p.code]) || 0;
-          totalPcs += q;
-          const prodObj = products.find(prod => prod.id === p.code || prod.code === p.code || prod.name === p.code);
-          const price = prodObj ? Number(prodObj.price || prodObj.unitPrice || 0) : 0;
-          totalVal += (q * price);
         });
-
-        po.totalPcs = totalPcs;
-        po.totalAmount = totalVal;
+        recalculatePOSalesTotals(po);
       });
 
       savePOSalesData(allPO);
@@ -6412,7 +6466,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       STANDARD_FACTORY_25_PRODUCTS.forEach(prod => {
         const code = prod.code;
         const targetTotal = Number(spkData.items[code] !== undefined ? spkData.items[code] : 0);
-        const origTotal = posOnDate.reduce((sum, p) => sum + (Number(p.items && p.items[code]) || 0), 0);
+        const origTotal = posOnDate.reduce((sum, p) => sum + getPOSalesItemQty(p, code), 0);
 
         if (origTotal <= 0 || origTotal === targetTotal) return;
 
@@ -6421,7 +6475,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         let allocated = 0;
 
         const allocs = posOnDate.map(po => {
-          const curQty = Number(po.items && po.items[code]) || 0;
+          const curQty = getPOSalesItemQty(po, code);
           const raw = curQty * ratio;
           const base = Math.floor(raw);
           allocated += base;
@@ -6437,8 +6491,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         // Terapkan ke masing-masing PO
         allocs.forEach(a => {
-          if (!a.po.items) a.po.items = {};
-          a.po.items[code] = a.base;
+          setPOSalesItemQty(a.po, code, a.base);
         });
       });
 
@@ -6448,22 +6501,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
 
       // Hitung ulang total Pcs dan Total Amount pada setiap PO
-      const products = getProductsData();
-      posOnDate.forEach(po => {
-        let totalPcs = 0;
-        let totalVal = 0;
-        if (po.items) {
-          Object.entries(po.items).forEach(([k, q]) => {
-            const qty = Number(q) || 0;
-            totalPcs += qty;
-            const p = products.find(prod => prod.id === k || prod.code === k || prod.name === k);
-            const price = p ? Number(p.price || p.unitPrice || 0) : 0;
-            totalVal += (qty * price);
-          });
-        }
-        po.totalPcs = totalPcs;
-        po.totalAmount = totalVal;
-      });
+      posOnDate.forEach(po => recalculatePOSalesTotals(po));
 
       savePOSalesData(allPO);
 
@@ -7671,7 +7709,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         // 1. Hitung Total Orderan Produk dari Semua Sales
         let rowOrderTotal = 0;
         const salesRowValues = allPO.map((po, sIdx) => {
-          const q = Number(po.items && po.items[code]) || 0;
+          const q = getPOSalesItemQty(po, code);
           rowOrderTotal += q;
           salesGrandTotals[sIdx] += q;
           return q;
