@@ -544,7 +544,7 @@
         </button>
         
         <!-- Tab 5: Operasional & P&L -->
-        <button onclick="switchTab('operasional')" class="nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="operasional">
+        <button onclick="switchTab('operasional')" class="owner-only nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition" data-tab="operasional">
           <i data-lucide="truck" class="w-4 h-4"></i>
           <span>Operasional & P&L</span>
           <span class="ml-auto text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Keuangan</span>
@@ -561,7 +561,7 @@
         <div class="pt-4 mt-4 border-t border-slate-100 px-3 space-y-2">
           <button 
             onclick="openSupabaseConfigModal()" 
-            class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition"
+            class="owner-only w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition"
             title="Pengaturan Database Cloud Supabase">
             <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-600"></i>
             <span>Database Cloud Supabase</span>
@@ -577,7 +577,7 @@
 
           <button 
             onclick="downloadMonthlyBackup()" 
-            class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+            class="owner-only w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
             title="Download seluruh data dalam format JSON">
             <i data-lucide="download" class="w-3.5 h-3.5 text-brand-600"></i>
             <span>Backup Bulanan (JSON)</span>
@@ -1039,7 +1039,7 @@
             <button 
               type="button" 
               onclick="openFinancialReportModal('po:' + currentPODate)" 
-              class="px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
+              class="owner-only px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
               title="Lihat Laporan Laba Rugi Komprehensif Pre Order ini">
               <i data-lucide="trending-up" class="w-4 h-4"></i>
               <span>Laba Rugi PO Ini</span>
@@ -1237,7 +1237,7 @@
       <!-- ============================================== -->
       <!-- TAB 5: OPERASIONAL, KEUANGAN & LABA RUGI (P&L) -->
       <!-- ============================================== -->
-      <section id="tab-operasional" class="tab-content space-y-5">
+      <section id="tab-operasional" class="tab-content owner-only space-y-5">
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -2825,8 +2825,9 @@
         <input type="hidden" id="sales-form-id" value="">
         <div><label class="block font-semibold mb-1 text-slate-700">Nama Sales *</label><input type="text" id="sales-form-name" required class="w-full px-3 py-2 border rounded-xl"></div>
         <div>
-          <label class="block font-semibold mb-1 text-slate-700">
+          <label class="block font-semibold mb-1 text-slate-700 flex items-center justify-between">
             <span>Status Sales / Tingkat Harga (Tiering Mitra) *</span>
+            <span class="owner-only text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Khusus Owner</span>
           </label>
           <select id="sales-form-price-level" required class="w-full px-3 py-2 border rounded-xl bg-white font-semibold text-slate-800 focus:outline-none focus:border-brand-500">
             <option value="level1">Sales Besar (+25%)</option>
@@ -2836,6 +2837,9 @@
             <option value="level5">Agen Khusus (+28%)</option>
             <option value="level6">Grosir Partai (+20%)</option>
           </select>
+          <p id="sales-form-tier-kasir-note" class="hidden text-[10.5px] text-amber-700 mt-1 italic font-medium">
+            🔒 Tingkat harga dikunci oleh sistem. Hanya Owner yang berwenang mengubah tier harga sales.
+          </p>
         </div>
         <div><label class="block font-semibold mb-1 text-slate-700">No WhatsApp *</label><input type="tel" id="sales-form-phone" required placeholder="08xxxxxxxxxx" class="w-full px-3 py-2 border rounded-xl"></div>
         <div><label class="block font-semibold mb-1 text-slate-700">Rute Pengantaran</label><input type="text" id="sales-form-route" placeholder="Contoh: Rute Klojen, Sukun" class="w-full px-3 py-2 border rounded-xl"></div>
@@ -3334,7 +3338,7 @@
       <button onclick="switchTab('produk')" class="owner-only nav-item-mobile flex-1 max-w-[70px] flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="produk">
         <i data-lucide="package" class="w-4 h-4 mb-0.5"></i><span class="truncate">Produk</span>
       </button>
-      <button onclick="switchTab('operasional')" class="nav-item-mobile flex-1 max-w-[70px] flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="operasional">
+      <button onclick="switchTab('operasional')" class="owner-only nav-item-mobile flex-1 max-w-[70px] flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="operasional">
         <i data-lucide="truck" class="w-4 h-4 mb-0.5"></i><span class="truncate">Ops</span>
       </button>
       <button onclick="switchTab('sales')" class="nav-item-mobile flex-1 max-w-[70px] flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500 hover:text-slate-800" data-tab="sales">
@@ -3510,6 +3514,10 @@
     }
 
     function openSupabaseConfigModal() {
+      if (currentRole === 'kasir') {
+        showToast('Pengaturan database cloud hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
+        return;
+      }
       const { url, anonKey } = getActiveSupabaseCredentials();
       document.getElementById('supabase-url-input').value = url;
       document.getElementById('supabase-key-input').value = anonKey;
@@ -5033,7 +5041,7 @@
               <button onclick="editPOSales('${po.id}')" class="p-1 rounded text-slate-500 hover:text-brand-600 transition" title="Edit PO">
                 <i data-lucide="edit-3" class="w-3.5 h-3.5 inline"></i>
               </button>
-              <button onclick="deletePOSales('${po.id}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition" title="Hapus">
+              <button onclick="deletePOSales('${po.id}')" class="owner-only p-1 rounded text-slate-400 hover:text-rose-600 transition" title="Hapus">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
               </button>
             </td>
@@ -5408,6 +5416,10 @@
     }
 
     function deletePOSales(poId) {
+      if (currentRole === 'kasir') {
+        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk menghapus PO Sales.', 'error');
+        return;
+      }
       if (confirm('Hapus data PO sales ini? Transaksi drop roti terkait di kasir juga akan otomatis dibatalkan.')) {
         const allPO = getPOSalesData();
         const poToDelete = allPO.find(p => p.id === poId);
@@ -8916,6 +8928,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
     // --- 5. BACKUP BULANAN (JSON) DILENGKAPI PO SALES ---
     function downloadMonthlyBackup() {
+      if (currentRole === 'kasir') {
+        showToast('Fitur unduh backup database hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
+        return;
+      }
       const backupPayload = {
         metadata: {
           company: 'CV. Alfaris Enam Delapan',
@@ -8948,6 +8964,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
     // --- 6. PENGELUARAN OPERASIONAL & EXECUTIVE P&L ---
     function openExpenseModal(expId = null) {
+      if (currentRole === 'kasir') {
+        showToast('Pencatatan biaya operasional hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
+        return;
+      }
       const modal = document.getElementById('modal-expense');
       const title = document.getElementById('expense-modal-title');
       const submitBtn = document.getElementById('expense-submit-btn');
@@ -9282,6 +9302,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function openFinancialReportModal(initialPeriod) {
+      if (currentRole === 'kasir') {
+        showToast('Laporan Laba Rugi Komprehensif hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
+        return;
+      }
       populateFinancialReportPeriods(initialPeriod);
       const layoutSelect = document.getElementById('filter-rpt-layout');
       if (layoutSelect) layoutSelect.value = 'summary';
@@ -11040,7 +11064,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                   <button 
                     onclick="deleteTransaction('${t.id}')" 
                     title="Batalkan Transaksi" 
-                    class="p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                    class="owner-only p-1.5 text-slate-300 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
                   >
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                   </button>
@@ -11051,6 +11075,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }).join('');
       }
       lucide.createIcons();
+      applyRoleVisibility();
     }
 
     function setTrxFilter(f) { 
@@ -11069,6 +11094,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function deleteTransaction(id) {
+      if (currentRole === 'kasir') {
+        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk menghapus atau membatalkan transaksi.', 'error');
+        return;
+      }
       const allTrx = getTransactionsData();
       const trxToDelete = allTrx.find(t => t.id === id);
       if (!trxToDelete) return;
@@ -11135,13 +11164,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             <div class="flex items-center gap-1.5">
               <button onclick="openSalesModal('${s.id}')" title="Edit Sales" class="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-brand-600 hover:bg-slate-50 transition"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
               <button onclick="toggleSalesStatus('${s.id}')" class="px-2.5 py-1 text-xs border border-slate-200 font-medium rounded-lg hover:bg-slate-50 transition">${s.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}</button>
-              <button onclick="deleteSales('${s.id}')" title="Hapus Sales" class="p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+              <button onclick="deleteSales('${s.id}')" title="Hapus Sales" class="owner-only p-1.5 rounded-lg border border-rose-200 text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
             </div>
           </div>
         `;
         }).join('');
       }
       lucide.createIcons();
+      applyRoleVisibility();
     }
     function setSalesFilter(f) { currentSalesFilter = f; renderSalesList(); }
     function toggleSalesStatus(id) { saveSalesData(getSalesData().map(s => s.id === id ? { ...s, status: s.status === 'aktif' ? 'nonaktif' : 'aktif' } : s)); }
@@ -11154,6 +11184,24 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const phoneInput = document.getElementById('sales-form-phone');
       const routeInput = document.getElementById('sales-form-route');
       const priceLevelSelect = document.getElementById('sales-form-price-level');
+      const isKasir = currentRole === 'kasir';
+      const tierKasirNote = document.getElementById('sales-form-tier-kasir-note');
+
+      if (priceLevelSelect) {
+        priceLevelSelect.disabled = isKasir;
+        if (isKasir) {
+          priceLevelSelect.classList.add('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+        } else {
+          priceLevelSelect.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+        }
+      }
+      if (tierKasirNote) {
+        if (isKasir) {
+          tierKasirNote.classList.remove('hidden');
+        } else {
+          tierKasirNote.classList.add('hidden');
+        }
+      }
 
       if (salesId && typeof salesId === 'string') {
         const s = getSalesData().find(x => x.id === salesId);
@@ -11189,8 +11237,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const n = document.getElementById('sales-form-name').value.trim();
       const p = document.getElementById('sales-form-phone').value.trim();
       const route = document.getElementById('sales-form-route').value.trim() || 'Rute Bebas';
-      const priceLevel = document.getElementById('sales-form-price-level')?.value || 'level1';
+      let priceLevel = document.getElementById('sales-form-price-level')?.value || 'level1';
       if (!n || !p) return;
+
+      if (salesId && currentRole === 'kasir') {
+        const existingSales = getSalesData().find(s => s.id === salesId);
+        if (existingSales && existingSales.priceLevel) {
+          priceLevel = existingSales.priceLevel;
+        }
+      } else if (!salesId && currentRole === 'kasir') {
+        priceLevel = 'level1';
+      }
 
       const tierObj = PRICE_TIERS.find(t => t.id === priceLevel) || PRICE_TIERS[0];
       let list = getSalesData();
@@ -11213,6 +11270,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       closeSalesModal();
     }
     function deleteSales(id) {
+      if (currentRole === 'kasir') {
+        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk menghapus data sales.', 'error');
+        return;
+      }
       const s = getSalesData().find(x => x.id === id);
       const sName = s ? s.name : id;
       if (confirm(`Hapus data sales "${sName}"? Sales ini tidak akan muncul lagi di daftar drop dan rekap PO.`)) {
@@ -11270,6 +11331,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       PRICE_TIERS.forEach(t => document.getElementById('price-' + t.id).value = Math.round((f * (1 + (t.marginPct / 100))) / 50) * 50);
     }
     function openProductModal(prodId = null) {
+      if (currentRole === 'kasir') {
+        showToast('Pengaturan produk & harga hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
+        return;
+      }
       const modal = document.getElementById('modal-product');
       const title = document.getElementById('product-modal-title');
       const submitBtn = document.getElementById('product-submit-btn');
@@ -11311,6 +11376,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     function closeProductModal() { document.getElementById('modal-product').classList.add('hidden'); }
     function saveProduct(e) {
       e.preventDefault();
+      if (currentRole === 'kasir') {
+        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk mengubah data produk.', 'error');
+        return;
+      }
       const prodId = document.getElementById('product-form-id').value;
       const name = document.getElementById('product-form-name').value.trim();
       const factoryPrice = parseFloat(document.getElementById('product-form-factory-price').value) || 0;
@@ -11330,6 +11399,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       closeProductModal();
     }
     function deleteProduct(id) {
+      if (currentRole === 'kasir') {
+        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk menghapus produk.', 'error');
+        return;
+      }
       const prod = getProductsData().find(p => p.id === id);
       const prodName = prod ? prod.name : id;
       if (confirm(`Hapus produk "${prodName}"? Semua data konfigurasi 6 level harga untuk produk ini akan dihapus.`)) {
@@ -11490,6 +11563,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
     }
 
     function openChangePinModal() {
+      if (currentRole === 'kasir') {
+        showToast('Pengaturan PIN keamanan hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
+        return;
+      }
       const pins = getAuthPins();
       document.getElementById('change-pin-kasir').value = pins.kasir;
       document.getElementById('change-pin-owner').value = pins.owner;
@@ -11502,6 +11579,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
     function handleChangePinSubmit(e) {
       e.preventDefault();
+      if (currentRole === 'kasir') {
+        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk mengubah PIN keamanan.', 'error');
+        return;
+      }
       const kPin = document.getElementById('change-pin-kasir').value.trim();
       const oPin = document.getElementById('change-pin-owner').value.trim();
 
@@ -11553,16 +11634,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       document.querySelectorAll('.kasir-only').forEach(el => currentRole === 'kasir' ? el.classList.remove('hidden') : el.classList.add('hidden'));
 
       if (currentRole === 'kasir') {
-        if (currentTab === 'produk') {
+        if (currentTab === 'produk' || currentTab === 'operasional') {
           switchTab('dashboard');
         }
       }
     }
 
     function switchTab(tabId) {
-      if (currentRole === 'kasir' && tabId === 'produk') {
-        showToast('Menu Produk & Harga hanya dapat diakses oleh Owner / Pimpinan.', 'warning');
-        if (currentTab === 'produk') switchTab('dashboard');
+      if (currentRole === 'kasir' && (tabId === 'produk' || tabId === 'operasional')) {
+        const tabName = tabId === 'produk' ? 'Produk & Harga' : 'Operasional & P&L';
+        showToast(`Menu ${tabName} hanya dapat diakses oleh Owner / Pimpinan.`, 'warning');
+        if (currentTab === 'produk' || currentTab === 'operasional') switchTab('dashboard');
         return;
       }
 
@@ -11571,16 +11653,24 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       document.getElementById('tab-' + tabId)?.classList.add('active');
 
       document.querySelectorAll('.nav-item-desktop').forEach(b => {
-        b.className = b.getAttribute('data-tab') === currentTab 
+        const isOwnerOnly = b.classList.contains('owner-only') || ['produk', 'operasional'].includes(b.getAttribute('data-tab'));
+        const isActive = b.getAttribute('data-tab') === currentTab;
+        b.className = isActive 
           ? 'nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-brand-500 text-white shadow-sm'
           : 'nav-item-desktop w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50';
+        if (isOwnerOnly) b.classList.add('owner-only');
       });
 
       document.querySelectorAll('.nav-item-mobile').forEach(b => {
-        b.className = b.getAttribute('data-tab') === currentTab 
+        const isOwnerOnly = b.classList.contains('owner-only') || ['produk', 'operasional'].includes(b.getAttribute('data-tab'));
+        const isActive = b.getAttribute('data-tab') === currentTab;
+        b.className = isActive 
           ? 'nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-bold text-brand-600'
           : 'nav-item-mobile flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg text-[9px] font-medium text-slate-500';
+        if (isOwnerOnly) b.classList.add('owner-only');
       });
+
+      applyRoleVisibility();
 
       if (tabId === 'po') {
         const poDateEl = document.getElementById('po-date-filter');
