@@ -349,9 +349,17 @@
       </span>
     </div>
     <div class="flex items-center gap-2">
-      <span class="text-[10px] text-amber-300 font-semibold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-400/30">
-        Demo Bebas Uji Coba
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] text-slate-300">Mode Saat Ini:</span>
+        <button 
+          id="btn-toggle-demo-role"
+          type="button" 
+          onclick="toggleDemoRole()" 
+          class="px-2.5 py-1 rounded bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow-xs cursor-pointer transition flex items-center gap-1">
+          <span id="demo-role-label">👑 Mode Owner (Akses Penuh)</span>
+          <span class="text-[9px] bg-slate-900 text-white px-1.5 py-0.2 rounded font-normal">Klik untuk Ubah</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -4586,13 +4594,13 @@
     }
 
     // Inisialisasi State Awal Default Aplikasi
-    const DEFAULT_PO_SALES = [];
+    const DEFAULT_PO_SALES = [{"id":"po_demo_1_2026-11-11","salesId":"sal_demo_1","salesName":"Budi Santoso","salesRoute":"Rute Kota (Sentra Niaga)","date":"2026-11-11","createdAt":"2026-11-11T04:44:22.287Z","status":"CONFIRMED","totalPcs":360,"items":{"ROTI-01":120,"ROTI-02":60,"ROTI-03":60,"ROTI-04":60,"ROTI-05":60}},{"id":"po_demo_2_2026-11-11","salesId":"sal_demo_2","salesName":"Ahmad Fauzi","salesRoute":"Rute Barat (Kepanjen - Wlingi)","date":"2026-11-11","createdAt":"2026-11-11T04:44:22.287Z","status":"CONFIRMED","totalPcs":300,"items":{"ROTI-01":60,"ROTI-02":60,"ROTI-03":60,"ROTI-06":60,"ROTI-07":60}},{"id":"po_demo_3_2026-11-11","salesId":"sal_demo_3","salesName":"Dedi Kurniawan","salesRoute":"Rute Timur (Singosari - Lawang)","date":"2026-11-11","createdAt":"2026-11-11T04:44:22.287Z","status":"CONFIRMED","totalPcs":360,"items":{"ROTI-01":120,"ROTI-02":60,"ROTI-04":60,"ROTI-08":60,"ROTI-09":60}}];
     const DEFAULT_EXPENSES = [];
     const DEFAULT_TOKO = [
       { id: 'TKO-003', name: 'Toko Rejeki Singosari', pic: 'Pak Bambang', phone: '082199887766', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: '2026-11-03' }
     ];
     const DEFAULT_RETUR = [];
-    const DEFAULT_SALES = [{"id":"sal_demo_1","name":"Budi Santoso","route":"Rute Kota 1","phone":"081234567890","priceLevel":"level1","status":"active","notes":"Motoris Utama Kota"},{"id":"sal_demo_2","name":"Ahmad Fauzi","route":"Rute Barat","phone":"081398765432","priceLevel":"level2","status":"active","notes":"Motoris Reguler Wilayah Barat"},{"id":"sal_demo_3","name":"Dedi Kurniawan","route":"Rute Timur","phone":"081911223344","priceLevel":"level1","status":"active","notes":"Motoris Utama Wilayah Timur"}];
+    const DEFAULT_SALES = [{"id":"sal_demo_1","name":"Budi Santoso","route":"Rute Kota (Sentra Niaga)","phone":"081234567890","priceLevel":"level1","status":"active","notes":"Motoris Utama Kota"},{"id":"sal_demo_2","name":"Ahmad Fauzi","route":"Rute Barat (Kepanjen - Wlingi)","phone":"081398765432","priceLevel":"level2","status":"active","notes":"Motoris Reguler Barat"},{"id":"sal_demo_3","name":"Dedi Kurniawan","route":"Rute Timur (Singosari - Lawang)","phone":"081911223344","priceLevel":"level1","status":"active","notes":"Motoris Utama Timur"}];
     const DEFAULT_PRODUCTS = [
       { id: 'PRD-3646', code: 'ROTI-01', name: 'MCN', category: 'Roti Manis', stock: 100, factoryPrice: 6500, prices: { level1: 6900, level2: 7100, level3: 7200, level4: 7500, level5: 7100, level6: 6800 } },
       { id: 'PRD-5968', code: 'ROTI-02', name: 'MPC', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3600, level3: 3650, level4: 3850, level5: 3600, level6: 3500 } },
@@ -4620,7 +4628,7 @@
       { id: 'PRD-6617', code: 'ROTI-24', name: 'TP', category: 'Roti Tawar', stock: 100, factoryPrice: 5900, prices: { level1: 6300, level2: 6500, level3: 6600, level4: 6950, level5: 6500, level6: 6200 } },
       { id: 'PRD-9803', code: 'ROTI-25', name: 'TF', category: 'Roti Tawar', stock: 100, factoryPrice: 5900, prices: { level1: 6300, level2: 6500, level3: 6600, level4: 6950, level5: 6500, level6: 6200 } }
     ];
-    const DEFAULT_TRANSACTIONS = [];
+    const DEFAULT_TRANSACTIONS = [{"id":"trx_demo_1_2026-11-11","docNumber":"NOTA/20261111/001","salesId":"sal_demo_1","salesName":"Budi Santoso","salesRoute":"Rute Kota (Sentra Niaga)","date":"2026-11-11","totalPcs":360,"grandTotal":1980000,"paidAmount":1980000,"kasbonAmount":0,"paymentStatus":"LUNAS","paymentMethod":"CASH","createdAt":"2026-11-11T04:44:22.287Z","items":[{"code":"ROTI-01","name":"MCN","qty":120,"price":6900,"subtotal":828000,"basketType":"KB"},{"code":"ROTI-02","name":"MPC","qty":60,"price":3500,"subtotal":210000,"basketType":"KMK"},{"code":"ROTI-03","name":"MCK","qty":60,"price":3500,"subtotal":210000,"basketType":"KMK"},{"code":"ROTI-04","name":"MCC","qty":60,"price":3500,"subtotal":210000,"basketType":"KMK"},{"code":"ROTI-05","name":"MKK","qty":60,"price":8700,"subtotal":522000,"basketType":"KB"}]},{"id":"trx_demo_2_2026-11-11","docNumber":"NOTA/20261111/002","salesId":"sal_demo_2","salesName":"Ahmad Fauzi","salesRoute":"Rute Barat (Kepanjen - Wlingi)","date":"2026-11-11","totalPcs":300,"grandTotal":1540000,"paidAmount":1000000,"kasbonAmount":540000,"paymentStatus":"KASBON","paymentMethod":"CASH","createdAt":"2026-11-11T04:44:22.287Z","items":[{"code":"ROTI-01","name":"MCN","qty":60,"price":7100,"subtotal":426000,"basketType":"KB"},{"code":"ROTI-02","name":"MPC","qty":60,"price":3600,"subtotal":216000,"basketType":"KMK"},{"code":"ROTI-03","name":"MCK","qty":60,"price":3600,"subtotal":216000,"basketType":"KMK"},{"code":"ROTI-06","name":"MKS","qty":60,"price":5800,"subtotal":348000,"basketType":"KB"},{"code":"ROTI-07","name":"MPP","qty":60,"price":5600,"subtotal":334000,"basketType":"KB"}]}];
 
     // Fungsi pembersihan data dummy lawas dari browser kasir/owner jika ada sisa cache
     function cleanupLegacyDummyData() {
@@ -11586,6 +11594,26 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       saveAuthPins({ kasir: kPin, owner: oPin });
       closeChangePinModal();
       showToast('PIN Keamanan baru berhasil disimpan!');
+    }
+
+    
+    function toggleDemoRole() {
+      const currentRole = (currentUserSession && currentUserSession.role) || 'owner';
+      const newRole = currentRole === 'owner' ? 'kasir' : 'owner';
+      applyUserSession(newRole);
+      
+      const label = document.getElementById('demo-role-label');
+      if (label) {
+        label.innerText = newRole === 'owner' ? '👑 Mode Owner (Akses Penuh)' : '👤 Mode Kasir (Menu Terbatas)';
+      }
+      
+      const session = { role: newRole, remember: true, loginAt: new Date().toISOString() };
+      localStorage.setItem(STORAGE_KEY_AUTH_SESSION, JSON.stringify(session));
+      
+      showToast(newRole === 'owner' 
+        ? '👑 Beralih ke Mode Owner: Semua menu dan laporan Laba Rugi terbuka penuh.' 
+        : '👤 Beralih ke Mode Kasir: Menu Laba Rugi & Pengaturan harga disembunyikan.'
+      );
     }
 
     function applyUserSession(role) {
