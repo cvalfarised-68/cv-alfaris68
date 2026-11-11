@@ -10535,28 +10535,28 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       return `
         <div class="nota-a6-sheet bg-white text-slate-950 font-sans mx-auto" style="width: 100%; max-width: 105mm; margin: 0 auto; padding: 1.5mm 2mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
-          <!-- KOP DEMO DISTRIBUTOR & IDENTITAS NOTA A6 SESUAI STANDAR -->
-          <div class="flex items-center justify-between border-b-2 border-slate-900 ${isCompact ? 'pb-1 mb-1' : 'pb-1.5 mb-1.5'}">
-            <!-- SISI KIRI: LOGO KOTAK PUTIH BORDER AMBER & IDENTITAS PERUSAHAAN -->
+          <!-- KOP DEMO NOTA A6 PERSIS CONTOH GAMBAR (PENATAAN & FONT KOMPAK SESUAI CONTOH) -->
+          <div class="flex items-end justify-between border-b-2 border-slate-900 pb-1 mb-1.5">
+            <!-- SISI KIRI: LOGO KOTAK DF & INFORMASI PERUSAHAAN -->
             <div class="flex items-center gap-2">
-              <div class="${isCompact ? 'w-8 h-8 text-sm' : 'w-9 h-9 text-base'} rounded-xl border-2 border-amber-600 bg-white flex items-center justify-center flex-shrink-0 shadow-xs">
-                <span class="font-extrabold text-slate-400 leading-none">DF</span>
+              <div class="w-[42px] h-[42px] rounded-xl border-2 border-amber-600 bg-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                <span class="font-extrabold text-slate-400 text-sm leading-none">DF</span>
               </div>
               <div>
-                <h1 class="${isCompact ? 'text-[9.5pt]' : 'text-[10.5pt]'} font-black tracking-wide text-slate-950 uppercase leading-none">DISTRIBUTOR UTAMA INDONESIA (DEMO)</h1>
-                <p class="${isCompact ? 'text-[7.5pt]' : 'text-[8pt]'} font-black text-amber-800 uppercase tracking-wider mt-1 leading-none">DISTRIBUTOR RESMI MITRA FOODS</p>
-                <p class="${isCompact ? 'text-[6.5pt]' : 'text-[7pt]'} text-slate-600 font-semibold leading-tight mt-1">
+                <h1 class="text-[10pt] font-black text-slate-950 uppercase tracking-wide leading-none">DISTRIBUTOR UTAMA INDONESIA (DEMO)</h1>
+                <p class="text-[7.5pt] font-bold text-amber-800 uppercase tracking-wider mt-1 leading-none">DISTRIBUTOR RESMI MITRA FOODS</p>
+                <p class="text-[6.5pt] text-slate-600 font-medium leading-tight mt-1">
                   Kawasan Niaga Makmur Blok B-88 &bull;<br>Telp/WA: 0812-3456-7890
                 </p>
               </div>
             </div>
 
-            <!-- SISI KANAN: NOTA PENJUALAN GREY & NO TRX AMBER (LEGA & TIDAK MEPET) -->
+            <!-- SISI KANAN: NOTA PENJUALAN & NO TRX (SEJAJAR BAWAH, TIDAK BESAR, LEGA) -->
             <div class="text-right flex-shrink-0 pl-3">
-              <div class="${isCompact ? 'text-[8.5pt]' : 'text-[9.5pt]'} font-black tracking-wider text-slate-400 uppercase leading-none">
+              <div class="text-[8.5pt] font-extrabold text-slate-400 uppercase tracking-wider leading-none">
                 NOTA PENJUALAN
               </div>
-              <div class="${isCompact ? 'text-[8pt] mt-1' : 'text-[8.5pt] mt-1.5'} font-black text-slate-900 leading-none">
+              <div class="text-[8pt] text-slate-900 font-bold mt-2 leading-none">
                 NO: <span class="font-black text-amber-800">${trx.id}</span>
               </div>
             </div>
