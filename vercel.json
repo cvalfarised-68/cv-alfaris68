@@ -3,6 +3,24 @@
   "rewrites": [
     {
       "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(.*demo.*)"
+        }
+      ],
+      "destination": "/demo/index.html"
+    },
+    {
+      "source": "/demo",
+      "destination": "/demo/index.html"
+    },
+    {
+      "source": "/demo/(.*)",
+      "destination": "/demo/index.html"
+    },
+    {
+      "source": "/((?!demo).*)$",
       "destination": "/index.html"
     }
   ],
