@@ -1,16 +1,19 @@
 {
   "version": 2,
-  "rewrites": [
+  "redirects": [
     {
-      "source": "/(.*)",
+      "source": "/",
       "has": [
         {
           "type": "host",
           "value": "distriflow-demo.vercel.app"
         }
       ],
-      "destination": "/demo/index.html"
-    },
+      "destination": "/demo/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
     {
       "source": "/demo",
       "destination": "/demo/index.html"
