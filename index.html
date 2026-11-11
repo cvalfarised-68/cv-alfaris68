@@ -837,29 +837,7 @@
               <span>Input PO Sales</span>
             </button>
 
-            <button 
-              onclick="sendPOWhatsAppToFactory()" 
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition cursor-pointer">
-              <i data-lucide="message-circle" class="w-4 h-4"></i>
-              <span>Kirim PO ke Pabrik (WA)</span>
-            </button>
 
-            <button 
-              type="button"
-              onclick="openPabrikReconciliationModal('spk')" 
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition cursor-pointer"
-              title="Input Realisasi SPK Perolehan Roti Pabrik & Rekonsiliasi Otomatis ke Sales">
-              <i data-lucide="file-check-2" class="w-4 h-4"></i>
-              <span>Realisasi SPK Pabrik</span>
-            </button>
-
-            <button 
-              onclick="printAllPOSalesCardsOnDate()" 
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition cursor-pointer"
-              title="Cetak Semua Kartu Rekap PO Sales Sesuai Format Fisik Pabrik">
-              <i data-lucide="printer" class="w-4 h-4"></i>
-              <span>Cetak Kartu PO Sales</span>
-            </button>
           </div>
         </div>
 
@@ -1036,14 +1014,7 @@
               <span>Muatan & Armada Truk</span>
             </button>
 
-            <button 
-              type="button" 
-              onclick="openFinancialReportModal('po:' + currentPODate)" 
-              class="owner-only px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-2xs inline-flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
-              title="Lihat Laporan Laba Rugi Komprehensif Pre Order ini">
-              <i data-lucide="trending-up" class="w-4 h-4"></i>
-              <span>Laba Rugi PO Ini</span>
-            </button>
+
 
             <button 
               type="button"
@@ -1071,13 +1042,7 @@
               <span id="po-active-date-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
                 Tanggal: -
               </span>
-              <button 
-                onclick="openPreviewSPKMotoris()" 
-                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                title="Cetak Matriks Rekap SPK & Motoris (Format Khusus Permintaan Owner: Total Orderan + SPK Pabrik + Kolom Motoris)">
-                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-slate-950"></i>
-                <span>Cetak SPK & Motoris</span>
-              </button>
+
               <button 
                 onclick="openPreviewMatriksBongkar()" 
                 class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
@@ -1085,21 +1050,7 @@
                 <i data-lucide="printer" class="w-3.5 h-3.5 text-emerald-400"></i>
                 <span>Cetak Bongkar</span>
               </button>
-              <button 
-                onclick="openPreviewAmbilPabrik()" 
-                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                title="Cetak Surat Order TOTAL AMBIL PABRIK (A4 Portrait)">
-                <i data-lucide="factory" class="w-3.5 h-3.5 text-amber-200"></i>
-                <span>Cetak Pabrik</span>
-              </button>
-              <button 
-                type="button" 
-                onclick="printTracerBongkarTruk('all')" 
-                class="px-2.5 py-1 rounded-xl text-xs font-bold bg-blue-700 text-white hover:bg-blue-800 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
-                title="Cetak Lembar Tracer & Checklist Bongkar Muatan per Armada Truk">
-                <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-blue-200"></i>
-                <span>Cetak Tracer Truk</span>
-              </button>
+
             </div>
           </div>
 
@@ -2160,14 +2111,7 @@
             <span>🚚 Penataan Muatan Armada Truk</span>
             <span id="recon-tab-loaded-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">0 Varian</span>
           </button>
-          <button 
-            id="tab-btn-recon-baskets" 
-            onclick="switchReconTab('baskets')" 
-            class="px-3.5 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-            <i data-lucide="calculator" class="w-4 h-4"></i>
-            <span>📋 Semua 25 Varian Standar Pabrik</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">25 Varian</span>
-          </button>
+
         </div>
 
         <!-- TAB CONTENT 0: REALISASI SPK PABRIK & ALOKASI SALES (TERPADU SATU MENU) -->
@@ -2457,32 +2401,7 @@
           </div> <!-- Close recon-auto-allocation-panel -->
         </div> <!-- Close recon-tab-content-loaded -->
 
-        <!-- TAB CONTENT 3: RINCIAN 25 KERANJANG STANDAR PABRIK -->
-        <div id="recon-tab-content-baskets" class="hidden space-y-2">
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
-            <table class="w-full text-[11px] text-left">
-              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th class="py-2 px-2.5 text-center w-8">No</th>
-                  <th class="py-2 px-2.5">Inisial / Roti</th>
-                  <th class="py-2 px-2.5">Nama Varian</th>
-                  <th class="py-2 px-2.5 text-center">Tipe Krjg</th>
-                  <th class="py-2 px-2.5 text-center">Isi/Krjg</th>
-                  <th class="py-2 px-2.5 text-right">Order Sales</th>
-                  <th class="py-2 px-2.5 text-right font-extrabold text-brand-900">Hasil Keranjang</th>
-                  <th class="py-2 px-2.5 text-right">HPP Pabrik</th>
-                  <th class="py-2 px-2.5 text-right">Subtotal HPP</th>
-                </tr>
-              </thead>
-              <tbody id="recon-basket-tbody" class="divide-y divide-slate-100">
-                <!-- Diisi oleh JS -->
-              </tbody>
-              <tfoot id="recon-basket-tfoot" class="bg-slate-50 font-bold border-t border-slate-200">
-                <!-- Diisi oleh JS -->
-              </tfoot>
-            </table>
-          </div>
-        </div>
+
 
       </div>
 
@@ -7570,22 +7489,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             </tfoot>
           </table>
 
-          <!-- KOLOM CATATAN TIM BONGKAR (PENGGANTI TANDA TANGAN) -->
-          <div style="margin-top: 5px; border: 1.5px solid #0f172a; border-radius: 4px; padding: 5px 8px; background: #ffffff; page-break-inside: avoid; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 3px;">
-              <span style="font-weight: 900; font-size: 7.2pt; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px;">
-                📝 KOLOM CATATAN TIM BONGKAR MUATAN (Kondisi Fisik Roti, Selisih Muatan, Penyok, dll):
-              </span>
-              <span style="font-size: 6.5pt; font-weight: 700; color: #334155;">
-                Petugas Bongkar: ___________________________________ &bull; Jam Selesai: ___________ WIB
-              </span>
-            </div>
-            <div style="height: 38px; display: flex; flex-direction: column; justify-content: space-between;">
-              <div style="border-bottom: 1px dashed #94a3b8; height: 12px;"></div>
-              <div style="border-bottom: 1px dashed #94a3b8; height: 12px;"></div>
-              <div style="border-bottom: 1px dashed #94a3b8; height: 12px;"></div>
-            </div>
-          </div>
+
         </div>
       `;
     }
@@ -10543,7 +10447,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         <tr class="border-b border-slate-300 text-slate-900 leading-tight">
           <td class="border border-slate-400 ${rowPadY} px-1.5 text-center text-slate-500 font-mono ${fontSize}">${idx + 1}</td>
           <td class="border border-slate-400 ${rowPadY} px-2 text-left font-bold text-slate-900 ${fontSize}">${escapeHtml(it.productName)}</td>
-          <td class="border border-slate-400 ${rowPadY} px-1.5 text-center font-bold text-slate-950 ${fontSize}">${it.qty} Pcs</td>
+          <td class="border border-slate-400 ${rowPadY} px-1.5 text-center font-bold text-slate-950 ${fontSize}">${it.qty}</td>
           <td class="border border-slate-400 ${rowPadY} px-1.5 text-right font-mono text-slate-700 ${fontSize}">${formatRupiah(it.unitPrice)}</td>
           <td class="border border-slate-400 ${rowPadY} px-2 text-right font-mono font-bold text-slate-950 ${fontSize}">${formatRupiah(it.subtotal || (it.qty * it.unitPrice))}</td>
         </tr>
@@ -10614,7 +10518,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             <tfoot>
               <tr class="bg-slate-100 font-bold border-t-2 border-slate-900">
                 <td colspan="2" class="border border-slate-400 py-1 px-2 text-right uppercase font-black text-slate-900">TOTAL:</td>
-                <td class="border border-slate-400 py-1 px-1.5 text-center font-black text-slate-950">${trx.totalQty} Pcs</td>
+                <td class="border border-slate-400 py-1 px-1.5 text-center font-black text-slate-950">${trx.totalQty}</td>
                 <td class="border border-slate-400 py-1 px-1.5 text-right"></td>
                 <td class="border border-slate-400 py-1 px-2 text-right text-[8.5pt] font-black text-slate-950">${formatRupiah(trx.totalAmount)}</td>
               </tr>
@@ -10623,21 +10527,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
           ${kasbonBox}
 
-          <!-- KOLOM TANDA TANGAN (KASIR & SALES) -->
-          <div class="grid grid-cols-2 gap-3 text-center text-[8pt] avoid-break">
-            <div class="border border-slate-300 rounded p-1">
-              <div class="text-slate-700 font-bold">Kasir / Admin Gudang</div>
-              <div class="text-[7pt] text-slate-500">Yang Menyerahkan Barang</div>
-              <div class="h-6"></div>
-              <div class="border-t border-slate-400 font-black pt-0.5 text-slate-900 text-[7.5pt]">( Kasir Alfaris )</div>
-            </div>
-            <div class="border border-slate-300 rounded p-1">
-              <div class="text-slate-700 font-bold">Sales Penerima Barang</div>
-              <div class="text-[7pt] text-slate-500">Yang Membawa & Bertanggung Jawab</div>
-              <div class="h-6"></div>
-              <div class="border-t border-slate-400 font-black pt-0.5 text-slate-900 text-[7.5pt]">( ${escapeHtml(trx.salesName || 'Sales')} )</div>
-            </div>
-          </div>
+
         </div>
       `;
     }
