@@ -148,7 +148,7 @@
         color: #0f172a !important;
       }
 
-      /* Mode Cetak Nota Penjualan Sales (Ukuran Kertas A5 & Batch 1 Nota per Halaman) */
+      /* Mode Cetak Nota Penjualan Sales (Ukuran Kertas A6 & Batch 1 Nota per Halaman) */
       body.printing-nota #print-area-nota, 
       body.printing-nota #print-area-nota * {
         visibility: visible !important;
@@ -157,7 +157,7 @@
         position: static !important;
         display: block !important;
         width: 100% !important;
-        max-width: 148mm !important;
+        max-width: 105mm !important;
         margin: 0 auto !important;
         padding: 0 !important;
         background: #ffffff !important;
@@ -165,7 +165,7 @@
       }
       .nota-batch-page {
         width: 100% !important;
-        max-width: 148mm !important;
+        max-width: 105mm !important;
         margin: 0 auto !important;
         padding: 0 !important;
         box-sizing: border-box !important;
@@ -349,7 +349,7 @@
   <!-- ROOT PRINT CONTAINER UNTUK LAPORAN KEUANGAN KORPORAT (BEBAS DARI OVERFLOW/SCROLL MODAL) -->
   <div id="print-area-financial" class="hidden"></div>
 
-  <!-- ROOT PRINT CONTAINER UNTUK NOTA PENJUALAN SALES (UKURAN A5) -->
+  <!-- ROOT PRINT CONTAINER UNTUK NOTA PENJUALAN SALES (UKURAN A6) -->
   <div id="print-area-nota" class="hidden"></div>
 
   <!-- ROOT PRINT CONTAINER UNTUK KARTU REKAP PRE-ORDER SALES (FORMAT FISIK) -->
@@ -777,7 +777,7 @@
               class="px-3.5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               title="Cetak Semua Nota Penjualan Sales A5 Sekaligus (1 Lembar per Sales, Siap Cetak / PDF)">
               <i data-lucide="printer" class="w-4 h-4"></i>
-              <span>Cetak Semua Nota Sales (Batch A5)</span>
+              <span>Cetak Semua Nota Sales (Batch A6)</span>
             </button>
           </div>
         </div>
@@ -1906,7 +1906,7 @@
         <div class="pt-2 flex flex-col gap-2">
           <button type="button" onclick="printFromSuccessModal()" class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Cetak Nota Sales (A5) Sekarang</span>
+            <span>Cetak Nota Sales (A6) Sekarang</span>
           </button>
           <button type="button" onclick="closeTrxSuccessModal()" class="w-full py-2 px-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition cursor-pointer">
             Selesai / Cetak Nanti Dari Tabel
@@ -1929,7 +1929,7 @@
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <span>Nota Penjualan Sales</span>
               <span id="preview-nota-id-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">TRX-XXXX</span>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-400/30">UKURAN A5</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-400/30">UKURAN A6</span>
             </h3>
             <p class="text-[11px] text-slate-400">Bukti penyerahan barang & tagihan resmi kepada Sales CV. Alfaris Enam Delapan</p>
           </div>
@@ -1940,7 +1940,7 @@
             onclick="printActiveNota()" 
             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm transition cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Cetak Nota Sales (A5)</span>
+            <span>Cetak Nota Sales (A6)</span>
           </button>
           <button 
             type="button" 
@@ -7432,7 +7432,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       let grandTotalUnits = 0;
 
       const rowsHtml = allPO.length === 0 
-        ? `<tr><td colspan="${products.length + 4}" style="text-align: center; padding: 20px; color: #64748b; font-style: italic;">Belum ada data Pre-Order (PO) Sales untuk tanggal ${formattedDate}.</td></tr>`
+        ? `<tr><td colspan="${products.length + 3}" style="text-align: center; padding: 20px; color: #000000; font-weight: 700; font-style: italic; font-size: 9pt;">Belum ada data Pre-Order (PO) Sales untuk tanggal ${formattedDate}.</td></tr>`
         : allPO.map((po, sIdx) => {
             let salesSum = 0;
             const cellsHtml = products.map(p => {
@@ -7447,49 +7447,41 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
               const cellText = qty > 0 ? qty : '-';
               const cellStyle = qty > 0 
-                ? 'background: #f1f5f9; font-weight: 800; color: #0f172a;' 
-                : 'color: #94a3b8; font-weight: 400;';
+                ? 'background: #f1f5f9; font-weight: 900; color: #000000; font-size: 8.5pt;' 
+                : 'color: #94a3b8; font-weight: 500; font-size: 7.5pt;';
 
-              return `<td style="border: 1px solid #64748b; text-align: center; padding: 2.5px 1px; ${cellStyle}">${cellText}</td>`;
+              return `<td style="border: 1px solid #475569; text-align: center; padding: 2.5px 1px; ${cellStyle}">${cellText}</td>`;
             }).join('');
-
-            const zebraBg = sIdx % 2 === 1 ? 'background-color: #f8fafc;' : 'background-color: #ffffff;';
 
             // Baris Kosong untuk Ceklist / Cek Jumlah Produk Fisik oleh Tim Bongkar
             const emptyCheckCellsHtml = products.map(() => {
-              return `<td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; text-align: center; padding: 0; height: 12px; background: #ffffff;"></td>`;
+              return `<td style="border: 1px solid #475569; border-bottom: 2px solid #000000; text-align: center; padding: 0; height: 13px; background: #ffffff;"></td>`;
             }).join('');
 
             const rowBg = sIdx % 2 === 1 ? '#f8fafc' : '#ffffff';
 
             return `
-              <!-- BARIS 1: PESANAN PO SISTEM -->
+              <!-- BARIS 1: PESANAN PO SISTEM (KOLOM NAMA SALES DIMEPETKAN, FONT DIBESARKAN, TANPA KOLOM CEK) -->
               <tr style="background-color: ${rowBg};">
-                <td rowspan="2" style="border: 1px solid #64748b; border-bottom: 2px solid #334155; text-align: center; font-weight: 800; padding: 2px; color: #0f172a; vertical-align: middle; background: ${rowBg}; font-size: 7pt;">
+                <td rowspan="2" style="border: 1px solid #475569; border-bottom: 2px solid #000000; text-align: center; font-weight: 900; padding: 2px; color: #000000; vertical-align: middle; background: ${rowBg}; font-size: 8pt; font-family: monospace;">
                   ${sIdx + 1}
                 </td>
-                <td style="border: 1px solid #64748b; padding: 2px 4px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; background: ${rowBg}; font-size: 6.8pt;">
+                <td style="border: 1px solid #475569; padding: 2px 2px; font-weight: 900; color: #000000; word-break: break-word; line-height: 1.05; background: ${rowBg}; font-size: 7.5pt;">
                   ${escapeHtml(po.salesName || 'Sales')}
-                  <span style="display: block; font-size: 5.5pt; font-weight: 500; color: #64748b;">${escapeHtml(po.salesRoute || '-')}</span>
+                  <span style="display: block; font-size: 6pt; font-weight: 700; color: #000000; margin-top: 1px;">${escapeHtml(po.salesRoute || '-')}</span>
                 </td>
                 ${cellsHtml}
-                <td style="border: 1px solid #64748b; text-align: center; font-weight: 900; background: #e2e8f0; color: #0f172a; padding: 2px 1px; font-size: 6.8pt;">
+                <td style="border: 1px solid #475569; text-align: center; font-weight: 900; background: #fef08a; color: #000000; padding: 2px 1px; font-size: 8.5pt;">
                   ${salesSum.toLocaleString('id-ID')}
                 </td>
-                <td style="border: 1px solid #64748b; text-align: center; padding: 1px; background: ${rowBg};">
-                  <span style="display: inline-block; width: 11px; height: 11px; border: 1.2px solid #475569; border-radius: 2px;"></span>
-                </td>
               </tr>
-              <!-- BARIS 2: BARIS KOSONG UNTUK CEKLIST / CEK JUMLAH TIM BONGKAR -->
+              <!-- BARIS 2: BARIS KOSONG UNTUK CEKLIST / CEK JUMLAH TIM BONGKAR (TANPA KOLOM CEK) -->
               <tr style="background-color: #ffffff;">
-                <td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; padding: 1px 4px; font-size: 5.5pt; font-weight: 700; color: #64748b; text-align: left; background: #ffffff; height: 12px;">
-                  <span style="font-style: italic; color: #64748b;">✓ Cek Fisik:</span>
+                <td style="border: 1px solid #475569; border-bottom: 2px solid #000000; padding: 1px 2px; font-size: 6.5pt; font-weight: 800; color: #000000; text-align: left; background: #ffffff; height: 13px;">
+                  <span style="font-style: italic; color: #000000;">✓ Fisik:</span>
                 </td>
                 ${emptyCheckCellsHtml}
-                <td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; background: #f8fafc; text-align: center; height: 12px;"></td>
-                <td style="border: 1px solid #64748b; border-bottom: 2px solid #334155; text-align: center; padding: 1px; background: #ffffff;">
-                  <span style="display: inline-block; width: 11px; height: 11px; border: 1.2px solid #94a3b8; border-radius: 2px; background: #fff;"></span>
-                </td>
+                <td style="border: 1px solid #475569; border-bottom: 2px solid #000000; background: #fef08a; text-align: center; height: 13px;"></td>
               </tr>
             `;
           }).join('');
@@ -7497,7 +7489,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const footColsHtml = products.map(p => {
         const totalProd = productTotals[p.id] || 0;
         return `
-          <td style="border: 1.5px solid #0f172a; text-align: center; font-weight: 900; padding: 4px 1px; background: #fef08a; color: #0f172a;">
+          <td style="border: 1.5px solid #000000; text-align: center; font-weight: 900; padding: 4px 1px; background: #fef08a; color: #000000; font-size: 8.5pt;">
             ${totalProd > 0 ? totalProd : '0'}
           </td>
         `;
@@ -7505,60 +7497,58 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       const headProductCols = products.map(p => {
         return `
-          <th style="border: 1px solid #475569; background: #1e293b; color: #ffffff; font-size: 6.5pt; font-weight: 800; text-align: center; padding: 4px 1px; white-space: nowrap; line-height: 1.1;" title="${escapeHtml(p.name)}">
+          <th style="border: 1px solid #000000; background: #cbd5e1; color: #000000; font-size: 8pt; font-weight: 900; text-align: center; padding: 4px 1px; white-space: nowrap; line-height: 1.1;" title="${escapeHtml(p.name)}">
             ${escapeHtml(p.name)}
           </th>
         `;
       }).join('');
 
       return `
-        <div class="matriks-bongkar-sheet bg-white text-slate-950 font-sans mx-auto" style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 7pt; line-height: 1.2;">
-          <!-- KOP PERUSAHAAN DISTRIBUTOR CV. ALFARIS ENAM DELAPAN -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 6px;">
+        <div class="matriks-bongkar-sheet bg-white text-black font-sans mx-auto" style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 8pt; line-height: 1.2;">
+          <!-- KOP PERUSAHAAN DISTRIBUTOR CV. ALFARIS ENAM DELAPAN (FONT ATAS WARNA HITAM PEKAT) -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000000; padding-bottom: 6px; margin-bottom: 6px;">
             <div>
-              <div style="font-size: 13pt; font-weight: 900; letter-spacing: 0.5px; color: #0f172a; line-height: 1.1;">CV. ALFARIS ENAM DELAPAN</div>
-              <div style="font-size: 8pt; font-weight: 800; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px;">DISTRIBUTOR RESMI FRIEND'S BAKERY</div>
-              <div style="font-size: 6.5pt; color: #475569; margin-top: 1px;">
-                Alamat : Dusun Telbuk, Desa Kawisrejo, Kecamatan, Rejoso, Kabupaten Pasuruan 67181 &bull; Telp/WA: 087776653321
+              <div style="font-size: 14pt; font-weight: 900; letter-spacing: 0.5px; color: #000000; line-height: 1.1;">CV. ALFARIS ENAM DELAPAN</div>
+              <div style="font-size: 9pt; font-weight: 900; color: #000000; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;">DISTRIBUTOR RESMI FRIEND'S BAKERY</div>
+              <div style="font-size: 7.5pt; font-weight: 700; color: #000000; margin-top: 1px;">
+                Alamat : Dusun Telbuk, Desa Kawisrejo, Kecamatan Rejoso, Kabupaten Pasuruan 67181 &bull; Telp/WA: 087776653321
               </div>
             </div>
             <div style="text-align: right;">
-              <div style="display: inline-block; background: #0f172a; color: #ffffff; font-weight: 800; font-size: 8.5pt; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.3px;">
+              <div style="display: inline-block; background: #000000; color: #ffffff; font-weight: 900; font-size: 9pt; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.3px;">
                 MATRIKS BONGKAR MUATAN PER SALES
               </div>
-              <div style="font-size: 7.5pt; font-weight: 700; color: #0f172a; margin-top: 3px;">
-                Hari &amp; Tanggal Ambil Pabrik: <span style="font-size: 8pt; color: #b45309; font-weight: 900;">${formattedDate}</span>
+              <div style="font-size: 8.5pt; font-weight: 800; color: #000000; margin-top: 3px;">
+                Hari &amp; Tanggal Ambil Pabrik: <span style="font-size: 9pt; color: #000000; font-weight: 900; text-decoration: underline;">${formattedDate}</span>
               </div>
-              <div style="font-size: 6.5pt; color: #64748b;">
+              <div style="font-size: 7.5pt; font-weight: 700; color: #000000; margin-top: 1px;">
                 Armada: <strong>${armada.nopol}</strong> &bull; Cetak: ${printTimeStr}
               </div>
             </div>
           </div>
 
-          <!-- TABEL MATRIKS 25 KOLOM ROTI (LANDSCAPE - PAS 100% LEBAR KERTAS A4) -->
-          <table style="width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 6.8pt;">
+          <!-- TABEL MATRIKS 25 KOLOM ROTI (LANDSCAPE A4 - NAMA SALES DIMEPETKAN, TANPA KOLOM CEK, FONT LEBIH BESAR) -->
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 8pt;">
             <thead>
               <tr>
-                <th style="border: 1px solid #475569; background: #0f172a; color: #ffffff; text-align: center; width: 18px; padding: 4px 1px; font-weight: 800;">No</th>
-                <th style="border: 1px solid #475569; background: #0f172a; color: #ffffff; text-align: left; width: 95px; padding: 4px 5px; font-weight: 800;">Nama Sales</th>
+                <th style="border: 1px solid #000000; background: #cbd5e1; color: #000000; text-align: center; width: 18px; padding: 4px 1px; font-weight: 900; font-size: 8pt;">No</th>
+                <th style="border: 1px solid #000000; background: #cbd5e1; color: #000000; text-align: left; width: 56px; padding: 4px 2px; font-weight: 900; font-size: 8pt;">Nama Sales</th>
                 ${headProductCols}
-                <th style="border: 1px solid #475569; background: #0f172a; color: #fde047; text-align: center; width: 42px; padding: 4px 1px; font-weight: 900;">Total</th>
-                <th style="border: 1px solid #475569; background: #0f172a; color: #ffffff; text-align: center; width: 26px; padding: 4px 1px; font-weight: 800;">Cek</th>
+                <th style="border: 1px solid #000000; background: #fef08a; color: #000000; text-align: center; width: 44px; padding: 4px 1px; font-weight: 900; font-size: 8.5pt;">Total</th>
               </tr>
             </thead>
             <tbody>
               ${rowsHtml}
             </tbody>
             <tfoot>
-              <tr style="border-top: 2px solid #0f172a;">
-                <td colspan="2" style="border: 1.5px solid #0f172a; text-align: right; font-weight: 900; padding: 4px 6px; background: #fef08a; color: #0f172a; text-transform: uppercase;">
+              <tr style="border-top: 2px solid #000000;">
+                <td colspan="2" style="border: 1.5px solid #000000; text-align: right; font-weight: 900; padding: 4px 4px; background: #fef08a; color: #000000; text-transform: uppercase; font-size: 8.5pt;">
                   TOTAL BONGKAR (PABRIK):
                 </td>
                 ${footColsHtml}
-                <td style="border: 1.5px solid #0f172a; text-align: center; font-weight: 900; background: #fde047; color: #0f172a; font-size: 7.5pt; padding: 4px 1px;">
+                <td style="border: 1.5px solid #000000; text-align: center; font-weight: 900; background: #fde047; color: #000000; font-size: 9.5pt; padding: 4px 1px;">
                   ${grandTotalUnits.toLocaleString('id-ID')}
                 </td>
-                <td style="border: 1.5px solid #0f172a; background: #fef08a; text-align: center; font-size: 6pt; font-weight: 700;">OK</td>
               </tr>
             </tfoot>
           </table>
@@ -10478,7 +10468,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (!printArea) return;
 
       // Atur ukuran halaman print ke A5 Portrait dengan margin kompak 3mm 4mm
-      setPrintPageSize('A5 portrait', '3mm 4mm');
+      setPrintPageSize('A6 portrait', '2mm 3mm');
 
       // Bungkus setiap nota transaksi dalam .nota-batch-page
       printArea.innerHTML = targetList.map(trx => `
@@ -10512,89 +10502,89 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           return idxA - idxB;
         });
 
-      // Hitung baris item dengan font dan padding proporsional agar 100% pas 1 lembar A5
+      // Hitung baris item dengan font lebih besar dan padding pas untuk ukuran A6 (105mm x 148mm)
       const itemCount = sortedTrxItems.length;
       const rowPadY = itemCount > 12 ? 'py-0.5' : (itemCount > 8 ? 'py-1' : 'py-1.5');
-      const fontSize = itemCount > 12 ? 'text-[8pt]' : 'text-[8.5pt]';
+      const fontSize = itemCount > 12 ? 'text-[8.5pt]' : (itemCount > 8 ? 'text-[9pt]' : 'text-[9.5pt]');
 
       const itemsRows = sortedTrxItems.length > 0 ? sortedTrxItems.map((it, idx) => `
-        <tr class="border-b border-slate-300 text-slate-900 leading-tight">
-          <td class="border border-slate-400 ${rowPadY} px-1.5 text-center text-slate-500 font-mono ${fontSize}">${idx + 1}</td>
-          <td class="border border-slate-400 ${rowPadY} px-2 text-left font-bold text-slate-900 ${fontSize}">${escapeHtml(it.productName)}</td>
-          <td class="border border-slate-400 ${rowPadY} px-1.5 text-center font-bold text-slate-950 ${fontSize}">${it.qty}</td>
-          <td class="border border-slate-400 ${rowPadY} px-1.5 text-right font-mono text-slate-700 ${fontSize}">${formatRupiah(it.unitPrice)}</td>
-          <td class="border border-slate-400 ${rowPadY} px-2 text-right font-mono font-bold text-slate-950 ${fontSize}">${formatRupiah(it.subtotal || (it.qty * it.unitPrice))}</td>
+        <tr class="border-b border-slate-400 text-slate-950 leading-tight">
+          <td class="border border-slate-500 ${rowPadY} px-1 text-center font-mono font-bold ${fontSize}">${idx + 1}</td>
+          <td class="border border-slate-500 ${rowPadY} px-1.5 text-left font-black text-slate-950 ${fontSize}">${escapeHtml(it.productName)}</td>
+          <td class="border border-slate-500 ${rowPadY} px-1 text-center font-black text-slate-950 text-[10pt]">${it.qty}</td>
+          <td class="border border-slate-500 ${rowPadY} px-1 text-right font-mono font-bold text-slate-900 ${fontSize}">${formatRupiah(it.unitPrice)}</td>
+          <td class="border border-slate-500 ${rowPadY} px-1.5 text-right font-mono font-black text-slate-950 ${fontSize}">${formatRupiah(it.subtotal || (it.qty * it.unitPrice))}</td>
         </tr>
       `).join('') : `
         <tr>
-          <td colspan="5" class="py-2 text-center text-slate-400 italic border border-slate-400 text-[8pt]">Tidak ada produk yang dipesan</td>
+          <td colspan="5" class="py-2.5 text-center text-slate-500 italic border border-slate-500 text-[9pt]">Tidak ada produk yang dipesan</td>
         </tr>
       `;
 
       const kasbonBox = (trx.paymentMethod === 'kasbon' && trx.paymentStatus !== 'lunas') ? `
-        <div class="mb-1.5 p-1 bg-amber-50 border border-amber-300 rounded text-[8pt]">
+        <div class="mb-1.5 p-1.5 bg-amber-50 border border-amber-400 rounded text-[9pt]">
           <div class="flex justify-between font-bold text-amber-950">
-            <span>DP Diterima: <strong>${formatRupiah(dpAmt)}</strong></span>
-            <span class="text-rose-700 font-black">Sisa Kasbon: ${formatRupiah(sisaAmt)}</span>
-            <span>Jatuh Tempo: <strong>${formatIndoDateFull(trx.dueDate || addDaysYMD(trx.date, 3))}</strong></span>
+            <span>DP: <strong>${formatRupiah(dpAmt)}</strong></span>
+            <span class="text-rose-700 font-black">Sisa: ${formatRupiah(sisaAmt)}</span>
+            <span>Tempo: <strong>${formatIndoDateFull(trx.dueDate || addDaysYMD(trx.date, 3))}</strong></span>
           </div>
         </div>
       ` : '';
 
       return `
-        <div class="nota-a5-sheet bg-white text-slate-900 font-sans mx-auto text-xs" style="width: 100%; max-width: 148mm; margin: 0 auto; padding: 1.5mm 2.5mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
-          <!-- KOP PERUSAHAAN & IDENTITAS NOTA -->
+        <div class="nota-a6-sheet bg-white text-slate-950 font-sans mx-auto" style="width: 100%; max-width: 105mm; margin: 0 auto; padding: 2mm 2.5mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
+          <!-- KOP PERUSAHAAN & IDENTITAS NOTA A6 (FONT BESAR & JELAS) -->
           <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-1.5">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <div class="w-8 h-8 rounded-lg bg-amber-600 text-white font-black text-sm flex items-center justify-center border border-amber-700 shadow-xs flex-shrink-0">
                 68
               </div>
               <div>
-                <h1 class="text-xs sm:text-sm font-black tracking-wide text-slate-900 uppercase leading-none">CV. ALFARIS ENAM DELAPAN</h1>
-                <p class="text-[8pt] font-bold text-amber-800 uppercase tracking-wider mt-0.5 leading-none">DISTRIBUTOR RESMI FRIEND'S BAKERY</p>
-                <p class="text-[7pt] sm:text-[7.5pt] text-slate-600 leading-tight mt-0.5">Dusun Telbuk, Desa Kawisrejo, Rejoso, Pasuruan 67181 &bull; Telp/WA: 087776653321</p>
+                <h1 class="text-[10pt] sm:text-[10.5pt] font-black tracking-wide text-slate-950 uppercase leading-none">CV. ALFARIS ENAM DELAPAN</h1>
+                <p class="text-[8pt] font-black text-amber-900 uppercase tracking-wider mt-0.5 leading-none">DISTRIBUTOR RESMI FRIEND'S BAKERY</p>
+                <p class="text-[7.5pt] text-slate-700 font-semibold leading-tight mt-0.5">Dusun Telbuk, Desa Kawisrejo, Rejoso, Pasuruan &bull; WA: 087776653321</p>
               </div>
             </div>
             <div class="text-right flex-shrink-0">
-              <div class="inline-block bg-slate-900 text-white font-black text-[9pt] px-2 py-0.5 rounded tracking-wide">
+              <div class="inline-block bg-slate-950 text-white font-black text-[9pt] px-2 py-0.5 rounded tracking-wide">
                 NOTA PENJUALAN
               </div>
-              <div class="text-[8.5pt] font-bold text-slate-800 mt-0.5">NO: <span class="font-black text-amber-700">${trx.id}</span></div>
+              <div class="text-[8.5pt] font-bold text-slate-900 mt-0.5">NO: <span class="font-black text-amber-800">${trx.id}</span></div>
             </div>
           </div>
 
           <!-- INFORMASI DI BAWAH KOP -->
-          <div class="flex items-center justify-between px-2.5 py-1 mb-1.5 bg-slate-50 border border-slate-300 rounded text-[8.5pt]">
+          <div class="flex items-center justify-between px-2 py-1 mb-1.5 bg-slate-100 border border-slate-400 rounded text-[9pt]">
             <div>
-              <span class="font-bold text-slate-600">Nama Sales :</span>
-              <span class="font-black text-slate-950 text-xs ml-1 uppercase">${escapeHtml(trx.salesName || '-')}</span>
+              <span class="font-bold text-slate-700">Nama Sales :</span>
+              <span class="font-black text-slate-950 text-[9.5pt] ml-1 uppercase">${escapeHtml(trx.salesName || '-')}</span>
             </div>
             <div class="text-right">
-              <span class="font-bold text-slate-600">Hari &amp; Tanggal :</span>
-              <span class="font-black text-slate-900 text-xs ml-1">${dropDate}</span>
+              <span class="font-bold text-slate-700">Hari &amp; Tanggal :</span>
+              <span class="font-black text-slate-950 text-[9pt] ml-1">${dropDate}</span>
             </div>
           </div>
 
-          <!-- TABEL RINCIAN ROTI BERKOLOM -->
-          <table class="w-full border-collapse border border-slate-900 text-[8pt] mb-1.5">
+          <!-- TABEL RINCIAN ROTI BERKOLOM (UKURAN A6 FONT LEBIH BESAR) -->
+          <table class="w-full border-collapse border border-slate-900 text-[9pt] mb-1.5">
             <thead>
-              <tr class="bg-slate-200 text-slate-900 font-bold border-b border-slate-900">
-                <th class="border border-slate-400 py-1 px-1.5 text-center w-6">No</th>
-                <th class="border border-slate-400 py-1 px-2 text-left">Nama Barang</th>
-                <th class="border border-slate-400 py-1 px-1.5 text-center w-14">Qty</th>
-                <th class="border border-slate-400 py-1 px-1.5 text-right w-20">Harga Satuan</th>
-                <th class="border border-slate-400 py-1 px-2 text-right w-24">Jumlah (Rp)</th>
+              <tr class="bg-slate-200 text-slate-950 font-extrabold border-b border-slate-900">
+                <th class="border border-slate-500 py-1 px-1 text-center w-6 text-[8.5pt]">No</th>
+                <th class="border border-slate-500 py-1 px-1.5 text-left text-[9pt]">Nama Barang</th>
+                <th class="border border-slate-500 py-1 px-1 text-center w-11 text-[9pt]">Qty</th>
+                <th class="border border-slate-500 py-1 px-1 text-right w-16 text-[9pt]">Harga</th>
+                <th class="border border-slate-500 py-1 px-1.5 text-right w-20 text-[9pt]">Jumlah</th>
               </tr>
             </thead>
             <tbody>
               ${itemsRows}
             </tbody>
             <tfoot>
-              <tr class="bg-slate-100 font-bold border-t-2 border-slate-900">
-                <td colspan="2" class="border border-slate-400 py-1 px-2 text-right uppercase font-black text-slate-900">TOTAL:</td>
-                <td class="border border-slate-400 py-1 px-1.5 text-center font-black text-slate-950">${trx.totalQty}</td>
-                <td class="border border-slate-400 py-1 px-1.5 text-right"></td>
-                <td class="border border-slate-400 py-1 px-2 text-right text-[8.5pt] font-black text-slate-950">${formatRupiah(trx.totalAmount)}</td>
+              <tr class="bg-slate-100 font-extrabold border-t-2 border-slate-900">
+                <td colspan="2" class="border border-slate-500 py-1 px-1.5 text-right uppercase font-black text-slate-950 text-[9.5pt]">TOTAL:</td>
+                <td class="border border-slate-500 py-1 px-1 text-center font-black text-slate-950 text-[10.5pt]">${trx.totalQty}</td>
+                <td class="border border-slate-500 py-1 px-1 text-right"></td>
+                <td class="border border-slate-500 py-1 px-1.5 text-right text-[10pt] font-black text-slate-950">${formatRupiah(trx.totalAmount)}</td>
               </tr>
             </tfoot>
           </table>
@@ -10645,7 +10635,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (!printArea) return;
 
       // Atur ukuran halaman print ke A5 Portrait secara dinamis
-      setPrintPageSize('A5 portrait');
+      setPrintPageSize('A6 portrait', '2mm 3mm');
       printArea.innerHTML = buildNotaHTML(trx);
 
       document.body.classList.remove('printing-financial', 'printing-po', 'printing-po-card');

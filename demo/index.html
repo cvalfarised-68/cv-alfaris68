@@ -142,7 +142,7 @@
         color: #0f172a !important;
       }
 
-      /* Mode Cetak Nota Penjualan Sales (Ukuran Kertas A5 & Batch 1 Nota per Halaman) */
+      /* Mode Cetak Nota Penjualan Sales (Ukuran Kertas A6 & Batch 1 Nota per Halaman) */
       body.printing-nota #print-area-nota, 
       body.printing-nota #print-area-nota * {
         visibility: visible !important;
@@ -151,7 +151,7 @@
         position: static !important;
         display: block !important;
         width: 100% !important;
-        max-width: 148mm !important;
+        max-width: 105mm !important;
         margin: 0 auto !important;
         padding: 0 !important;
         background: #ffffff !important;
@@ -159,7 +159,7 @@
       }
       .nota-batch-page {
         width: 100% !important;
-        max-width: 148mm !important;
+        max-width: 105mm !important;
         margin: 0 auto !important;
         padding: 0 !important;
         box-sizing: border-box !important;
@@ -253,7 +253,7 @@
       }
 
       /* Hindari pemotongan baris di tengah tabel atau tanda tangan */
-      tr, .avoid-break, .nota-a5-sheet, .tracer-sheet, .ambil-pabrik-sheet, .po-card-sheet, .spk-motoris-sheet {
+      tr, .avoid-break, .nota-a6-sheet, .tracer-sheet, .ambil-pabrik-sheet, .po-card-sheet, .spk-motoris-sheet {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -274,7 +274,7 @@
       .nota-batch-page:last-child,
       .tracer-sheet:last-child,
       .po-card-sheet:last-child,
-      .nota-a5-sheet:last-child,
+      .nota-a6-sheet:last-child,
       .ambil-pabrik-sheet:last-child,
       .spk-motoris-sheet:last-child {
         page-break-after: avoid !important;
@@ -370,7 +370,7 @@
   <!-- ROOT PRINT CONTAINER UNTUK LAPORAN KEUANGAN KORPORAT (BEBAS DARI OVERFLOW/SCROLL MODAL) -->
   <div id="print-area-financial" class="hidden"></div>
 
-  <!-- ROOT PRINT CONTAINER UNTUK NOTA PENJUALAN SALES (UKURAN A5) -->
+  <!-- ROOT PRINT CONTAINER UNTUK NOTA PENJUALAN SALES (UKURAN A6) -->
   <div id="print-area-nota" class="hidden"></div>
 
   <!-- ROOT PRINT CONTAINER UNTUK KARTU REKAP PRE-ORDER SALES (FORMAT FISIK) -->
@@ -798,7 +798,7 @@
               class="px-3.5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               title="Cetak Semua Nota Penjualan Sales A5 Sekaligus (1 Lembar per Sales, Siap Cetak / PDF)">
               <i data-lucide="printer" class="w-4 h-4"></i>
-              <span>Cetak Semua Nota Sales (Batch A5)</span>
+              <span>Cetak Semua Nota Sales (Batch A6)</span>
             </button>
           </div>
         </div>
@@ -1927,7 +1927,7 @@
         <div class="pt-2 flex flex-col gap-2">
           <button type="button" onclick="printFromSuccessModal()" class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Cetak Nota Sales (A5) Sekarang</span>
+            <span>Cetak Nota Sales (A6) Sekarang</span>
           </button>
           <button type="button" onclick="closeTrxSuccessModal()" class="w-full py-2 px-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition cursor-pointer">
             Selesai / Cetak Nanti Dari Tabel
@@ -1950,7 +1950,7 @@
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <span>Nota Penjualan Sales</span>
               <span id="preview-nota-id-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">TRX-XXXX</span>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-400/30">UKURAN A5</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-400/30">UKURAN A6</span>
             </h3>
             <p class="text-[11px] text-slate-400">Bukti penyerahan barang & tagihan resmi kepada Sales DistriFlow Logistik</p>
           </div>
@@ -1961,7 +1961,7 @@
             onclick="printActiveNota()" 
             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm transition cursor-pointer">
             <i data-lucide="printer" class="w-4 h-4"></i>
-            <span>Cetak Nota Sales (A5)</span>
+            <span>Cetak Nota Sales (A6)</span>
           </button>
           <button 
             type="button" 
@@ -10499,7 +10499,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (!printArea) return;
 
       // Atur ukuran halaman print ke A5 Portrait dengan margin kompak 3mm 4mm
-      setPrintPageSize('A5 portrait', '3mm 4mm');
+      setPrintPageSize('A6 portrait', '2mm 3mm');
 
       // Bungkus setiap nota transaksi dalam .nota-batch-page
       printArea.innerHTML = targetList.map(trx => `
@@ -10563,7 +10563,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       ` : '';
 
       return `
-        <div class="nota-a5-sheet bg-white text-slate-900 font-sans mx-auto text-xs" style="width: 100%; max-width: 148mm; margin: 0 auto; padding: 1.5mm 2.5mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
+        <div class="nota-a6-sheet bg-white text-slate-900 font-sans mx-auto text-xs" style="width: 100%; max-width: 105mm; margin: 0 auto; padding: 1.5mm 2.5mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
           <!-- KOP PERUSAHAAN & IDENTITAS NOTA -->
           <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-1.5">
             <div class="flex items-center gap-2">
@@ -10666,7 +10666,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       if (!printArea) return;
 
       // Atur ukuran halaman print ke A5 Portrait secara dinamis
-      setPrintPageSize('A5 portrait');
+      setPrintPageSize('A6 portrait', '2mm 3mm');
       printArea.innerHTML = buildNotaHTML(trx);
 
       document.body.classList.remove('printing-financial', 'printing-po', 'printing-po-card');
