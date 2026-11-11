@@ -1,0 +1,44 @@
+========================================================================
+PANDUAN CEPAT PENGGUNAAN WEBAPP DISTRIBUTOR & LOGISTIK TERPADU
+========================================================================
+
+Selamat atas pembelian WebApp Distribusi & Logistik Terpadu!
+Aplikasi ini dirancang khusus untuk mempermudah operasional distributor
+(Roti, FMCG, Snack, Minuman, Sembako, dll) tanpa memerlukan server berbayar.
+
+------------------------------------------------------------------------
+A. CARA MENGGUNAKAN LANGSUNG SECARA OFFLINE / LOKAL (KOMPUTER / LAPTOP)
+------------------------------------------------------------------------
+1. Klik ganda (double-click) file "index.html".
+2. File akan otomatis terbuka di browser Anda (Google Chrome / Microsoft Edge).
+3. Anda langsung bisa menginput PO Sales, mengatur armada truk, mencetak
+   matriks bongkar muatan, dan mencetak nota transaksi penjualan!
+
+PIN DEFAULT:
+- Login sebagai Owner / Admin : 6868
+- Login sebagai Kasir        : 1234
+(PIN dapat diubah kapan saja di menu Pengaturan Keamanan)
+
+------------------------------------------------------------------------
+B. CARA MENJALANKAN ONLINE (AGAR BISA DIAKSES VIA HP SALES / KASIR)
+------------------------------------------------------------------------
+Aplikasi ini dapat di-online-kan 100% GRATIS tanpa biaya sewa server:
+1. Buka situs https://vercel.com/ dan buat akun gratis.
+2. Unggah file "index.html" dan "vercel.json" ke repositori GitHub atau
+   seret langsung ke dashboard Vercel.
+3. Anda akan mendapatkan tautan web (contoh: https://toko-anda.vercel.app)
+   yang bisa diakses dari HP, Tablet, dan Komputer di mana saja!
+
+------------------------------------------------------------------------
+C. CARA MENGUBAH NAMA USAHA, LOGO & PRODUK
+------------------------------------------------------------------------
+- Nama Usaha & Alamat : Buka menu "Pengaturan" di dalam aplikasi, atau
+  buka file "index.html" menggunakan Notepad lalu ubah nama perusahaan.
+- Master Produk       : Buka menu "Produk & Harga", klik "Tambah Produk"
+  untuk menambahkan varian barang dagangan Anda beserta harga modal dan jual.
+
+Butuh bantuan instalasi / setup terima beres?
+Silakan hubungi kami melalui kontak yang tertera di akun pembelian Anda.
+
+Semoga usaha Anda semakin maju, rapi, dan sukses selalu!
+========================================================================
