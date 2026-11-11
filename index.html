@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script>
+    // Jika diakses melalui domain demo (distriflow-demo.vercel.app), langsung arahkan ke aplikasi demo
+    if (window.location.hostname.includes('demo') && !window.location.pathname.startsWith('/demo')) {
+      window.location.replace('/demo/');
+    }
+  </script>
   <title>CV. Alfaris Enam Delapan - Sistem Manajemen Distribusi Roti</title>
   
   <!-- Tailwind CSS CDN -->

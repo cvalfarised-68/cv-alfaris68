@@ -6,7 +6,7 @@
       "has": [
         {
           "type": "host",
-          "value": "(.*demo.*)"
+          "value": "distriflow-demo.vercel.app"
         }
       ],
       "destination": "/demo/index.html"
