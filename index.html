@@ -294,6 +294,45 @@
         width: 100% !important;
       }
     }
+
+    /* Freeze Panes untuk Tabel SPK & Alokasi Sales */
+    .spk-sticky-col-no {
+      position: sticky !important;
+      left: 0px !important;
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
+      text-align: center;
+    }
+    .spk-sticky-col-inisial {
+      position: sticky !important;
+      left: 40px !important;
+      width: 62px !important;
+      min-width: 62px !important;
+      max-width: 62px !important;
+      border-right: 2px solid #cbd5e1 !important; /* slate-300 */
+      box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.12);
+    }
+    thead th.spk-sticky-col-no,
+    thead th.spk-sticky-col-inisial {
+      z-index: 30 !important;
+      background-color: #f1f5f9 !important; /* slate-100 */
+    }
+    tbody td.spk-sticky-col-no,
+    tbody td.spk-sticky-col-inisial {
+      z-index: 20 !important;
+      background-color: #ffffff;
+    }
+    tbody tr:hover td.spk-sticky-col-no,
+    tbody tr:hover td.spk-sticky-col-inisial {
+      background-color: #f8fafc !important; /* slate-50 */
+    }
+    tfoot td.spk-sticky-col-no,
+    tfoot td.spk-sticky-col-inisial {
+      z-index: 20 !important;
+      background-color: #f8fafc !important; /* slate-50 */
+    }
+
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col pb-20 md:pb-0">
@@ -2188,7 +2227,7 @@
 
           <!-- Tabel Rekonsiliasi SPK Pabrik & Alokasi Sales (Matriks Terpadu) -->
           <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
-            <table class="w-full text-[11px] text-left">
+            <table class="w-full text-[11px] text-left border-separate border-spacing-0">
               <thead id="recon-spk-thead" class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada & sales -->
               </thead>
@@ -5945,17 +5984,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         thead.innerHTML = `
           <tr>
-            <th class="py-2.5 px-2 text-center w-8">No</th>
-            <th class="py-2.5 px-2 w-14">Inisial</th>
-            <th class="py-2.5 px-2.5 min-w-[110px]">Nama Varian Roti</th>
-            <th class="py-2.5 px-2 text-center">Tipe</th>
-            <th class="py-2.5 px-2 text-center">Isi</th>
-            <th class="py-2.5 px-2.5 text-right font-black text-slate-800 bg-slate-100">PO Diminta</th>
+            <th class="spk-sticky-col-no py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200">No</th>
+            <th class="spk-sticky-col-inisial py-2.5 px-2 text-slate-700 font-bold border-b border-slate-200">Inisial</th>
+            <th class="py-2.5 px-2.5 min-w-[120px] text-slate-700 font-bold border-b border-slate-200">Nama Varian Roti</th>
+            <th class="py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200">Tipe</th>
+            <th class="py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200">Isi</th>
+            <th class="py-2.5 px-2.5 text-right font-black text-slate-800 bg-slate-100/90 border-b border-slate-200">PO Diminta</th>
             ${truckHeaders}
             ${salesHeaders}
-            <th class="py-2.5 px-2 text-right font-bold text-slate-800">Krjg SPK</th>
-            <th class="py-2.5 px-2 text-center font-bold">Selisih</th>
-            <th class="py-2.5 px-2 text-center">Status Stok</th>
+            <th class="py-2.5 px-2 text-right font-bold text-slate-800 border-b border-slate-200">Krjg SPK</th>
+            <th class="py-2.5 px-2 text-center font-bold border-b border-slate-200">Selisih</th>
+            <th class="py-2.5 px-2 text-center border-b border-slate-200">Status Stok</th>
           </tr>
         `;
       }
@@ -6096,31 +6135,35 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         const isRowActive = poQty > 0 || rowSPKTotal > 0;
 
         return `
-          <tr class="hover:bg-slate-50 transition ${isRowActive ? 'bg-white' : 'opacity-50'}" id="spk-row-${item.code}">
-            <td class="py-2 px-2 text-center text-slate-400 font-mono">${idx + 1}</td>
-            <td class="py-2 px-2 font-bold text-slate-900">${escapeHtml(item.code)}</td>
-            <td class="py-2 px-2.5 font-semibold text-slate-800">${escapeHtml(item.name)}</td>
-            <td class="py-2 px-2 text-center">
+          <tr class="hover:bg-slate-50 transition group ${isRowActive ? 'bg-white' : 'opacity-60 bg-slate-50/50'}" id="spk-row-${item.code}">
+            <td class="spk-sticky-col-no py-2 px-2 text-slate-400 font-mono border-b border-slate-100 ${isRowActive ? 'bg-white' : 'bg-slate-50'}">
+              ${idx + 1}
+            </td>
+            <td class="spk-sticky-col-inisial py-2 px-2 font-bold text-slate-900 border-b border-slate-100 ${isRowActive ? 'bg-white' : 'bg-slate-50'}">
+              ${escapeHtml(item.code)}
+            </td>
+            <td class="py-2 px-2.5 font-semibold text-slate-800 border-b border-slate-100">${escapeHtml(item.name)}</td>
+            <td class="py-2 px-2 text-center border-b border-slate-100">
               <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.basketType === 'KB' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
                 ${item.basketType}
               </span>
             </td>
-            <td class="py-2 px-2 text-center text-slate-600 font-mono">${upb}</td>
-            <td class="py-2 px-2.5 text-right font-black text-slate-900 bg-slate-50" id="spk-row-po-${item.code}">${poQty.toLocaleString('id-ID')} ${item.unit || 'pcs'}</td>
+            <td class="py-2 px-2 text-center text-slate-600 font-mono border-b border-slate-100">${upb}</td>
+            <td class="py-2 px-2.5 text-right font-black text-slate-900 bg-slate-50 border-b border-slate-100" id="spk-row-po-${item.code}">${poQty.toLocaleString('id-ID')} ${item.unit || 'pcs'}</td>
             ${truckInputsHtml}
             ${truckCount > 1 ? `
-              <td class="py-2 px-2 text-right font-black text-indigo-950 bg-indigo-50/30" id="spk-row-total-pcs-${item.code}">
+              <td class="py-2 px-2 text-right font-black text-indigo-950 bg-indigo-50/30 border-b border-slate-100" id="spk-row-total-pcs-${item.code}">
                 ${rowSPKTotal.toLocaleString('id-ID')} ${item.unit || 'pcs'}
               </td>
             ` : ''}
             ${salesCellsHtml}
-            <td class="py-2 px-2 text-right font-black text-indigo-900" id="spk-row-total-baskets-${item.code}">
+            <td class="py-2 px-2 text-right font-black text-indigo-900 border-b border-slate-100" id="spk-row-total-baskets-${item.code}">
               ${rowBaskets} ${item.basketType}
             </td>
-            <td class="py-2 px-2 text-center" id="spk-diff-cell-${item.code}">
+            <td class="py-2 px-2 text-center border-b border-slate-100" id="spk-diff-cell-${item.code}">
               ${diffBadge}
             </td>
-            <td class="py-2 px-2 text-center" id="spk-status-cell-${item.code}">
+            <td class="py-2 px-2 text-center border-b border-slate-100" id="spk-status-cell-${item.code}">
               ${statusText}
             </td>
           </tr>
@@ -6201,15 +6244,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         tfoot.innerHTML = `
           <tr>
-            <td colspan="5" class="py-3 px-2 text-right font-black text-slate-900 uppercase">TOTAL KESELURUHAN:</td>
-            <td id="spk-tfoot-po-total" class="py-3 px-2.5 text-right font-black text-slate-800 text-xs">${totalPOUnits.toLocaleString('id-ID')} pcs</td>
+            <td class="spk-sticky-col-no py-3 px-2 text-center border-t border-b border-slate-200"></td>
+            <td class="spk-sticky-col-inisial py-3 px-2 text-center font-black text-slate-400 border-t border-b border-slate-200">∑</td>
+            <td colspan="3" class="py-3 px-2 text-right font-black text-slate-900 uppercase border-t border-b border-slate-200">TOTAL KESELURUHAN:</td>
+            <td id="spk-tfoot-po-total" class="py-3 px-2.5 text-right font-black text-slate-800 text-xs border-t border-b border-slate-200">${totalPOUnits.toLocaleString('id-ID')} pcs</td>
             ${truckFooters}
             ${salesFooters}
-            <td class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm">
+            <td class="py-3 px-2 text-right font-black text-indigo-900 text-xs sm:text-sm border-t border-b border-slate-200">
               ${totalSPKKB} KB • ${totalSPKKMK} KMK
             </td>
-            <td class="py-3 px-2 text-center font-black">${netDiffText}</td>
-            <td class="py-3 px-2 text-center font-bold text-indigo-800 text-[10.5px]">Friend's Bakery</td>
+            <td class="py-3 px-2 text-center font-black border-t border-b border-slate-200">${netDiffText}</td>
+            <td class="py-3 px-2 text-center font-bold text-indigo-800 text-[10.5px] border-t border-b border-slate-200">Friend's Bakery</td>
           </tr>
         `;
       }
