@@ -3331,8 +3331,8 @@
     // --- 1. SUPABASE DATABASE CLIENT & STATE SYNC ---
     // Konfigurasi bawaan DistriFlow Logistik:
     const DEFAULT_SUPABASE_CONFIG = {
-      url: 'https://goirtjhgvfxovwgcdsbi.supabase.co',
-      anonKey: 'sb_publishable__MO9vKw2COjfHiOGxyIX2A_w7fZ1GPF'
+      url: '',
+      anonKey: ''
     };
 
     const STORAGE_KEY_SUPABASE_URL = 'demo_distriflow_supabase_url';
@@ -4592,7 +4592,7 @@
       { id: 'TKO-003', name: 'Toko Rejeki Singosari', pic: 'Pak Bambang', phone: '082199887766', route: 'Singosari - Lawang', salesName: 'Rian Dani', lastVisitDate: '2026-11-03' }
     ];
     const DEFAULT_RETUR = [];
-    const DEFAULT_SALES = [];
+    const DEFAULT_SALES = [{"id":"sal_demo_1","name":"Budi Santoso","route":"Rute Kota 1","phone":"081234567890","priceLevel":"level1","status":"active","notes":"Motoris Utama Kota"},{"id":"sal_demo_2","name":"Ahmad Fauzi","route":"Rute Barat","phone":"081398765432","priceLevel":"level2","status":"active","notes":"Motoris Reguler Wilayah Barat"},{"id":"sal_demo_3","name":"Dedi Kurniawan","route":"Rute Timur","phone":"081911223344","priceLevel":"level1","status":"active","notes":"Motoris Utama Wilayah Timur"}];
     const DEFAULT_PRODUCTS = [
       { id: 'PRD-3646', code: 'ROTI-01', name: 'MCN', category: 'Roti Manis', stock: 100, factoryPrice: 6500, prices: { level1: 6900, level2: 7100, level3: 7200, level4: 7500, level5: 7100, level6: 6800 } },
       { id: 'PRD-5968', code: 'ROTI-02', name: 'MPC', category: 'Roti Manis', stock: 100, factoryPrice: 3350, prices: { level1: 3500, level2: 3600, level3: 3650, level4: 3850, level5: 3600, level6: 3500 } },
