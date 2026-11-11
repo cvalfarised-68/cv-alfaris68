@@ -10538,23 +10538,30 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       return `
         <div class="nota-a6-sheet bg-white text-slate-950 font-sans mx-auto" style="width: 100%; max-width: 105mm; margin: 0 auto; padding: 1.5mm 2mm; box-sizing: border-box; page-break-inside: avoid; break-inside: avoid;">
-          <!-- KOP PERUSAHAAN & IDENTITAS NOTA A6 -->
-          <div class="flex items-center justify-between border-b-2 border-slate-900 ${isCompact ? 'pb-0.5 mb-1' : 'pb-1 mb-1.5'}">
-            <div class="flex items-center gap-1.5">
-              <div class="${isCompact ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-sm'} rounded-lg bg-amber-600 text-white font-black flex items-center justify-center border border-amber-700 shadow-xs flex-shrink-0">
-                68
+          <!-- KOP PERUSAHAAN & IDENTITAS NOTA A6 SESUAI CONTOH RESMI -->
+          <div class="flex items-center justify-between border-b-2 border-slate-900 ${isCompact ? 'pb-1 mb-1' : 'pb-1.5 mb-1.5'}">
+            <!-- SISI KIRI: LOGO KOTAK PUTIH BORDER AMBER & IDENTITAS CV. ALFARIS -->
+            <div class="flex items-center gap-2">
+              <div class="${isCompact ? 'w-8 h-8 text-sm' : 'w-9 h-9 text-base'} rounded-xl border-2 border-amber-600 bg-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                <span class="font-extrabold text-slate-400 leading-none">68</span>
               </div>
               <div>
                 <h1 class="${isCompact ? 'text-[9.5pt]' : 'text-[10.5pt]'} font-black tracking-wide text-slate-950 uppercase leading-none">CV. ALFARIS ENAM DELAPAN</h1>
-                <p class="${isCompact ? 'text-[7.5pt]' : 'text-[8pt]'} font-black text-amber-900 uppercase tracking-wider mt-0.5 leading-none">DISTRIBUTOR RESMI FRIEND'S BAKERY</p>
-                <p class="${isCompact ? 'text-[6.5pt]' : 'text-[7.5pt]'} text-slate-700 font-semibold leading-tight mt-0.5">Dusun Telbuk, Desa Kawisrejo, Rejoso, Pasuruan &bull; WA: 087776653321</p>
+                <p class="${isCompact ? 'text-[7.5pt]' : 'text-[8pt]'} font-black text-amber-800 uppercase tracking-wider mt-1 leading-none">DISTRIBUTOR RESMI FRIEND'S BAKERY</p>
+                <p class="${isCompact ? 'text-[6.5pt]' : 'text-[7pt]'} text-slate-600 font-semibold leading-tight mt-1">
+                  Dusun Telbuk, Desa Kawisrejo, Rejoso, Pasuruan &bull;<br>WA: 087776653321
+                </p>
               </div>
             </div>
-            <div class="text-right flex-shrink-0">
-              <div class="inline-block bg-slate-950 text-white font-black ${isCompact ? 'text-[8pt] px-1.5 py-0.5' : 'text-[9pt] px-2 py-0.5'} rounded tracking-wide">
+
+            <!-- SISI KANAN: NOTA PENJUALAN GREY & NO TRX AMBER (LEGA & TIDAK MEPET) -->
+            <div class="text-right flex-shrink-0 pl-3">
+              <div class="${isCompact ? 'text-[8.5pt]' : 'text-[9.5pt]'} font-black tracking-wider text-slate-400 uppercase leading-none">
                 NOTA PENJUALAN
               </div>
-              <div class="${isCompact ? 'text-[7.5pt]' : 'text-[8.5pt]'} font-bold text-slate-900 mt-0.5">NO: <span class="font-black text-amber-800">${trx.id}</span></div>
+              <div class="${isCompact ? 'text-[8pt] mt-1' : 'text-[8.5pt] mt-1.5'} font-black text-slate-900 leading-none">
+                NO: <span class="font-black text-amber-800">${trx.id}</span>
+              </div>
             </div>
           </div>
 
