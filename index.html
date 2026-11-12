@@ -660,7 +660,12 @@
 
         <!-- STATS KPI GRID -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="owner-only bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-2 right-2">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700">
+                <i data-lucide="lock" class="w-2.5 h-2.5"></i> OWNER ONLY
+              </span>
+            </div>
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs font-medium text-slate-500">Total Omset Penjualan</span>
               <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -1517,8 +1522,8 @@
               <span>Jumlah Pesanan per Varian Roti:</span>
             </label>
             <div class="flex items-center gap-1.5">
-              <button type="button" onclick="setAllPOInputsZero()" class="text-[10px] text-slate-500 hover:text-slate-800 px-2 py-0.5 rounded bg-slate-200/70 hover:bg-slate-200 font-semibold cursor-pointer">
-                Reset Semua (0)
+              <button type="button" onclick="setAllPOInputsZero()" class="owner-only text-[10px] text-slate-500 hover:text-slate-800 px-2 py-0.5 rounded bg-slate-200/70 hover:bg-slate-200 font-semibold cursor-pointer">
+                Kosongkan Semua
               </button>
             </div>
           </div>
@@ -5025,12 +5030,14 @@
                 <i data-lucide="printer" class="w-3 h-3 inline"></i>
                 <span>Kartu PO</span>
               </button>
-              <button onclick="editPOSales('${po.id}')" class="p-1 rounded text-slate-500 hover:text-brand-600 transition" title="Edit PO">
+              <button onclick="editPOSales('${po.id}')" class="p-1 rounded text-slate-500 hover:text-brand-600 transition cursor-pointer" title="Edit PO">
                 <i data-lucide="edit-3" class="w-3.5 h-3.5 inline"></i>
               </button>
-              <button onclick="deletePOSales('${po.id}')" class="owner-only p-1 rounded text-slate-400 hover:text-rose-600 transition" title="Hapus">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
-              </button>
+              ${currentRole === 'kasir' ? '' : `
+                <button onclick="deletePOSales('${po.id}')" class="owner-only p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer" title="Hapus PO">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+                </button>
+              `}
             </td>
           </tr>
         `;
@@ -5290,13 +5297,15 @@
       }
 
       productsContainer.innerHTML = products.map((p, idx) => {
-        const val = (existingItems[p.id] !== undefined ? existingItems[p.id] : 
-                    (existingItems[p.code] !== undefined ? existingItems[p.code] : 
-                    (existingItems[p.name] !== undefined ? existingItems[p.name] : 0)));
+        const rawVal = (existingItems[p.id] !== undefined ? existingItems[p.id] : 
+                       (existingItems[p.code] !== undefined ? existingItems[p.code] : 
+                       (existingItems[p.name] !== undefined ? existingItems[p.name] : 0)));
+        const numVal = parseInt(rawVal, 10) || 0;
+        const displayVal = numVal > 0 ? numVal : '';
         const stdCode = getProductStandardCode(p.name);
         const conv = FACTORY_BREAD_CONVERSIONS[stdCode] || { unit: 'pcs', type: 'KB' };
         const unit = conv.unit || 'pcs';
-        const isQtyActive = val > 0;
+        const isQtyActive = numVal > 0;
         const unitPrice = getProductPriceForSales(p, tierId);
 
         return `
@@ -5319,7 +5328,8 @@
                 min="0" 
                 step="1" 
                 data-prod-id="${p.id}" 
-                value="${val}" 
+                value="${displayVal}" 
+                onfocus="this.select()"
                 oninput="updatePOFormLiveTotals()"
                 placeholder="0"
                 class="po-input-qty w-20 px-2 py-1 text-xs font-black text-center border rounded-lg focus:outline-none focus:border-brand-500 ${isQtyActive ? 'bg-white text-slate-900 border-amber-400' : 'bg-slate-50 text-slate-500 border-slate-300'}"
@@ -5389,7 +5399,7 @@
 
     function setAllPOInputsZero() {
       document.querySelectorAll('.po-input-qty').forEach(input => {
-        input.value = 0;
+        input.value = '';
       });
       updatePOFormLiveTotals();
     }
