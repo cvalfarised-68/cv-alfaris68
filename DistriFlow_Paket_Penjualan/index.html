@@ -4828,6 +4828,57 @@
 
     function formatRupiah(num) { return 'Rp ' + Number(num || 0).toLocaleString('id-ID'); }
 
+    // Helper Pembagian Muatan Truk Berdasarkan Kelipatan Keranjang Utuh & Sisa Satuan
+    function divideUnitsToTrucksByBasket(totalUnits, truckCount, upb) {
+      const count = Math.max(1, truckCount || 1);
+      const total = Number(totalUnits) || 0;
+      const unitsPerBasket = Number(upb) || 1;
+
+      if (count === 1) return [total];
+      if (total <= 0) return Array(count).fill(0);
+
+      if (unitsPerBasket <= 0) {
+        const base = Math.floor(total / count);
+        const rem = total % count;
+        return Array.from({ length: count }, (_, i) => base + (i < rem ? 1 : 0));
+      }
+
+      // Hitung keranjang utuh dan sisa satuan yang tidak cukup 1 keranjang
+      const fullBaskets = Math.floor(total / unitsPerBasket);
+      const remUnits = total % unitsPerBasket;
+
+      // Bagi keranjang utuh ke armada secara seimbang
+      const baseFull = Math.floor(fullBaskets / count);
+      const extraFull = fullBaskets % count;
+
+      const alloc = [];
+      for (let i = 0; i < count; i++) {
+        const b = baseFull + (i < extraFull ? 1 : 0);
+        alloc.push(b * unitsPerBasket);
+      }
+
+      // Sisa satuan lepas ditempatkan pada armada dengan muatan keranjang lebih sedikit
+      if (remUnits > 0) {
+        const targetIdx = extraFull < count ? extraFull : 0;
+        alloc[targetIdx] += remUnits;
+      }
+
+      return alloc;
+    }
+
+    // Helper Format Label Keranjang (Contoh: (2 krj) jika pas, atau (2 krj+6) jika ada sisa)
+    function formatBasketBreakdownLabel(qty, upb, basketType = 'krj') {
+      const num = Number(qty) || 0;
+      const u = Number(upb) || 1;
+      if (num === 0) return '(0 krj)';
+      const full = Math.floor(num / u);
+      const rem = num % u;
+      if (rem === 0) {
+        return `(${full} krj)`;
+      }
+      return `(${full > 0 ? full : 0} krj+${rem})`;
+    }
+
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -6064,9 +6115,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           const targetQty = (spkData.items && spkData.items[item.code] !== undefined) 
             ? Number(spkData.items[item.code]) 
             : poQty;
-          const base = Math.floor(targetQty / truckCount);
-          const rem = targetQty % truckCount;
-          alloc = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+          alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
         }
 
         let rowSPKTotal = 0;
@@ -7811,9 +7860,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           const targetQty = (spkData.items && spkData.items[code] !== undefined)
             ? Number(spkData.items[code])
             : rowOrderTotal;
-          const base = Math.floor(targetQty / truckCount);
-          const rem = targetQty % truckCount;
-          alloc = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+          alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
         }
 
         let rowSPKTotal = 0;
@@ -8438,14 +8485,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const allocMap = {};
       loadedItems.forEach(item => {
         const total = Number(item.orderQty) || 0;
-        const base = Math.floor(total / truckCount);
-        const rem = total % truckCount;
-
-        const alloc = [];
-        for (let i = 0; i < truckCount; i++) {
-          alloc.push(base + (i < rem ? 1 : 0));
-        }
-        allocMap[item.code] = alloc;
+        const upb = Number(item.unitsPerBasket) || 60;
+        allocMap[item.code] = divideUnitsToTrucksByBasket(total, truckCount, upb);
       });
 
       const manualData = {
@@ -8461,7 +8502,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       renderReconModalContent();
       renderSPKTabContent();
-      showToast('Penataan manual muatan truk berhasil dibagi rata dalam Pcs/Bdl!', 'success');
+      showToast('Penataan muatan armada berhasil dibagi rata otomatis per kelipatan keranjang!', 'success');
     }
 
     // Fungsi Render Tabel Grid Penataan Manual Muatan Armada (Dalam Pcs/Bdl & Konversi Keranjang)
@@ -8516,9 +8557,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                         (spkData.itemsPerTruck && spkData.itemsPerTruck[item.code]);
 
             if (!alloc || alloc.length !== truckCount) {
-              const base = Math.floor(totalUnits / truckCount);
-              const rem = totalUnits % truckCount;
-              alloc = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
+              alloc = divideUnitsToTrucksByBasket(totalUnits, truckCount, upb);
             }
 
             let sumAllocPcs = 0;
@@ -8532,6 +8571,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
               if (item.basketType === 'KB') truckSums[i].kb += b;
               else truckSums[i].kmk += b;
               truckSums[i].units += pQty;
+
+              const basketLabelText = formatBasketBreakdownLabel(pQty, upb, item.basketType);
+              const isNonMultiple = pQty > 0 && pQty % upb !== 0;
 
               truckInputs += `
                 <td class="py-2 px-2 text-center border-l border-slate-100 bg-amber-50/20">
@@ -8547,8 +8589,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                       >
                       <span class="text-[10px] text-slate-400 font-mono">${item.unit || 'pcs'}</span>
                     </div>
-                    <span id="manual-truck-basket-label-${item.code}-t${i + 1}" class="text-[10px] text-amber-800 font-semibold mt-0.5">
-                      (${b} ${item.basketType})
+                    <span id="manual-truck-basket-label-${item.code}-t${i + 1}" class="text-[10px] ${isNonMultiple ? 'text-amber-900 font-bold bg-amber-100/70 px-1 py-0.2 rounded' : 'text-amber-800 font-semibold'} mt-0.5">
+                      ${basketLabelText}
                     </span>
                   </div>
                 </td>
@@ -8560,7 +8602,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             if (diffPcs === 0) {
               statusHtml = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Pas Lengkap</span>';
             } else if (diffPcs > 0) {
-              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diffPcs} ${item.unit || 'pcs'} (${Math.ceil(diffPcs / upb)} ${item.basketType})</span>`;
+              statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diffPcs} ${item.unit || 'pcs'} ${formatBasketBreakdownLabel(diffPcs, upb, item.basketType)}</span>`;
             } else {
               statusHtml = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diffPcs)} ${item.unit || 'pcs'}</span>`;
             }
@@ -8578,7 +8620,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 <td class="py-2 px-2.5 text-center text-slate-600 font-mono">${upb} ${item.unit || 'pcs'}</td>
                 <td class="py-2 px-2.5 text-right font-black text-slate-900">
                   <span>${totalUnits.toLocaleString('id-ID')} ${item.unit || 'pcs'}</span>
-                  <span class="block text-[9.5px] font-normal text-slate-400">(${totalBaskets} ${item.basketType})</span>
+                  <span class="block text-[9.5px] font-semibold text-slate-500">${formatBasketBreakdownLabel(totalUnits, upb, item.basketType)}</span>
                 </td>
                 ${truckInputs}
                 <td class="py-2 px-2.5 text-center" id="manual-status-${item.code}">
@@ -8654,8 +8696,12 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         const basketLabel = document.getElementById(`manual-truck-basket-label-${code}-t${i + 1}`);
         if (basketLabel) {
-          const b = pQty > 0 ? Math.ceil(pQty / upb) : 0;
-          basketLabel.innerText = `(${b} ${basketType})`;
+          basketLabel.innerText = formatBasketBreakdownLabel(pQty, upb, basketType);
+          if (pQty > 0 && pQty % upb !== 0) {
+            basketLabel.className = 'text-[10px] text-amber-900 font-bold bg-amber-100/70 px-1 py-0.2 rounded mt-0.5';
+          } else {
+            basketLabel.className = 'text-[10px] text-amber-800 font-semibold mt-0.5';
+          }
         }
       }
 
@@ -8665,7 +8711,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         if (diffPcs === 0) {
           statusEl.innerHTML = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Pas Lengkap</span>';
         } else if (diffPcs > 0) {
-          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diffPcs} ${unit} (${Math.ceil(diffPcs / upb)} ${basketType})</span>`;
+          statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Sisa ${diffPcs} ${unit} ${formatBasketBreakdownLabel(diffPcs, upb, basketType)}</span>`;
         } else {
           statusEl.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Lebih ${Math.abs(diffPcs)} ${unit}</span>`;
         }
