@@ -302,6 +302,31 @@
     }
 
     /* Freeze Panes untuk Tabel SPK & Alokasi Sales */
+    .spk-table-scroll-container {
+      max-height: 62vh;
+      overflow: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+    @media (min-width: 640px) {
+      .spk-table-scroll-container {
+        max-height: 72vh;
+      }
+    }
+
+    /* Freeze Baris Judul (Header Row) untuk Tabel SPK & Alokasi Sales */
+    #recon-spk-thead th,
+    #recon-manual-thead th,
+    .spk-sticky-header {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 25 !important;
+      background-color: #f1f5f9;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Freeze Kolom No & Inisial */
     .spk-sticky-col-no {
       position: sticky !important;
       left: 0px !important;
@@ -319,10 +344,25 @@
       border-right: 2px solid #cbd5e1 !important; /* slate-300 */
       box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.12);
     }
+
+    /* Sudut Kiri Atas: Pertemuan Freeze Baris Judul & Freeze Kolom No/Inisial (Z-Index Tertinggi) */
+    #recon-spk-thead th.spk-sticky-col-no,
+    #recon-spk-thead th.spk-sticky-col-inisial,
+    #recon-manual-thead th.spk-sticky-col-no,
+    #recon-manual-thead th.spk-sticky-col-inisial,
     thead th.spk-sticky-col-no,
     thead th.spk-sticky-col-inisial {
-      z-index: 30 !important;
-      background-color: #f1f5f9 !important; /* slate-100 */
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 50 !important;
+      background-color: #f1f5f9 !important;
+      box-shadow: 2px 2px 5px -1px rgba(0, 0, 0, 0.15) !important;
+    }
+    thead th.spk-sticky-col-no {
+      left: 0px !important;
+    }
+    thead th.spk-sticky-col-inisial {
+      left: 40px !important;
     }
     tbody td.spk-sticky-col-no,
     tbody td.spk-sticky-col-inisial {
@@ -2311,7 +2351,7 @@
           </div>
 
           <!-- Tabel Rekonsiliasi SPK Pabrik & Alokasi Sales (Matriks Terpadu) -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
+          <div class="spk-table-scroll-container overflow-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
             <table class="w-full text-[11px] text-left border-separate border-spacing-0">
               <thead id="recon-spk-thead" class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <!-- Diisi otomatis oleh renderSPKTabContent sesuai jumlah armada & sales -->
@@ -6091,17 +6131,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         if (truckCount > 1) {
           for (let i = 0; i < truckCount; i++) {
             truckHeaders += `
-              <th class="py-2.5 px-2 text-center font-bold text-indigo-950 bg-indigo-100/60 border-l border-indigo-200">
+              <th class="spk-sticky-header py-2.5 px-2 text-center font-bold text-indigo-950 bg-indigo-100 border-l border-indigo-200">
                 🚚 SPK ${i + 1}<br><span class="text-[9px] font-normal text-slate-600">${rawPlates[i]}</span>
               </th>
             `;
           }
           truckHeaders += `
-            <th class="py-2.5 px-2 text-right font-black text-indigo-900 bg-indigo-100/40">Total SPK</th>
+            <th class="spk-sticky-header py-2.5 px-2 text-right font-black text-indigo-900 bg-indigo-100 border-l border-indigo-200">Total SPK</th>
           `;
         } else {
           truckHeaders = `
-            <th class="py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-50/70 w-32">
+            <th class="spk-sticky-header py-2.5 px-2.5 text-right font-black text-indigo-900 bg-indigo-100 w-32 border-l border-indigo-200">
               🚚 SPK 1 (${rawPlates[0] || armada.nopol || 'Armada'})
             </th>
           `;
@@ -6110,29 +6150,29 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         let salesHeaders = '';
         if (posOnDate.length > 0) {
           salesHeaders = posOnDate.map(po => `
-            <th class="py-2.5 px-2 text-center font-bold text-amber-950 bg-amber-100/70 border-l border-amber-200 min-w-[70px]">
+            <th class="spk-sticky-header py-2.5 px-2 text-center font-bold text-amber-950 bg-amber-100 border-l border-amber-200 min-w-[70px]">
               👤 ${escapeHtml(po.salesName || 'Sales')}<br><span class="text-[9px] font-normal text-amber-800">${escapeHtml(po.salesRoute || 'Rute')}</span>
             </th>
           `).join('');
         } else {
           salesHeaders = `
-            <th class="py-2.5 px-3 text-center text-slate-400 bg-slate-100 italic font-medium">Belum Ada PO Sales</th>
+            <th class="spk-sticky-header py-2.5 px-3 text-center text-slate-400 bg-slate-100 italic font-medium border-l border-slate-200">Belum Ada PO Sales</th>
           `;
         }
 
         thead.innerHTML = `
           <tr>
-            <th class="spk-sticky-col-no py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200">No</th>
-            <th class="spk-sticky-col-inisial py-2.5 px-2 text-slate-700 font-bold border-b border-slate-200">Inisial</th>
-            <th class="py-2.5 px-2.5 min-w-[120px] text-slate-700 font-bold border-b border-slate-200">Nama Varian Roti</th>
-            <th class="py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200">Tipe</th>
-            <th class="py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200">Isi</th>
-            <th class="py-2.5 px-2.5 text-right font-black text-slate-800 bg-slate-100/90 border-b border-slate-200">PO Diminta</th>
+            <th class="spk-sticky-col-no py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200 bg-slate-100">No</th>
+            <th class="spk-sticky-col-inisial py-2.5 px-2 text-slate-700 font-bold border-b border-slate-200 bg-slate-100">Inisial</th>
+            <th class="spk-sticky-header py-2.5 px-2.5 min-w-[120px] text-slate-700 font-bold border-b border-slate-200 bg-slate-100">Nama Varian Roti</th>
+            <th class="spk-sticky-header py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200 bg-slate-100">Tipe</th>
+            <th class="spk-sticky-header py-2.5 px-2 text-center text-slate-700 font-bold border-b border-slate-200 bg-slate-100">Isi</th>
+            <th class="spk-sticky-header py-2.5 px-2.5 text-right font-black text-slate-800 bg-slate-100 border-b border-slate-200">PO Diminta</th>
             ${truckHeaders}
             ${salesHeaders}
-            <th class="py-2.5 px-2 text-right font-bold text-slate-800 border-b border-slate-200">Krjg SPK</th>
-            <th class="py-2.5 px-2 text-center font-bold border-b border-slate-200">Selisih</th>
-            <th class="py-2.5 px-2 text-center border-b border-slate-200">Status Stok</th>
+            <th class="spk-sticky-header py-2.5 px-2 text-right font-bold text-slate-800 border-b border-slate-200 bg-slate-100">Krjg SPK</th>
+            <th class="spk-sticky-header py-2.5 px-2 text-center font-bold text-slate-700 border-b border-slate-200 bg-slate-100">Selisih</th>
+            <th class="spk-sticky-header py-2.5 px-2 text-center font-bold text-slate-700 border-b border-slate-200 bg-slate-100">Status Stok</th>
           </tr>
         `;
       }
