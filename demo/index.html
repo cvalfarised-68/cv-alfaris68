@@ -679,22 +679,52 @@
           </div>
         </div>
 
+        <!-- Filter Tanggal & Quick Pills Dashboard -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-4 h-4 text-brand-500"></i>
+              <span>Tanggal Ringkasan:</span>
+            </span>
+            <input 
+              type="date" 
+              id="dashboard-date-filter" 
+              onchange="onDashboardDateChange()" 
+              class="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 focus:outline-none focus:border-brand-500"
+            >
+            <span id="dashboard-date-badge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
+              Hari Ini
+            </span>
+          </div>
+
+          <!-- Quick Date Pills Dashboard -->
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs flex-wrap">
+            <button type="button" onclick="setDashboardDateQuick(0)" id="dash-btn-today" class="px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer">
+              Hari Ini
+            </button>
+            <button type="button" onclick="setDashboardDateQuick(-1)" id="dash-btn-yesterday" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              Kemarin
+            </button>
+            <button type="button" onclick="setDashboardDateQuick(1)" id="dash-btn-tomorrow" class="px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              Besok
+            </button>
+            <button type="button" onclick="setDashboardDateQuick('all')" id="dash-btn-all" class="owner-only px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer">
+              Semua Tanggal
+            </button>
+          </div>
+        </div>
+
         <!-- STATS KPI GRID -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div class="owner-only bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="absolute top-2 right-2">
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700">
-                <i data-lucide="lock" class="w-2.5 h-2.5"></i> OWNER ONLY
-              </span>
-            </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-medium text-slate-500">Total Omset Penjualan</span>
+              <span id="kpi-omset-title" class="text-xs font-bold text-slate-700">Omset Penjualan</span>
               <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <i data-lucide="wallet" class="w-4 h-4"></i>
               </div>
             </div>
             <div id="kpi-omset" class="text-lg sm:text-2xl font-bold text-slate-900">Rp 0</div>
-            <div id="kpi-omset-sub" class="text-[11px] text-slate-400 mt-1">Dari 0 Transaksi</div>
+            <div id="kpi-omset-sub" class="text-[11px] text-slate-500 mt-1">Per Tanggal</div>
           </div>
 
           <div class="bg-white p-4 rounded-2xl border-2 border-rose-200 shadow-sm relative overflow-hidden">
@@ -3887,6 +3917,7 @@
     let currentSalesFilter = 'all';
     let currentTrxFilter = 'all';
     let currentPODate = '';
+    let currentDashboardDate = '';
 
     const PRICE_TIERS = [
       { id: 'level1', name: 'Sales Besar', marginPct: 25, color: 'blue' },
@@ -5054,11 +5085,9 @@
               <button onclick="editPOSales('${po.id}')" class="p-1 rounded text-slate-500 hover:text-brand-600 transition cursor-pointer" title="Edit PO">
                 <i data-lucide="edit-3" class="w-3.5 h-3.5 inline"></i>
               </button>
-              ${currentRole === 'kasir' ? '' : `
-                <button onclick="deletePOSales('${po.id}')" class="owner-only p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer" title="Hapus PO">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
-                </button>
-              `}
+              <button onclick="deletePOSales('${po.id}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer" title="Hapus PO">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
+              </button>
             </td>
           </tr>
         `;
@@ -5434,10 +5463,6 @@
     }
 
     function deletePOSales(poId) {
-      if (currentRole === 'kasir') {
-        showToast('Hanya Owner / Pimpinan yang memiliki wewenang untuk menghapus PO Sales.', 'error');
-        return;
-      }
       if (confirm('Hapus data PO sales ini? Transaksi drop roti terkait di kasir juga akan otomatis dibatalkan.')) {
         const allPO = getPOSalesData();
         const poToDelete = allPO.find(p => p.id === poId);
@@ -9110,12 +9135,121 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
     }
 
+    function updateDashboardDatePillsHighlight(dateStr) {
+      const todayYMD = getTodayYMD();
+      const yesterdayYMD = addDaysYMD(todayYMD, -1);
+      const tomorrowYMD = addDaysYMD(todayYMD, 1);
+
+      const btnToday = document.getElementById('dash-btn-today');
+      const btnYesterday = document.getElementById('dash-btn-yesterday');
+      const btnTomorrow = document.getElementById('dash-btn-tomorrow');
+      const btnAll = document.getElementById('dash-btn-all');
+
+      const activeClass = 'px-3 py-1 rounded-lg font-bold bg-white text-brand-700 shadow-xs transition cursor-pointer';
+      const inactiveClass = 'px-3 py-1 rounded-lg font-semibold transition text-slate-600 hover:text-slate-900 cursor-pointer';
+
+      if (btnToday) btnToday.className = dateStr === todayYMD ? activeClass : inactiveClass;
+      if (btnYesterday) btnYesterday.className = dateStr === yesterdayYMD ? activeClass : inactiveClass;
+      if (btnTomorrow) btnTomorrow.className = dateStr === tomorrowYMD ? activeClass : inactiveClass;
+      if (btnAll) btnAll.className = (dateStr === 'all' ? activeClass : inactiveClass) + ' owner-only';
+    }
+
+    function setDashboardDateQuick(offsetOrAll) {
+      const el = document.getElementById('dashboard-date-filter');
+      if (offsetOrAll === 'all') {
+        if (currentRole === 'kasir') return;
+        currentDashboardDate = 'all';
+        if (el) el.value = '';
+        updateDashboardDatePillsHighlight('all');
+        updateDashboardAndPL();
+        return;
+      }
+
+      const target = addDaysYMD(getTodayYMD(), offsetOrAll);
+      currentDashboardDate = target;
+      currentPODate = target;
+      if (el) el.value = target;
+
+      const poEl = document.getElementById('po-date-filter');
+      if (poEl) poEl.value = target;
+      const trxEl = document.getElementById('filter-trx-date');
+      if (trxEl && !trxEl.dataset.customMode) trxEl.value = target;
+
+      updateDashboardDatePillsHighlight(target);
+      updatePODatePillsHighlight(target);
+      updateTrxDatePillsHighlight(target);
+      updateDashboardAndPL();
+    }
+
+    function onDashboardDateChange() {
+      const el = document.getElementById('dashboard-date-filter');
+      if (!el || !el.value) return;
+      const target = el.value;
+      currentDashboardDate = target;
+      currentPODate = target;
+
+      const poEl = document.getElementById('po-date-filter');
+      if (poEl) poEl.value = target;
+      const trxEl = document.getElementById('filter-trx-date');
+      if (trxEl && !trxEl.dataset.customMode) trxEl.value = target;
+
+      updateDashboardDatePillsHighlight(target);
+      updatePODatePillsHighlight(target);
+      updateTrxDatePillsHighlight(target);
+      updateDashboardAndPL();
+    }
+
     function updateDashboardAndPL() {
       populatePLPeriodDropdown();
 
       const allTrx = getTransactionsData();
       const allExp = getExpensesData();
       const allRet = getReturData();
+
+      // Tanggal operasional dashboard yang aktif
+      const dashDateInput = document.getElementById('dashboard-date-filter');
+      let targetDashDate = currentDashboardDate || (dashDateInput && dashDateInput.value) || currentPODate || getTodayYMD();
+      if (dashDateInput && !dashDateInput.value && targetDashDate !== 'all') {
+        dashDateInput.value = targetDashDate;
+      }
+      currentDashboardDate = targetDashDate;
+      updateDashboardDatePillsHighlight(targetDashDate);
+
+      // Hitung Omset Penjualan spesifik pada tanggal tersebut (untuk Kasir dan Ringkasan Harian)
+      let dateOmset = 0;
+      let dateTrxCount = 0;
+      let isEstimateFromPO = false;
+
+      if (targetDashDate === 'all' && currentRole !== 'kasir') {
+        allTrx.forEach(t => {
+          dateOmset += (t.totalAmount || 0);
+          dateTrxCount++;
+        });
+      } else {
+        const trxOnDate = allTrx.filter(t => t.date === targetDashDate);
+        dateTrxCount = trxOnDate.length;
+        trxOnDate.forEach(t => {
+          dateOmset += (t.totalAmount || 0);
+        });
+
+        // Jika transaksi kasir belum di-generate untuk tanggal ini namun ada PO Sales, hitung estimasi PO
+        if (dateOmset === 0) {
+          const allPO = getPOSalesData().filter(p => p.date === targetDashDate);
+          if (allPO.length > 0) {
+            const products = getProductsData();
+            allPO.forEach(po => {
+              if (po.items) {
+                Object.entries(po.items).forEach(([pId, qty]) => {
+                  const prod = products.find(p => p.id === pId);
+                  const price = prod ? (prod.price || prod.salePrice || 0) : 0;
+                  dateOmset += ((Number(qty) || 0) * price);
+                });
+              }
+            });
+            if (dateOmset > 0) isEstimateFromPO = true;
+          }
+        }
+      }
 
       // Dashboard Overall KPI (All-time business health)
       let globalOmset = 0;
@@ -9140,8 +9274,51 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const globalGross = Math.max(0, globalOmset - globalKulakan - globalWaste);
       const globalNet = globalGross - globalExpCost;
 
+      // Update elemen KPI Omset (Untuk Kasir: Omset Penjualan di tgl itu)
       const kpiOmsetEl = document.getElementById('kpi-omset');
-      if (kpiOmsetEl) kpiOmsetEl.innerText = formatRupiah(globalOmset);
+      const kpiOmsetTitleEl = document.getElementById('kpi-omset-title');
+      const kpiOmsetSubEl = document.getElementById('kpi-omset-sub');
+      const dateBadgeEl = document.getElementById('dashboard-date-badge');
+
+      if (dateBadgeEl) {
+        if (targetDashDate === 'all') {
+          dateBadgeEl.innerText = 'Semua Tanggal';
+        } else {
+          const isToday = targetDashDate === getTodayYMD();
+          const isTomorrow = targetDashDate === addDaysYMD(getTodayYMD(), 1);
+          const isYesterday = targetDashDate === addDaysYMD(getTodayYMD(), -1);
+          const label = isToday ? 'Hari Ini' : (isTomorrow ? 'Besok' : (isYesterday ? 'Kemarin' : formatIndoDate(targetDashDate, false)));
+          dateBadgeEl.innerText = `${label} (${formatIndoDate(targetDashDate, true)})`;
+        }
+      }
+
+      if (kpiOmsetEl) kpiOmsetEl.innerText = formatRupiah(dateOmset);
+
+      if (currentRole === 'kasir') {
+        const titleDate = targetDashDate === getTodayYMD() ? 'Hari Ini' : formatIndoDate(targetDashDate, false);
+        if (kpiOmsetTitleEl) kpiOmsetTitleEl.innerText = `Omset Penjualan (${titleDate})`;
+        if (kpiOmsetSubEl) {
+          if (isEstimateFromPO) {
+            kpiOmsetSubEl.innerText = `Estimasi dari Pre-Order (PO) Sales (${formatIndoDate(targetDashDate, true)})`;
+          } else {
+            kpiOmsetSubEl.innerText = `Dari ${dateTrxCount} Transaksi pada tanggal ini`;
+          }
+        }
+      } else {
+        // Owner
+        if (targetDashDate === 'all') {
+          if (kpiOmsetTitleEl) kpiOmsetTitleEl.innerText = 'Total Omset Penjualan';
+          if (kpiOmsetSubEl) kpiOmsetSubEl.innerText = `Akumulasi ${allTrx.length} Seluruh Transaksi`;
+        } else {
+          const titleDate = targetDashDate === getTodayYMD() ? 'Hari Ini' : formatIndoDate(targetDashDate, false);
+          if (kpiOmsetTitleEl) kpiOmsetTitleEl.innerText = `Omset Penjualan (${titleDate})`;
+          if (kpiOmsetSubEl) {
+            const trxInfo = isEstimateFromPO ? 'Estimasi PO' : `${dateTrxCount} Trx`;
+            kpiOmsetSubEl.innerHTML = `${trxInfo} &bull; <span class="text-slate-400">Total Akumulasi: ${formatRupiah(globalOmset)}</span>`;
+          }
+        }
+      }
+
       const kpiKasbonEl = document.getElementById('kpi-kasbon');
       if (kpiKasbonEl) kpiKasbonEl.innerText = formatRupiah(globalKasbonBelumLunas);
       const kpiKasbonSubEl = document.getElementById('kpi-kasbon-sub');
@@ -11719,6 +11896,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }
         updateTrxDatePillsHighlight(currentPODate);
         renderTransactionList();
+      } else if (tabId === 'dashboard') {
+        const dashDateEl = document.getElementById('dashboard-date-filter');
+        if (dashDateEl) {
+          if (!dashDateEl.value || (dashDateEl.value !== currentPODate && currentDashboardDate !== 'all')) {
+            dashDateEl.value = currentPODate || getTodayYMD();
+            currentDashboardDate = dashDateEl.value;
+          }
+          updateDashboardDatePillsHighlight(currentDashboardDate);
+        }
+        updateDashboardAndPL();
       }
 
       lucide.createIcons();
@@ -11762,6 +11949,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       }
 
       currentPODate = initialDate;
+      currentDashboardDate = initialDate;
+      const initDashDateEl = document.getElementById('dashboard-date-filter');
+      if (initDashDateEl) initDashDateEl.value = initialDate;
+      updateDashboardDatePillsHighlight(initialDate);
       const initPODateEl = document.getElementById('po-date-filter');
       if (initPODateEl) initPODateEl.value = initialDate;
       const initTrxDateEl = document.getElementById('filter-trx-date');
