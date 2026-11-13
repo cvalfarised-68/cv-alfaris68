@@ -4976,6 +4976,120 @@
       return alloc;
     }
 
+    // Helper Penyelaras Proporsional Alokasi Armada saat PO Bertambah atau Berkurang
+    function rebalanceTruckAllocationProportionally(currentAlloc, newTotalUnits, truckCount, upb) {
+      const count = Math.max(1, truckCount || 1);
+      const newTotal = Math.max(0, Number(newTotalUnits) || 0);
+      const unitsPerBasket = Math.max(1, Number(upb) || 1);
+
+      if (newTotal === 0) return Array(count).fill(0);
+      if (count === 1) return [newTotal];
+
+      const currentSum = (currentAlloc || []).reduce((a, b) => a + (Number(b) || 0), 0);
+
+      // Jika alokasi sebelumnya kosong, bernilai 0 semua, atau jumlah armada berbeda
+      if (currentSum === 0 || !Array.isArray(currentAlloc) || currentAlloc.length !== count) {
+        return divideUnitsToTrucksByBasket(newTotal, count, unitsPerBasket);
+      }
+
+      // Jika newTotal kelipatan keranjang utuh, selaraskan di level keranjang
+      if (unitsPerBasket > 1 && newTotal % unitsPerBasket === 0) {
+        const targetBaskets = newTotal / unitsPerBasket;
+        const curBaskets = currentAlloc.map(v => (Number(v) || 0) / unitsPerBasket);
+        const sumCurBaskets = curBaskets.reduce((a, b) => a + b, 0);
+
+        if (sumCurBaskets > 0) {
+          const bRatio = targetBaskets / sumCurBaskets;
+          const rawB = curBaskets.map(b => b * bRatio);
+          let baseB = rawB.map(b => Math.floor(b));
+          let allocatedB = baseB.reduce((a, b) => a + b, 0);
+          let remB = targetBaskets - allocatedB;
+
+          const fracB = rawB.map((b, i) => ({ index: i, frac: b - Math.floor(b) }))
+                            .sort((a, b) => b.frac - a.frac);
+
+          for (let i = 0; i < remB; i++) {
+            baseB[fracB[i % count].index] += 1;
+          }
+
+          return baseB.map(b => b * unitsPerBasket);
+        }
+      }
+
+      // Penyelarasan umum per satuan (pcs/bdl) dengan mempertahankan rasio truk yang sudah ada
+      const ratio = newTotal / currentSum;
+      let rawAlloc = currentAlloc.map(v => (Number(v) || 0) * ratio);
+
+      let baseAlloc = rawAlloc.map(v => Math.floor(v));
+      let allocated = baseAlloc.reduce((a, b) => a + b, 0);
+      let rem = newTotal - allocated;
+
+      const fractions = rawAlloc.map((v, i) => ({ index: i, frac: v - Math.floor(v) }))
+                                .sort((a, b) => b.frac - a.frac);
+
+      for (let i = 0; i < rem; i++) {
+        baseAlloc[fractions[i % count].index] += 1;
+      }
+
+      return baseAlloc;
+    }
+
+    // Helper Rekonsiliasi Pintar Muatan Armada saat PO Sales Ditambah / Dikurangi
+    function reconcileTruckAllocationsOnPOChange(targetDate) {
+      const date = targetDate || currentPODate || getTodayYMD();
+      if (!date) return;
+
+      const allPO = getPOSalesData().filter(p => p.date === date);
+      const armada = getFactoryArmadaForDate(date);
+      const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
+
+      const aggregatedItems = {};
+      allPO.forEach(po => {
+        Object.entries(po.items || {}).forEach(([k, q]) => {
+          aggregatedItems[k] = (aggregatedItems[k] || 0) + Number(q || 0);
+        });
+      });
+
+      const calc = calculateFactoryLoad(aggregatedItems, armada.kb, armada.kmk);
+      const manualData = getManualTruckAllocData(date);
+      const spkData = getSPKRealizationData(date);
+
+      if (!manualData.allocations) manualData.allocations = {};
+      if (!spkData.itemsPerTruck) spkData.itemsPerTruck = {};
+      if (!spkData.items) spkData.items = {};
+
+      const updatedAlloc = { ...manualData.allocations, ...spkData.itemsPerTruck };
+      const updatedTotalSPK = { ...spkData.items };
+
+      // Selaraskan setiap varian produk yang dipesan
+      calc.itemsBreakdown.forEach(item => {
+        const code = item.code;
+        const newTotal = Number(item.orderQty) || 0;
+        const upb = Number(item.unitsPerBasket) || 60;
+        const curAlloc = updatedAlloc[code] || null;
+
+        const rebalanced = rebalanceTruckAllocationProportionally(curAlloc, newTotal, truckCount, upb);
+        updatedAlloc[code] = rebalanced;
+        updatedTotalSPK[code] = newTotal;
+      });
+
+      // Jika ada produk yang sebelumnya punya alokasi tapi sekarang PO-nya 0
+      Object.keys(updatedAlloc).forEach(code => {
+        const it = calc.itemsBreakdown.find(x => x.code === code);
+        if (!it || (Number(it.orderQty) || 0) === 0) {
+          updatedAlloc[code] = Array(truckCount).fill(0);
+          updatedTotalSPK[code] = 0;
+        }
+      });
+
+      manualData.allocations = updatedAlloc;
+      saveManualTruckAllocData(date, manualData);
+
+      spkData.itemsPerTruck = updatedAlloc;
+      spkData.items = updatedTotalSPK;
+      saveSPKRealizationData(date, spkData);
+    }
+
     // Helper Format Label Keranjang (Contoh: (2 krj) jika pas, atau (2 krj+6) jika ada sisa)
     function formatBasketBreakdownLabel(qty, upb, basketType = 'krj') {
       const num = Number(qty) || 0;
@@ -5308,6 +5422,7 @@
 
         hiddenId.value = po.id;
         dateInput.value = po.date;
+        if (po.date) currentPODate = po.date; // Kunci & sinkronkan currentPODate ke tanggal PO yang sedang diedit
         dateInput.disabled = true; // Tanggal terkunci pada data PO ini
         dateInput.classList.add('bg-slate-100', 'cursor-not-allowed');
 
@@ -5603,9 +5718,13 @@
       if (confirm('Hapus data PO sales ini? Transaksi drop roti terkait di kasir juga akan otomatis dibatalkan.')) {
         const allPO = getPOSalesData();
         const poToDelete = allPO.find(p => p.id === poId);
+        const poDate = poToDelete ? poToDelete.date : currentPODate;
         const updatedPO = allPO.filter(p => p.id !== poId);
         savePOSalesData(updatedPO, true);
         deleteItemFromSupabase('po_sales', poId);
+
+        // Rekonsiliasi alokasi muatan truk agar langsung berkurang
+        reconcileTruckAllocationsOnPOChange(poDate);
 
         // Hapus juga transaksi drop roti terkait di Transaksi Sales
         let allTrx = getTransactionsData();
@@ -5698,6 +5817,9 @@
       if (dateFilterEl) dateFilterEl.value = currentPODate;
       savePOSalesData(allPO);
       closePOInputModal();
+
+      // Rekonsiliasi & selaraskan alokasi muatan truk secara cerdas agar tidak 0 / kosong
+      reconcileTruckAllocationsOnPOChange(targetDate);
 
       // OTOMATIS LANGSUNG TERBITKAN / SINKRONKAN KE TRANSAKSI SALES (ZERO STOCK)!
       publishPOToTransactions(targetDate, false);
@@ -6074,6 +6196,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const modal = document.getElementById('modal-pabrik-reconciliation');
       if (!modal) return;
 
+      // Selaraskan alokasi armada jika terdapat penambahan / pengurangan PO sebelumnya
+      reconcileTruckAllocationsOnPOChange(currentPODate);
+
       const armada = getFactoryArmadaForDate(currentPODate);
       populateReconArmadaDropdown(armada.nopol);
 
@@ -6221,11 +6346,18 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         let alloc = (spkData.itemsPerTruck && spkData.itemsPerTruck[item.code]) || 
                     (manualData && manualData.allocations && manualData.allocations[item.code]);
 
-        if (!alloc || alloc.length !== truckCount) {
-          const targetQty = (spkData.items && spkData.items[item.code] !== undefined) 
-            ? Number(spkData.items[item.code]) 
-            : poQty;
+        const targetQty = (spkData.items && spkData.items[item.code] !== undefined) 
+          ? Number(spkData.items[item.code]) 
+          : poQty;
+
+        const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+
+        if (!alloc || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
           alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
+        } else if (sumAlloc !== targetQty && targetQty > 0) {
+          alloc = rebalanceTruckAllocationProportionally(alloc, targetQty, truckCount, upb);
+        } else if (targetQty === 0) {
+          alloc = Array(truckCount).fill(0);
         }
 
         let rowSPKTotal = 0;
@@ -6513,6 +6645,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         savePOSalesData(allPO);
 
+        // Rekonsiliasi alokasi armada secara otomatis
+        reconcileTruckAllocationsOnPOChange(currentPODate);
+
         if (typeof autoSyncAllPOsToTransactions === 'function') {
           autoSyncAllPOsToTransactions();
         }
@@ -6601,15 +6736,24 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const armada = getFactoryArmadaForDate(currentPODate);
       const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
 
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+      const calcLoad = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
+
       const spkItemsPerTruck = {};
       const spkTotalItems = {};
 
-      STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
-        const poQty = posOnDate.reduce((sum, po) => sum + getPOSalesItemQty(po, p.code), 0);
-        const base = Math.floor(poQty / truckCount);
-        const rem = poQty % truckCount;
-        spkItemsPerTruck[p.code] = Array.from({ length: truckCount }, (_, i) => base + (i < rem ? 1 : 0));
-        spkTotalItems[p.code] = poQty;
+      calcLoad.itemsBreakdown.forEach(item => {
+        const poQty = Number(item.orderQty) || 0;
+        const upb = Number(item.unitsPerBasket) || 60;
+        spkItemsPerTruck[item.code] = divideUnitsToTrucksByBasket(poQty, truckCount, upb);
+        spkTotalItems[item.code] = poQty;
       });
 
       const spkData = getSPKRealizationData(currentPODate);
@@ -6639,20 +6783,51 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const armada = getFactoryArmadaForDate(currentPODate);
       const truckCount = Math.max(1, armada.trucksCount || (armada.kb >= 600 ? 3 : (armada.kb >= 400 ? 2 : 1)));
 
-      const spkItems = {};
-      const spkItemsPerTruck = {};
+      const manualData = getManualTruckAllocData(currentPODate);
+      const spkDataCur = getSPKRealizationData(currentPODate);
 
-      STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
+      const spkItems = {};
+      const spkItemsPerTruck = { ...(manualData.allocations || {}), ...(spkDataCur.itemsPerTruck || {}) };
+
+      // Cari semua varian produk (standar 25 + produk non-standar aktif)
+      let allPO = getPOSalesData();
+      let posOnDate = allPO.filter(po => po.date === currentPODate);
+      const aggItems = {};
+      posOnDate.forEach(po => {
+        if (po.items) {
+          Object.entries(po.items).forEach(([k, v]) => {
+            aggItems[k] = (aggItems[k] || 0) + (Number(v) || 0);
+          });
+        }
+      });
+      const calcLoad = calculateFactoryLoad(aggItems, armada.kb, armada.kmk);
+      const allCodes = new Set([
+        ...STANDARD_PRODUCT_ORDER,
+        ...calcLoad.itemsBreakdown.map(it => it.code)
+      ]);
+
+      allCodes.forEach(code => {
+        let hasInput = false;
         const tPcs = [];
         let rowSum = 0;
         for (let i = 0; i < truckCount; i++) {
-          const inputEl = document.getElementById(`spk-truck-pcs-${p.code}-t${i}`);
-          const val = inputEl ? Math.max(0, parseInt(inputEl.value || '0', 10)) : 0;
-          tPcs.push(val);
-          rowSum += val;
+          const inputEl = document.getElementById(`spk-truck-pcs-${code}-t${i}`);
+          if (inputEl) {
+            hasInput = true;
+            const val = Math.max(0, parseInt(inputEl.value || '0', 10));
+            tPcs.push(val);
+            rowSum += val;
+          }
         }
-        spkItemsPerTruck[p.code] = tPcs;
-        spkItems[p.code] = rowSum;
+        if (hasInput && rowSum > 0) {
+          spkItemsPerTruck[code] = tPcs;
+          spkItems[code] = rowSum;
+        } else if (hasInput && rowSum === 0) {
+          spkItemsPerTruck[code] = tPcs;
+          spkItems[code] = 0;
+        } else if (!hasInput && spkItemsPerTruck[code]) {
+          spkItems[code] = spkItemsPerTruck[code].reduce((a, b) => a + (Number(b) || 0), 0);
+        }
       });
 
       const spkData = {
@@ -6666,8 +6841,8 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       saveSPKRealizationData(currentPODate, spkData);
 
       // Simpan perubahan alokasi sales dari sel input matriks hanya jika input valid & bukan 0 semua
-      const allPO = getPOSalesData();
-      const posOnDate = allPO.filter(po => po.date === currentPODate);
+      allPO = getPOSalesData();
+      posOnDate = allPO.filter(po => po.date === currentPODate);
 
       posOnDate.forEach(po => {
         let hasAnyInput = false;
@@ -7210,7 +7385,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                 </div>
                 <div>
                   <button 
-                    onclick="openEditPOModal('${po.id}')" 
+                    onclick="editPOSales('${po.id}')" 
                     class="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-lg transition inline-flex items-center gap-1 cursor-pointer"
                     title="Ubah pesanan sales ini bila pabrik kurang atau mobil masih longgar">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5 text-brand-600"></i>
@@ -7966,11 +8141,18 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         let alloc = (spkData.itemsPerTruck && spkData.itemsPerTruck[code]) || 
                     (manualData && manualData.allocations && manualData.allocations[code]);
 
-        if (!alloc || alloc.length !== truckCount) {
-          const targetQty = (spkData.items && spkData.items[code] !== undefined)
-            ? Number(spkData.items[code])
-            : rowOrderTotal;
+        const targetQty = (spkData.items && spkData.items[code] !== undefined)
+          ? Number(spkData.items[code])
+          : rowOrderTotal;
+
+        const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+
+        if (!alloc || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
           alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
+        } else if (sumAlloc !== targetQty && targetQty > 0) {
+          alloc = rebalanceTruckAllocationProportionally(alloc, targetQty, truckCount, upb);
+        } else if (targetQty === 0) {
+          alloc = Array(truckCount).fill(0);
         }
 
         let rowSPKTotal = 0;
@@ -8441,8 +8623,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
         }
 
         (loadedItems || []).forEach(item => {
-          const alloc = manualAlloc[item.code] || [];
+          let alloc = manualAlloc[item.code];
           const upb = Number(item.unitsPerBasket) || 60;
+          const totalUnits = Number(item.orderQty || item.qty || 0);
+          const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+
+          if (!alloc || alloc.length !== count || (sumAlloc === 0 && totalUnits > 0)) {
+            alloc = divideUnitsToTrucksByBasket(totalUnits, count, upb);
+          } else if (sumAlloc !== totalUnits && totalUnits > 0) {
+            alloc = rebalanceTruckAllocationProportionally(alloc, totalUnits, count, upb);
+          }
 
           for (let i = 0; i < count; i++) {
             const rawVal = alloc[i] || 0;
@@ -8666,8 +8856,14 @@ Terima kasih atas kerja samanya! 🙏🍞`;
             let alloc = (manualData.allocations && manualData.allocations[item.code]) || 
                         (spkData.itemsPerTruck && spkData.itemsPerTruck[item.code]);
 
-            if (!alloc || alloc.length !== truckCount) {
+            const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+
+            if (!alloc || alloc.length !== truckCount || (sumAlloc === 0 && totalUnits > 0)) {
               alloc = divideUnitsToTrucksByBasket(totalUnits, truckCount, upb);
+            } else if (sumAlloc !== totalUnits && totalUnits > 0) {
+              alloc = rebalanceTruckAllocationProportionally(alloc, totalUnits, truckCount, upb);
+            } else if (totalUnits === 0) {
+              alloc = Array(truckCount).fill(0);
             }
 
             let sumAllocPcs = 0;
