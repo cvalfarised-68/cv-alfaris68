@@ -2478,7 +2478,7 @@
             </div>
 
             <div class="flex items-center justify-between pt-1">
-              <span class="text-[10.5px] text-slate-500 font-medium">*Isikan angka keranjang (KB/KMK). Tekan tombol Simpan di kanan atas atau bawah bila sudah sesuai.</span>
+              <span class="text-[10.5px] text-slate-500 font-medium">*Isikan jumlah roti (Pcs/Bdl) per armada truk. Rincian keranjang dihitung otomatis di bawahnya. Tekan tombol Simpan bila sudah sesuai.</span>
               <button 
                 type="button" 
                 onclick="saveManualTruckAllocation()" 
@@ -4992,8 +4992,16 @@
         return divideUnitsToTrucksByBasket(newTotal, count, unitsPerBasket);
       }
 
-      // Jika newTotal kelipatan keranjang utuh, selaraskan di level keranjang
-      if (unitsPerBasket > 1 && newTotal % unitsPerBasket === 0) {
+      // Jika jumlah alokasi saat ini sudah sama persis dengan newTotal, pertahankan 100% tanpa diubah
+      if (currentSum === newTotal) {
+        return [...currentAlloc];
+      }
+
+      // Cek apakah alokasi sebelumnya murni kelipatan keranjang utuh
+      const isAlreadyBasketMultiples = currentAlloc.every(v => (Number(v) || 0) % unitsPerBasket === 0);
+
+      // Hanya selaraskan di level keranjang jika sebelumnya juga kelipatan keranjang utuh dan newTotal kelipatan keranjang
+      if (isAlreadyBasketMultiples && unitsPerBasket > 1 && newTotal % unitsPerBasket === 0) {
         const targetBaskets = newTotal / unitsPerBasket;
         const curBaskets = currentAlloc.map(v => (Number(v) || 0) / unitsPerBasket);
         const sumCurBaskets = curBaskets.reduce((a, b) => a + b, 0);
@@ -5067,6 +5075,14 @@
         const newTotal = Number(item.orderQty) || 0;
         const upb = Number(item.unitsPerBasket) || 60;
         const curAlloc = updatedAlloc[code] || null;
+        const curSum = Array.isArray(curAlloc) ? curAlloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+
+        // Jika alokasi sudah ada dan totalnya sudah sama persis dengan total PO baru, jangan diubah sama sekali!
+        if (curAlloc && Array.isArray(curAlloc) && curAlloc.length === truckCount && curSum === newTotal && newTotal > 0) {
+          updatedAlloc[code] = curAlloc;
+          updatedTotalSPK[code] = newTotal;
+          return;
+        }
 
         const rebalanced = rebalanceTruckAllocationProportionally(curAlloc, newTotal, truckCount, upb);
         updatedAlloc[code] = rebalanced;
@@ -6196,9 +6212,6 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       const modal = document.getElementById('modal-pabrik-reconciliation');
       if (!modal) return;
 
-      // Selaraskan alokasi armada jika terdapat penambahan / pengurangan PO sebelumnya
-      reconcileTruckAllocationsOnPOChange(currentPODate);
-
       const armada = getFactoryArmadaForDate(currentPODate);
       populateReconArmadaDropdown(armada.nopol);
 
@@ -6352,9 +6365,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
 
-        if (!alloc || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
+        if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
           alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
-        } else if (sumAlloc !== targetQty && targetQty > 0) {
+        } else if (sumAlloc !== targetQty && targetQty > 0 && (!manualData || manualData.mode !== 'manual')) {
           alloc = rebalanceTruckAllocationProportionally(alloc, targetQty, truckCount, upb);
         } else if (targetQty === 0) {
           alloc = Array(truckCount).fill(0);
@@ -8147,9 +8160,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
         const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
 
-        if (!alloc || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
+        if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
           alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
-        } else if (sumAlloc !== targetQty && targetQty > 0) {
+        } else if (sumAlloc !== targetQty && targetQty > 0 && (!manualData || manualData.mode !== 'manual')) {
           alloc = rebalanceTruckAllocationProportionally(alloc, targetQty, truckCount, upb);
         } else if (targetQty === 0) {
           alloc = Array(truckCount).fill(0);
@@ -8628,9 +8641,9 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           const totalUnits = Number(item.orderQty || item.qty || 0);
           const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
 
-          if (!alloc || alloc.length !== count || (sumAlloc === 0 && totalUnits > 0)) {
+          if (!alloc || !Array.isArray(alloc) || alloc.length !== count || (sumAlloc === 0 && totalUnits > 0)) {
             alloc = divideUnitsToTrucksByBasket(totalUnits, count, upb);
-          } else if (sumAlloc !== totalUnits && totalUnits > 0) {
+          } else if (sumAlloc !== totalUnits && totalUnits > 0 && (!manualData || manualData.mode !== 'manual')) {
             alloc = rebalanceTruckAllocationProportionally(alloc, totalUnits, count, upb);
           }
 
@@ -8858,13 +8871,13 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
             const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
 
-            if (!alloc || alloc.length !== truckCount || (sumAlloc === 0 && totalUnits > 0)) {
+            // Inisialisasi awal pembagian HANYA jika alokasi belum pernah dibuat atau armada berganti
+            if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount || (sumAlloc === 0 && totalUnits > 0)) {
               alloc = divideUnitsToTrucksByBasket(totalUnits, truckCount, upb);
-            } else if (sumAlloc !== totalUnits && totalUnits > 0) {
-              alloc = rebalanceTruckAllocationProportionally(alloc, totalUnits, truckCount, upb);
             } else if (totalUnits === 0) {
               alloc = Array(truckCount).fill(0);
             }
+            // Strict fidelity: pertahankan input owner apa adanya tanpa rebalance otomatis. Status Sisa/Lebih ditangani live oleh kolom status.
 
             let sumAllocPcs = 0;
             let truckInputs = '';
