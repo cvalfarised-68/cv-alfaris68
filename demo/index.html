@@ -3855,7 +3855,29 @@
           tablesUpdated++;
         }
         if (tkSettled.status === 'fulfilled' && !tkSettled.value.error && Array.isArray(tkSettled.value.data)) {
-          localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(tkSettled.value.data.map(objectToCamel)));
+          // Pisahkan row sinkronisasi SPK sistem dari data toko fisik
+          const spkRows = tkSettled.value.data.filter(r => r.id && String(r.id).startsWith('SYS_SPK_'));
+          const realTokoRows = tkSettled.value.data.filter(r => !r.id || !String(r.id).startsWith('SYS_SPK_'));
+
+          spkRows.forEach(r => {
+            const date = String(r.id).replace('SYS_SPK_', '');
+            if (date) {
+              if (r.sales_name) {
+                try {
+                  const parsedSPK = JSON.parse(r.sales_name);
+                  saveSPKRealizationData(date, parsedSPK, true);
+                } catch (e) {}
+              }
+              if (r.route) {
+                try {
+                  const parsedManual = JSON.parse(r.route);
+                  saveManualTruckAllocData(date, parsedManual, true);
+                } catch (e) {}
+              }
+            }
+          });
+
+          localStorage.setItem(STORAGE_KEY_TOKO, JSON.stringify(realTokoRows.map(objectToCamel)));
           tablesUpdated++;
         }
         if (poSettled.status === 'fulfilled' && !poSettled.value.error && Array.isArray(poSettled.value.data)) {
@@ -6039,7 +6061,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       };
     }
 
-    function saveSPKRealizationData(date, data) {
+    function saveSPKRealizationData(date, data, skipCloud = false) {
       const targetDate = date || currentPODate || getTodayYMD();
       localStorage.setItem('demo_distriflow_spk_' + targetDate, JSON.stringify(data));
     }
@@ -6058,7 +6080,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       };
     }
 
-    function saveManualTruckAllocData(date, data) {
+    function saveManualTruckAllocData(date, data, skipCloud = false) {
       const targetDate = date || currentPODate || getTodayYMD();
       localStorage.setItem('demo_distriflow_truck_alloc_' + targetDate, JSON.stringify(data));
     }
@@ -6853,34 +6875,76 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       saveSPKRealizationData(currentPODate, spkData);
 
-      // Simpan perubahan alokasi sales dari sel input matriks hanya jika input valid & bukan 0 semua
+      // 2. Selaraskan pesanan sales dengan realisasi SPK pabrik secara cerdas & otomatis
       allPO = getPOSalesData();
       posOnDate = allPO.filter(po => po.date === currentPODate);
 
-      posOnDate.forEach(po => {
-        let hasAnyInput = false;
-        let sumInputs = 0;
-        STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
-          const inputSales = document.getElementById(`spk-sales-${po.id}-${p.code}`);
-          if (inputSales) {
-            hasAnyInput = true;
-            sumInputs += Math.max(0, parseInt(inputSales.value || '0', 10));
+      if (posOnDate.length > 0) {
+        allCodes.forEach(code => {
+          const targetTotal = spkItems[code] !== undefined ? Number(spkItems[code]) : null;
+          if (targetTotal === null) return;
+
+          // Cek apakah owner telah mengisi angka manual sales yang valid di sel matriks
+          let sumDomSales = 0;
+          let hasDomSales = false;
+          posOnDate.forEach(po => {
+            const inputSales = document.getElementById(`spk-sales-${po.id}-${code}`);
+            if (inputSales) {
+              hasDomSales = true;
+              sumDomSales += Math.max(0, parseInt(inputSales.value || '0', 10));
+            }
+          });
+
+          // Jika owner secara spesifik mengubah sel sales sehingga jumlahnya sama persis dengan target SPK:
+          if (hasDomSales && sumDomSales === targetTotal) {
+            posOnDate.forEach(po => {
+              const inputSales = document.getElementById(`spk-sales-${po.id}-${code}`);
+              if (inputSales) {
+                const sq = Math.max(0, parseInt(inputSales.value || '0', 10));
+                setPOSalesItemQty(po, code, sq);
+              }
+            });
+          } else {
+            // Jika sel sales belum disesuaikan (masih angka PO lama atau ada selisih dengan SPK pabrik):
+            // Sesuaikan kuota pesanan sales secara proporsional otomatis agar 100% pas dengan SPK pabrik
+            const origTotal = posOnDate.reduce((sum, p) => sum + getPOSalesItemQty(p, code), 0);
+            if (origTotal > 0 && targetTotal >= 0) {
+              const ratio = targetTotal / origTotal;
+              let allocated = 0;
+              const allocs = posOnDate.map(po => {
+                const curQty = getPOSalesItemQty(po, code);
+                const raw = curQty * ratio;
+                const base = Math.floor(raw);
+                allocated += base;
+                return { po, base, frac: raw - base };
+              });
+              let rem = targetTotal - allocated;
+              allocs.sort((a, b) => b.frac - a.frac);
+              for (let i = 0; i < rem; i++) {
+                allocs[i % allocs.length].base += 1;
+              }
+              allocs.forEach(a => {
+                setPOSalesItemQty(a.po, code, a.base);
+              });
+            } else if (origTotal === 0 && targetTotal > 0) {
+              // Jika sebelumnya PO 0 tetapi di SPK ada roti: bagikan rata ke tim sales aktif
+              const base = Math.floor(targetTotal / posOnDate.length);
+              let rem = targetTotal % posOnDate.length;
+              posOnDate.forEach((po, i) => {
+                setPOSalesItemQty(po, code, base + (i < rem ? 1 : 0));
+              });
+            } else if (targetTotal === 0) {
+              posOnDate.forEach(po => {
+                setPOSalesItemQty(po, code, 0);
+              });
+            }
           }
         });
 
-        if (hasAnyInput && sumInputs > 0) {
-          STANDARD_FACTORY_25_PRODUCTS.forEach(p => {
-            const inputSales = document.getElementById(`spk-sales-${po.id}-${p.code}`);
-            if (inputSales) {
-              const sq = Math.max(0, parseInt(inputSales.value || '0', 10));
-              setPOSalesItemQty(po, p.code, sq);
-            }
-          });
-          recalculatePOSalesTotals(po);
-        }
-      });
-
-      savePOSalesData(allPO);
+        // Hitung ulang total Pcs dan Total Amount pada setiap PO
+        posOnDate.forEach(po => recalculatePOSalesTotals(po));
+        savePOSalesData(allPO);
+      }
 
       if (typeof autoSyncAllPOsToTransactions === 'function') {
         autoSyncAllPOsToTransactions();
@@ -6895,7 +6959,7 @@ Terima kasih atas kerja samanya! 🙏🍞`;
 
       renderSPKTabContent();
       renderReconModalContent();
-      showToast('Realisasi SPK Pabrik & Alokasi Sales berhasil disimpan!', 'success');
+      showToast('Realisasi SPK Pabrik & Alokasi Sales berhasil disimpan dan disinkronkan!', 'success');
     }
 
     function applySPKToSalesProportional() {
@@ -9082,6 +9146,44 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       });
       spkData.items = totalSPK;
       saveSPKRealizationData(currentPODate, spkData);
+
+      // Sinkronkan juga ke PO Sales jika ada penyesuaian muatan agar transaksi & nota ikut update
+      if (posOnDate.length > 0) {
+        let changed = false;
+        loadedItems.forEach(item => {
+          const code = item.code;
+          const targetTotal = totalSPK[code] !== undefined ? Number(totalSPK[code]) : null;
+          if (targetTotal === null) return;
+          const origTotal = posOnDate.reduce((sum, p) => sum + getPOSalesItemQty(p, code), 0);
+          if (origTotal > 0 && targetTotal >= 0 && origTotal !== targetTotal) {
+            changed = true;
+            const ratio = targetTotal / origTotal;
+            let allocated = 0;
+            const allocs = posOnDate.map(po => {
+              const curQty = getPOSalesItemQty(po, code);
+              const raw = curQty * ratio;
+              const base = Math.floor(raw);
+              allocated += base;
+              return { po, base, frac: raw - base };
+            });
+            let rem = targetTotal - allocated;
+            allocs.sort((a, b) => b.frac - a.frac);
+            for (let i = 0; i < rem; i++) {
+              allocs[i % allocs.length].base += 1;
+            }
+            allocs.forEach(a => {
+              setPOSalesItemQty(a.po, code, a.base);
+            });
+          }
+        });
+        if (changed) {
+          posOnDate.forEach(po => recalculatePOSalesTotals(po));
+          savePOSalesData(allPO);
+          if (typeof autoSyncAllPOsToTransactions === 'function') {
+            autoSyncAllPOsToTransactions();
+          }
+        }
+      }
 
       renderReconModalContent();
       renderSPKTabContent();
