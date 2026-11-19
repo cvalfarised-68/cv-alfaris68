@@ -5088,6 +5088,9 @@
       if (!spkData.itemsPerTruck) spkData.itemsPerTruck = {};
       if (!spkData.items) spkData.items = {};
 
+      const isManualMode = (manualData.mode === 'manual') || 
+        (manualData.allocations && Object.keys(manualData.allocations).length > 0);
+
       const updatedAlloc = { ...manualData.allocations, ...spkData.itemsPerTruck };
       const updatedTotalSPK = { ...spkData.items };
 
@@ -5099,6 +5102,14 @@
         const curAlloc = updatedAlloc[code] || null;
         const curSum = Array.isArray(curAlloc) ? curAlloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
 
+        // JIKA MODE MANUAL AKTIF:
+        // Kunci dan pertahankan 100% alokasi armada yang sudah ditentukan owner tanpa di-rebalance otomatis!
+        if (isManualMode && curAlloc && Array.isArray(curAlloc) && curAlloc.length === truckCount) {
+          updatedAlloc[code] = curAlloc;
+          updatedTotalSPK[code] = curSum;
+          return;
+        }
+
         // Jika alokasi sudah ada dan totalnya sudah sama persis dengan total PO baru, jangan diubah sama sekali!
         if (curAlloc && Array.isArray(curAlloc) && curAlloc.length === truckCount && curSum === newTotal && newTotal > 0) {
           updatedAlloc[code] = curAlloc;
@@ -5106,19 +5117,24 @@
           return;
         }
 
-        const rebalanced = rebalanceTruckAllocationProportionally(curAlloc, newTotal, truckCount, upb);
+        const rebalanced = (curAlloc && Array.isArray(curAlloc) && curAlloc.length === truckCount && curSum > 0)
+          ? rebalanceTruckAllocationProportionally(curAlloc, newTotal, truckCount, upb)
+          : divideUnitsToTrucksByBasket(newTotal, truckCount, upb);
+
         updatedAlloc[code] = rebalanced;
         updatedTotalSPK[code] = newTotal;
       });
 
-      // Jika ada produk yang sebelumnya punya alokasi tapi sekarang PO-nya 0
-      Object.keys(updatedAlloc).forEach(code => {
-        const it = calc.itemsBreakdown.find(x => x.code === code);
-        if (!it || (Number(it.orderQty) || 0) === 0) {
-          updatedAlloc[code] = Array(truckCount).fill(0);
-          updatedTotalSPK[code] = 0;
-        }
-      });
+      // Jika ada produk yang sebelumnya punya alokasi tapi sekarang PO-nya 0 (hanya bersihkan jika BUKAN mode manual)
+      if (!isManualMode) {
+        Object.keys(updatedAlloc).forEach(code => {
+          const it = calc.itemsBreakdown.find(x => x.code === code);
+          if (!it || (Number(it.orderQty) || 0) === 0) {
+            updatedAlloc[code] = Array(truckCount).fill(0);
+            updatedTotalSPK[code] = 0;
+          }
+        });
+      }
 
       manualData.allocations = updatedAlloc;
       saveManualTruckAllocData(date, manualData);
@@ -6386,12 +6402,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           : poQty;
 
         const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+        const isSavedAlloc = Boolean(
+          (manualData && manualData.allocations && manualData.allocations.hasOwnProperty(item.code) && Array.isArray(manualData.allocations[item.code]) && manualData.allocations[item.code].length === truckCount) ||
+          (spkData && spkData.itemsPerTruck && spkData.itemsPerTruck.hasOwnProperty(item.code) && Array.isArray(spkData.itemsPerTruck[item.code]) && spkData.itemsPerTruck[item.code].length === truckCount)
+        );
 
-        if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
-          alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
+        if (!isSavedAlloc) {
+          alloc = targetQty > 0 ? divideUnitsToTrucksByBasket(targetQty, truckCount, upb) : Array(truckCount).fill(0);
         } else if (sumAlloc !== targetQty && targetQty > 0 && (!manualData || manualData.mode !== 'manual')) {
           alloc = rebalanceTruckAllocationProportionally(alloc, targetQty, truckCount, upb);
-        } else if (targetQty === 0) {
+        } else if (targetQty === 0 && !isSavedAlloc) {
           alloc = Array(truckCount).fill(0);
         }
 
@@ -8223,12 +8243,16 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           : rowOrderTotal;
 
         const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+        const isSavedAlloc = Boolean(
+          (manualData && manualData.allocations && manualData.allocations.hasOwnProperty(code) && Array.isArray(manualData.allocations[code]) && manualData.allocations[code].length === truckCount) ||
+          (spkData && spkData.itemsPerTruck && spkData.itemsPerTruck.hasOwnProperty(code) && Array.isArray(spkData.itemsPerTruck[code]) && spkData.itemsPerTruck[code].length === truckCount)
+        );
 
-        if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount || (sumAlloc === 0 && targetQty > 0)) {
-          alloc = divideUnitsToTrucksByBasket(targetQty, truckCount, upb);
+        if (!isSavedAlloc) {
+          alloc = targetQty > 0 ? divideUnitsToTrucksByBasket(targetQty, truckCount, upb) : Array(truckCount).fill(0);
         } else if (sumAlloc !== targetQty && targetQty > 0 && (!manualData || manualData.mode !== 'manual')) {
           alloc = rebalanceTruckAllocationProportionally(alloc, targetQty, truckCount, upb);
-        } else if (targetQty === 0) {
+        } else if (targetQty === 0 && !isSavedAlloc) {
           alloc = Array(truckCount).fill(0);
         }
 
@@ -8704,9 +8728,10 @@ Terima kasih atas kerja samanya! 🙏🍞`;
           const upb = Number(item.unitsPerBasket) || 60;
           const totalUnits = Number(item.orderQty || item.qty || 0);
           const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+          const isSavedAlloc = Boolean(alloc && Array.isArray(alloc) && alloc.length === count);
 
-          if (!alloc || !Array.isArray(alloc) || alloc.length !== count || (sumAlloc === 0 && totalUnits > 0)) {
-            alloc = divideUnitsToTrucksByBasket(totalUnits, count, upb);
+          if (!isSavedAlloc) {
+            alloc = totalUnits > 0 ? divideUnitsToTrucksByBasket(totalUnits, count, upb) : Array(count).fill(0);
           } else if (sumAlloc !== totalUnits && totalUnits > 0 && (!manualData || manualData.mode !== 'manual')) {
             alloc = rebalanceTruckAllocationProportionally(alloc, totalUnits, count, upb);
           }
@@ -8934,11 +8959,17 @@ Terima kasih atas kerja samanya! 🙏🍞`;
                         (spkData.itemsPerTruck && spkData.itemsPerTruck[item.code]);
 
             const sumAlloc = Array.isArray(alloc) ? alloc.reduce((a, b) => a + (Number(b) || 0), 0) : 0;
+            const isSavedInManual = Boolean(
+              (manualData.allocations && manualData.allocations.hasOwnProperty(item.code) && Array.isArray(manualData.allocations[item.code]) && manualData.allocations[item.code].length === truckCount) ||
+              (spkData.itemsPerTruck && spkData.itemsPerTruck.hasOwnProperty(item.code) && Array.isArray(spkData.itemsPerTruck[item.code]) && spkData.itemsPerTruck[item.code].length === truckCount)
+            );
 
             // Inisialisasi awal pembagian HANYA jika alokasi belum pernah dibuat atau armada berganti
-            if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount || (sumAlloc === 0 && totalUnits > 0)) {
-              alloc = divideUnitsToTrucksByBasket(totalUnits, truckCount, upb);
-            } else if (totalUnits === 0) {
+            if (!isSavedInManual) {
+              if (!alloc || !Array.isArray(alloc) || alloc.length !== truckCount) {
+                alloc = totalUnits > 0 ? divideUnitsToTrucksByBasket(totalUnits, truckCount, upb) : Array(truckCount).fill(0);
+              }
+            } else if (totalUnits === 0 && !isSavedInManual) {
               alloc = Array(truckCount).fill(0);
             }
             // Strict fidelity: pertahankan input owner apa adanya tanpa rebalance otomatis. Status Sisa/Lebih ditangani live oleh kolom status.
@@ -9146,44 +9177,6 @@ Terima kasih atas kerja samanya! 🙏🍞`;
       });
       spkData.items = totalSPK;
       saveSPKRealizationData(currentPODate, spkData);
-
-      // Sinkronkan juga ke PO Sales jika ada penyesuaian muatan agar transaksi & nota ikut update
-      if (posOnDate.length > 0) {
-        let changed = false;
-        loadedItems.forEach(item => {
-          const code = item.code;
-          const targetTotal = totalSPK[code] !== undefined ? Number(totalSPK[code]) : null;
-          if (targetTotal === null) return;
-          const origTotal = posOnDate.reduce((sum, p) => sum + getPOSalesItemQty(p, code), 0);
-          if (origTotal > 0 && targetTotal >= 0 && origTotal !== targetTotal) {
-            changed = true;
-            const ratio = targetTotal / origTotal;
-            let allocated = 0;
-            const allocs = posOnDate.map(po => {
-              const curQty = getPOSalesItemQty(po, code);
-              const raw = curQty * ratio;
-              const base = Math.floor(raw);
-              allocated += base;
-              return { po, base, frac: raw - base };
-            });
-            let rem = targetTotal - allocated;
-            allocs.sort((a, b) => b.frac - a.frac);
-            for (let i = 0; i < rem; i++) {
-              allocs[i % allocs.length].base += 1;
-            }
-            allocs.forEach(a => {
-              setPOSalesItemQty(a.po, code, a.base);
-            });
-          }
-        });
-        if (changed) {
-          posOnDate.forEach(po => recalculatePOSalesTotals(po));
-          savePOSalesData(allPO);
-          if (typeof autoSyncAllPOsToTransactions === 'function') {
-            autoSyncAllPOsToTransactions();
-          }
-        }
-      }
 
       renderReconModalContent();
       renderSPKTabContent();
